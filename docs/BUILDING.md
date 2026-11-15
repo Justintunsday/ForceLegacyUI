@@ -18,6 +18,7 @@ python3 scripts/generate_project.py --check
 xcodebuild -project ForceLegacyUI.xcodeproj -scheme ForceLegacyUI \
   -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' \
   -derivedDataPath build/device CODE_SIGNING_ALLOWED=NO build
+python3 scripts/prepare_sideload_metadata.py build/device/Build/Products/Release-iphoneos --evidence dist/sideload-metadata.json
 python3 scripts/package_ipa.py build/device/Build/Products/Release-iphoneos dist --unsigned
 ```
 
@@ -56,6 +57,17 @@ re-signed by ForceLegacyUI.
 A sideloading service that strips or cannot provision App Groups will not enable
 worse_query. A group string added to an unsigned entitlements file is not a valid
 provision. The app explains this in Diagnostics and still offers the demo.
+
+As of 0.1.1, re-signing inputs carry an ad-hoc signature containing the requested
+App Group entitlement, so sideloading tools can discover it. This is still not an
+Apple-provisioned installable signature. The package script rejects a missing
+App Group request instead of silently shipping an input without it.
+
+The runtime checks its own signature (or uses an embedded profile as candidate
+metadata) and tests matching group-container access. It accepts a uniquely
+recognizable signing-tool rename, refuses unrelated/ambiguous groups, and reports
+the configured, reported and selected names in Diagnostics. It does not create
+entitlements that Apple has not authorized. See the [Traditional Chinese guide](GUIDE.zh-Hant.md).
 
 ## GitHub Actions artifacts
 

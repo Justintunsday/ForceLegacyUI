@@ -1,0 +1,27 @@
+[
+  {
+    "ipa": "CompatibilityProbeLegacy-unsigned.ipa",
+    "version": "0.1.1",
+    "sha256": "0644f3bb0fd30504328b2b866e7485c34490bf26f6ecb52493dd35404c23f5c9",
+    "entitlements": {},
+    "requiresAppleProvisionedResigning": true
+  },
+  {
+    "ipa": "CompatibilityProbeModern-unsigned.ipa",
+    "version": "0.1.1",
+    "sha256": "ca9d274d73a2af81684aef185971784938d76ba5b20622e3e64af530c61557e3",
+    "entitlements": {},
+    "requiresAppleProvisionedResigning": true
+  },
+  {
+    "ipa": "ForceLegacyUI-unsigned.ipa",
+    "version": "0.1.1",
+    "sha256": "b362c9836c65ff82e8978807d8bbeef6124a9cb2904f139340f59c2f0e4da586",
+    "entitlements": {
+      "com.apple.security.application-groups": [
+        "group.org.forcelegacyui.app"
+      ]
+    },
+    "requiresAppleProvisionedResigning": true
+  }
+]

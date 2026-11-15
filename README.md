@@ -4,6 +4,15 @@ A native SwiftUI research app for investigating legacy appearance on iOS 26, wit
 a read-only LaunchServices inspector, worse_query integration, two control probes
 and a guarded SDK-metadata experiment engine.
 
+[繁體中文安裝與「找不到 App」排查教程](docs/GUIDE.zh-Hant.md)
+
+[Download 0.1.1 IPA (re-signing required)](https://github.com/Justintunsday/ForceLegacyUI/releases/download/v0.1.1/ForceLegacyUI-unsigned.ipa)
+
+Version 0.1.1 fixes missing App Group request metadata in the old sideloading
+artifact, detects matching signing-tool group renames, adds fallback enumeration,
+and shows the app-list failure reason directly. Updating permissions does not
+enable unverified live overrides.
+
 **No legacy appearance override is currently verified on iOS 26.6.2.** The shipped
 live-write allowlist is empty. The app does not modify signed app bundles, install
 tweaks, reinstall target applications or require a jailbreak. A successful metadata
@@ -31,9 +40,12 @@ CI packages unsigned device IPAs; an optional manual signing job can produce a
 device-installable main-app IPA when matching credentials and provisioning are
 configured. Unsigned IPAs require signing before installation.
 
-[Download the validated build artifacts](https://github.com/Justintunsday/ForceLegacyUI/actions/runs/43770790014).
-The validated source passed 17 safety tests, device/simulator builds and the
-synthetic preview/apply/restore flow. See the full [validation record](docs/VALIDATION.md).
+[Find the latest build artifacts](https://github.com/Justintunsday/ForceLegacyUI/actions/workflows/build.yml).
+Use a successful 0.1.1 build for sideloading; the old 0.1.0 package omitted App
+Group signing metadata. See the [validation record](docs/VALIDATION.md) for test scope.
+The [0.1.1 build](https://github.com/Justintunsday/ForceLegacyUI/actions/runs/43775929275)
+passed 28 safety tests, requested-entitlement packaging checks, device/simulator
+builds, synthetic transaction testing and native simulator app enumeration.
 
 ```sh
 swift test --package-path Packages/LegacyCore --parallel

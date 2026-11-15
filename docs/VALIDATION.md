@@ -1,5 +1,55 @@
 # Validation evidence
 
+## 0.1.1 validation
+
+Source commit [`9ccb514a`](https://github.com/Justintunsday/ForceLegacyUI/commit/9ccb514ada262fad09052af880d7d9a8a2a38528)
+passed [GitHub Actions run 43775929275](https://github.com/Justintunsday/ForceLegacyUI/actions/runs/43775929275).
+
+* All 28 XCTest safety cases passed, including recognized group rewrites, refusal
+  to use unrelated/ambiguous groups, runtime-access requirements and bounded
+  read-only cache discovery that leaves unknown SDK fields unavailable.
+* Device and simulator apps built. The IPA preparation step ad-hoc signed our
+  own build output, verified the seal, and decoded its actual Mach-O XML
+  entitlements before packaging. The ZIP payload was independently decoded again
+  after download; the main app contains `com.apple.security.application-groups =
+  [group.org.forcelegacyui.app]` and version `0.1.1`.
+* Native LaunchServices enumeration in the iOS 26.2 simulator returned **148 raw
+  records and 148 visible app entries**, including the installed test app. This
+  test did not use the demo fixture. A screenshot and full simulator report were
+  captured. Simulator enumeration does not prove physical-device visibility.
+* The synthetic preview/apply/backup/restore flow and probe fact exports passed.
+* No Apple signing certificate/profile was supplied. All released IPA files still
+  require Apple-provisioned re-signing; the ad-hoc entitlement request does not
+  itself grant App Group access on a phone.
+
+Evidence: [0.1.1 records](evidence/v0.1.1/),
+[native simulator screenshot](screenshots/NativeCatalog-0.1.1.png).
+Artifact ID: `14186028671`; ZIP digest:
+`cd6541b9fd254582e5f4d17cd1ab8d52619fa46610e88cd77ef0fa6f4e1fbc99`.
+The subsequent documentation commit adds these records and the Chinese guide
+without changing app, packaging or test source.
+
+There is still no verified iOS 26.6.2 live-write profile or physical-device
+appearance result. Requested entitlements, actual profile authorization, App
+Group container access, worse_query access, record-layout validation and UI
+appearance are distinct checks.
+
+## 0.1.0 packaging correction
+
+Device feedback showed an empty visible-app list and an unusable configured App
+Group. Inspecting the original 0.1.0 IPA confirmed that its executable had no
+`LC_CODE_SIGNATURE`, so re-signing tools could not read the requested App Group
+from its signature. The earlier IPA verification covered ZIP structure, executable
+presence and hashes; it did not validate the required entitlement metadata.
+
+Version 0.1.1 adds ad-hoc request metadata, verifies the actual binary before
+packaging, resolves safe group-name rewrites, and exercises native LS enumeration
+in addition to the demo. Its build evidence is recorded above.
+The historical 0.1.0 artifacts below are retained as a test record, not the current
+recommended sideloading input.
+
+## Historical 0.1.0 validation
+
 The final source build and simulator run passed at commit
 [`596e0552`](https://github.com/Justintunsday/ForceLegacyUI/commit/596e055291dcfc85cec478cd814d554bff614c4e).
 Its [GitHub Actions run](https://github.com/Justintunsday/ForceLegacyUI/actions/runs/43770790014)
