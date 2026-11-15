@@ -77,8 +77,15 @@ static NSString *FLSysctl(const char *key) {
 NSDictionary<NSString *, NSString *> *FLDeviceInfo(void) {
     NSOperatingSystemVersion os = NSProcessInfo.processInfo.operatingSystemVersion;
     struct utsname info; memset(&info, 0, sizeof(info)); uname(&info);
+    NSString *build = FLSysctl("kern.osversion");
+#if TARGET_OS_SIMULATOR
+    build = [@"simulator-host-kernel:" stringByAppendingString:build];
+    NSString *environment = @"simulator";
+#else
+    NSString *environment = @"physical-device";
+#endif
     return @{@"osVersion":[NSString stringWithFormat:@"%ld.%ld.%ld", (long)os.majorVersion, (long)os.minorVersion, (long)os.patchVersion],
-             @"osBuild":FLSysctl("kern.osversion"), @"model":FLSysctl("hw.machine"),
+             @"osBuild":build, @"environment":environment, @"model":FLSysctl("hw.machine"),
              @"architecture":[NSString stringWithUTF8String:info.machine] ?: @"unknown"};
 }
 UIImage *FLApplicationIcon(NSString *bundleID) {

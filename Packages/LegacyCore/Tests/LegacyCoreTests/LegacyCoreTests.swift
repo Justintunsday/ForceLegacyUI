@@ -137,4 +137,28 @@ final class LegacyCoreTests: XCTestCase {
         XCTAssertThrowsError(try SDKPlanner.prepare(data: fixture.data, profile: profile, device: device,
             targets: [fixture.catalog[0].id: .legacy], validator: BadValidator()))
     }
+    func testInterruptedChecksumWriteCanRecoverFromPendingReceipt() throws {
+        let root = try temporaryRoot(), file = root.appendingPathComponent("test.csstore"), backups = root.appendingPathComponent("Backups")
+        try fixture.data.write(to: file)
+        let entry = try TransactionEngine.apply(plan(), to: file, backups: backups, authorization: .appOwned(directory: root), validator: validator)
+        try BackupRepository.setStatus(.prepared, directory: entry.directory)
+        var torn = try Data(contentsOf: file); torn[6] = fixture.data[6]
+        // In-place modification preserves the inode as an interrupted pwrite would.
+        let handle = try FileHandle(forWritingTo: file); try handle.write(contentsOf: torn); try handle.close()
+        try TransactionEngine.recoverInterrupted(backup: BackupRepository.load(entry.directory), at: file,
+            profile: profile, device: device, authorization: .appOwned(directory: root), validator: validator)
+        XCTAssertEqual(try Data(contentsOf: file), fixture.data)
+        XCTAssertEqual(try BackupRepository.load(entry.directory).status, .rolledBack)
+    }
+    func testInterruptedRecoveryDoesNotOverwriteUnrelatedChanges() throws {
+        let root = try temporaryRoot(), file = root.appendingPathComponent("test.csstore"), backups = root.appendingPathComponent("Backups")
+        try fixture.data.write(to: file)
+        let entry = try TransactionEngine.apply(plan(), to: file, backups: backups, authorization: .appOwned(directory: root), validator: validator)
+        try BackupRepository.setStatus(.prepared, directory: entry.directory)
+        var concurrent = try Data(contentsOf: file); concurrent[50] ^= 1
+        let handle = try FileHandle(forWritingTo: file); try handle.write(contentsOf: concurrent); try handle.close()
+        XCTAssertThrowsError(try TransactionEngine.recoverInterrupted(backup: BackupRepository.load(entry.directory), at: file,
+            profile: profile, device: device, authorization: .appOwned(directory: root), validator: validator))
+        XCTAssertEqual(try Data(contentsOf: file), concurrent)
+    }
 }

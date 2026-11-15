@@ -42,6 +42,10 @@ for name in ["ForceLegacyUI", "CompatibilityProbeModern", "CompatibilityProbeLeg
         self_test = json.loads(self_test_path.read_text())
         if not self_test.get("passed"): raise SystemExit("App engine self-test failed")
         (output / "simulator-self-test.json").write_text(json.dumps(self_test, indent=2, sort_keys=True) + "\n")
+        fixture_path = container / "Documents/DemoLaboratory/synthetic.csstore"
+        (output / "synthetic-demo.csstore").write_bytes(fixture_path.read_bytes())
+        run("python3", str(root / "scripts/analyze_snapshot.py"), str(output / "synthetic-demo.csstore"),
+            "--output", str(output / "synthetic-analysis.json"))
     if name != "ForceLegacyUI":
         container = Path(run("xcrun", "simctl", "get_app_container", udid, identifier, "data"))
         facts_path = container / "Documents/launch-facts.json"

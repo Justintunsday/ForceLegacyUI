@@ -216,4 +216,50 @@ public enum TransactionEngine {
         // Re-resolves fields in today's store, preserving unrelated registrations and records.
         return try SDKPlanner.prepare(data: current, profile: profile, device: device, targets: targets, validator: validator)
     }
+
+    /// Recovers a torn write only if the entire file is provably the saved original plus some of our bytes.
+    /// Unlike ordinary restoration, this can repair an interrupted checksum write. It never replaces a stale DB.
+    public static func recoverInterrupted(backup: BackupEntry, at url: URL, profile: LayoutProfile,
+                                          device: DeviceIdentity, authorization: WriteAuthorization,
+                                          validator: StoreValidator) throws {
+        let entry = try BackupRepository.load(backup.directory)
+        let receipt = entry.receipt
+        guard [.prepared, .needsRecovery].contains(entry.status), receipt.sourceName == url.lastPathComponent,
+              receipt.profileDigest == profile.digest, receipt.device.osVersion == device.osVersion,
+              receipt.device.osBuild == device.osBuild, receipt.device.architecture == device.architecture else {
+            throw LegacyError.unsupported("Only a pending transaction for this exact device layout can be recovered.")
+        }
+        let original = try Data(contentsOf: entry.directory.appendingPathComponent("original.csstore"))
+        var targets: [String: SDKVersion] = [:]
+        for change in receipt.changes {
+            guard targets[change.bundleID] == nil else { throw LegacyError.invalid("Duplicate backup changes.") }
+            targets[change.bundleID] = change.target
+        }
+        let plan = try SDKPlanner.prepare(data: original, profile: profile, device: device, targets: targets, validator: validator)
+        guard plan.changes == receipt.changes, sha256(plan.candidate) == receipt.candidateSHA256 else {
+            throw LegacyError.invalid("The pending receipt cannot reproduce its candidate.")
+        }
+        try authorization.validate(url: url, plan: plan)
+        let file = try StableFile(url: url, writable: true)
+        let (current, identity) = try file.snapshot()
+        guard identity.device == receipt.identity.device, identity.inode == receipt.identity.inode,
+              identity.size == receipt.identity.size, safeToRollback(current: current, plan: plan) else {
+            throw LegacyError.conflict("The store was replaced or contains unrelated changes. Strict interrupted-write recovery is unsafe.")
+        }
+        if current != original {
+            // Retain even the torn state before attempting recovery; never overwrite the immutable original.
+            let snapshot = entry.directory.appendingPathComponent("interrupted-\(UUID().uuidString).csstore")
+            try BackupRepository.durableWrite(current, to: snapshot)
+            guard try file.snapshot().0 == current else { throw LegacyError.conflict("Store changed while preparing recovery.") }
+            do {
+                try file.write(plan.patches, restore: true)
+                guard try file.snapshot().0 == original else { throw LegacyError.recovery("Recovery byte comparison failed.") }
+                try validator.validate(original)
+            } catch {
+                try? BackupRepository.setStatus(.needsRecovery, directory: entry.directory)
+                throw LegacyError.recovery("Interrupted-write recovery did not complete. Keep the original backup: \(entry.id).")
+            }
+        }
+        try BackupRepository.setStatus(.rolledBack, directory: entry.directory)
+    }
 }

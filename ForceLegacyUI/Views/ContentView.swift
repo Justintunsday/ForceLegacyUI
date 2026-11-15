@@ -168,7 +168,7 @@ private struct BackupsView: View {
                         Text(entry.receipt.id.uuidString).font(.caption).foregroundStyle(.secondary)
                         LabeledContent("State", value: entry.status.rawValue)
                         ForEach(entry.receipt.changes, id: \.bundleID) { change in
-                            Text("\(change.bundleID)\n\(change.original) → \(change.target)").font(.caption)
+                            Text("\(change.bundleID)\n\(change.original.description) → \(change.target.description)").font(.caption)
                         }
                         if [.applied, .prepared, .needsRecovery].contains(entry.status) {
                             Button("Restore Original Configuration") { Task { await model.restore(entry) } }.disabled(model.busy)

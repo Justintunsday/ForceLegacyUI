@@ -180,8 +180,17 @@ actor ResearchEngine {
         return try withStore { url, _ in
             guard entry.receipt.sourceName == url.lastPathComponent else { throw LegacyError.conflict("This backup belongs to a different store file.") }
             let current = try TransactionEngine.readSnapshot(url)
-            let plan = try TransactionEngine.restorationPlan(backup: entry, current: current, profile: profile, device: identity, validator: validator)
             let authorization = try demo ? WriteAuthorization.appOwned(directory: demoRoot) : WriteAuthorization.reviewedLive(profile: profile, device: identity)
+            let plan: PreparedPlan
+            do {
+                plan = try TransactionEngine.restorationPlan(backup: entry, current: current, profile: profile, device: identity, validator: validator)
+            } catch {
+                guard [.prepared, .needsRecovery].contains(entry.status) else { throw error }
+                try TransactionEngine.recoverInterrupted(backup: entry, at: url, profile: profile, device: identity,
+                    authorization: authorization, validator: validator)
+                lastPreview = nil
+                return "Interrupted transaction recovered. Original bytes and checksum were verified."
+            }
             let undo = try TransactionEngine.apply(plan, to: url, backups: backupRoot, authorization: authorization, validator: validator)
             try BackupRepository.setStatus(.restored, directory: entry.directory)
             try BackupRepository.setStatus(.restored, directory: undo.directory)

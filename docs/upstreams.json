@@ -1,0 +1,26 @@
+{
+  "investigatedOn": "2026-11-16",
+  "timeZone": "Asia/Hong_Kong",
+  "repositories": [
+    {
+      "name": "ForceDuoApp",
+      "url": "https://github.com/34306/ForceDuoApp",
+      "commit": "65e8b6866e637ba695f594d4d718108c13a51635",
+      "licenseFound": false,
+      "sourceRedistributed": false,
+      "use": "Implementation technique and file-format investigation"
+    },
+    {
+      "name": "worse_query",
+      "url": "https://github.com/forcequitOS/worse_query",
+      "commit": "d1540e20cd82b974d891e0551ced6d6aeb570ac2",
+      "license": "GPL-3.0-or-later",
+      "sourceRedistributed": true,
+      "originalFiles": {
+        "worse_query/worse_query.m": "edad488641c58bdcfaa30622a5f1c8bcb08c1990d7dfeb1cb26c473ce3cd8c51",
+        "worse_query/worse_query.h": "02c919ddec399349ff0a8c1230fea01d590fd30880688da6edbb51ac38365408"
+      },
+      "changes": ["Nonrecursive cleanup", "Reject nonempty dedicated group caches", "Free query on symlink failure", "Recover interrupted symlink setup"]
+    }
+  ]
+}

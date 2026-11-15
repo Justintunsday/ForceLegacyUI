@@ -1,0 +1,17 @@
+{
+  "id": "unverified-template",
+  "osVersion": "26.6.2",
+  "osBuild": "REPLACE_WITH_CAPTURED_BUILD",
+  "architectures": ["arm64", "arm64e"],
+  "recordSize": 0,
+  "identifier": 0,
+  "duplicateIdentifier": 0,
+  "kind": 0,
+  "sdk": 0,
+  "name": 0,
+  "fallbackName": 0,
+  "bundleName": 0,
+  "placeholder": 0,
+  "signer": 0,
+  "evidence": ["UNVERIFIED TEMPLATE: invalid until every field is independently established"]
+}
