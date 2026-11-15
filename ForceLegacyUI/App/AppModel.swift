@@ -21,6 +21,16 @@ final class AppModel: ObservableObject {
     }
     func selectAll() { selection = Set(apps.filter(selectable).map(\.id)) }
 
+    func start() async {
+        #if targetEnvironment(simulator)
+        if ProcessInfo.processInfo.arguments.contains("--self-test") {
+            do { try await engine.simulatorSelfTest() }
+            catch { failed = true; message = "Simulator self-test failed: \(error.localizedDescription)" }
+        }
+        #endif
+        await scan()
+    }
+
     func scan(extended: Bool = false) async {
         guard !busy else { return }; busy = true; defer { busy = false }
         inspection = await engine.inspect(demo: demo, extended: extended)

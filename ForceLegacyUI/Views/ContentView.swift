@@ -42,7 +42,7 @@ struct ContentView: View {
             BackupsView().tabItem { Label("Restore", systemImage: "clock.arrow.circlepath") }
         }
         .tint(Color(red: 0.08, green: 0.35, blue: 0.72))
-        .task { await model.scan() }
+        .task { await model.start() }
         .sheet(isPresented: Binding(get: { !model.message.isEmpty }, set: { if !$0 { model.message = "" } })) {
             NavigationStack {
                 ScrollView { Text(model.message).font(.body).textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading).padding() }

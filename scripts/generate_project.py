@@ -71,8 +71,9 @@ def generate():
     pbx += "\n".join(f"\t{identifier} = {{ {body} }};" for identifier, body in sorted(objects.items()))
     pbx += f'\n}}; rootObject = {project}; }}\n'
     generated = {ROOT / "ForceLegacyUI.xcodeproj/project.pbxproj": pbx}
-    for name, target in zip(target_names, targets):
-        build_names = target_names if name == "ForceLegacyUI" else [name]
+    for scheme_name, name in [(n, n) for n in target_names] + [("ForceLegacyUIDevice", "ForceLegacyUI")]:
+        target = uid("target:" + name)
+        build_names = target_names if scheme_name == "ForceLegacyUI" else [name]
         entries = "".join(f'<BuildActionEntry buildForTesting="YES" buildForRunning="YES" buildForProfiling="YES" buildForArchiving="YES" buildForAnalyzing="YES"><BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="{uid("target:" + n)}" BuildableName="{n}.app" BlueprintName="{n}" ReferencedContainer="container:ForceLegacyUI.xcodeproj"/></BuildActionEntry>' for n in build_names)
         runnable = f'<BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="{target}" BuildableName="{name}.app" BlueprintName="{name}" ReferencedContainer="container:ForceLegacyUI.xcodeproj"/>'
         scheme = f'''<?xml version="1.0" encoding="UTF-8"?>
@@ -84,7 +85,7 @@ def generate():
 <AnalyzeAction buildConfiguration="Debug"/><ArchiveAction buildConfiguration="Release" revealArchiveInOrganizer="YES"/>
 </Scheme>
 '''
-        generated[ROOT / f"ForceLegacyUI.xcodeproj/xcshareddata/xcschemes/{name}.xcscheme"] = scheme
+        generated[ROOT / f"ForceLegacyUI.xcodeproj/xcshareddata/xcschemes/{scheme_name}.xcscheme"] = scheme
     return generated
 
 if __name__ == "__main__":

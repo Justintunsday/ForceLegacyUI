@@ -152,6 +152,29 @@ actor ResearchEngine {
 
     func backups() throws -> [BackupEntry] { try BackupRepository.list(backupRoot) }
 
+    #if targetEnvironment(simulator)
+    func simulatorSelfTest() throws {
+        let inspection = inspect(demo: true)
+        guard inspection.layoutValidated else { throw LegacyError.invalid("Demo inspection failed.") }
+        let before = try TransactionEngine.readSnapshot(demoStore)
+        let selected: Set<String> = ["org.forcelegacyui.sample.0"]
+        let preview = try apply(selected: selected, dryRun: true)
+        guard try TransactionEngine.readSnapshot(demoStore) == before else { throw LegacyError.invalid("Dry run mutated its source.") }
+        let result = try apply(selected: selected, dryRun: false)
+        let applied = try TransactionEngine.readSnapshot(demoStore)
+        guard applied != before, let entry = try backups().first(where: { $0.status == .applied }) else {
+            throw LegacyError.invalid("Apply or automatic backup failed.")
+        }
+        let restored = try restore(entry)
+        guard try TransactionEngine.readSnapshot(demoStore) == before else { throw LegacyError.invalid("Restoration did not reproduce the baseline.") }
+        let evidence: [String: Any] = ["passed": true, "physicalDeviceTest": false, "syntheticData": true,
+            "beforeSHA256": sha256(before), "appliedSHA256": sha256(applied), "restoredSHA256": sha256(before),
+            "preview": preview, "apply": result, "restore": restored]
+        let data = try JSONSerialization.data(withJSONObject: evidence, options: [.prettyPrinted, .sortedKeys])
+        try BackupRepository.durableWrite(data, to: documents.appendingPathComponent("simulator-self-test.json"))
+    }
+    #endif
+
     func restore(_ entry: BackupEntry) throws -> String {
         guard let profile else { throw LegacyError.unsupported("Restoration needs the original reviewed layout; no raw whole-store overwrite is allowed.") }
         return try withStore { url, _ in

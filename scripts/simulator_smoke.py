@@ -24,7 +24,7 @@ for name in ["ForceLegacyUI", "CompatibilityProbeModern", "CompatibilityProbeLeg
     app = products / f"{name}.app"
     info = plistlib.loads((app / "Info.plist").read_bytes()); identifier = info["CFBundleIdentifier"]
     run("xcrun", "simctl", "install", udid, str(app))
-    arguments = ["--demo"] if name == "ForceLegacyUI" else []
+    arguments = ["--demo", "--self-test"] if name == "ForceLegacyUI" else []
     launch = run("xcrun", "simctl", "launch", udid, identifier, *arguments)
     time.sleep(3)
     # launchctl presence checks that the app did not simply crash after spawning.
@@ -32,6 +32,16 @@ for name in ["ForceLegacyUI", "CompatibilityProbeModern", "CompatibilityProbeLeg
     if identifier not in processes: raise SystemExit(f"Process did not remain running: {identifier}")
     run("xcrun", "simctl", "io", udid, "screenshot", str(output / f"{name}-simulator.png"))
     facts = None
+    if name == "ForceLegacyUI":
+        container = Path(run("xcrun", "simctl", "get_app_container", udid, identifier, "data"))
+        self_test_path = container / "Documents/simulator-self-test.json"
+        for _ in range(15):
+            if self_test_path.exists(): break
+            time.sleep(1)
+        if not self_test_path.exists(): raise SystemExit("App engine self-test did not produce evidence")
+        self_test = json.loads(self_test_path.read_text())
+        if not self_test.get("passed"): raise SystemExit("App engine self-test failed")
+        (output / "simulator-self-test.json").write_text(json.dumps(self_test, indent=2, sort_keys=True) + "\n")
     if name != "ForceLegacyUI":
         container = Path(run("xcrun", "simctl", "get_app_container", udid, identifier, "data"))
         facts_path = container / "Documents/launch-facts.json"

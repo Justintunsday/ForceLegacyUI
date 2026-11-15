@@ -62,6 +62,8 @@ static void clean_symlink(NSString *group) {
 
 // So, who's ready for round two?
 int64_t worse_query(NSString *target, NSString *group, bool alt_flags, bool create_dir) {
+    // Recover an interrupted invocation by unlinking only our dedicated group's symlink.
+    clean_symlink(group);
     // Check if the target exists
     if (!create_dir) {
         struct stat st;
