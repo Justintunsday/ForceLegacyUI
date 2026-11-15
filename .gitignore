@@ -1,0 +1,14 @@
+research/
+.DS_Store
+.build/
+DerivedData/
+build/
+dist/
+*.xcuserstate
+xcuserdata/
+*.ipa
+*.p12
+*.mobileprovision
+Signing.local.xcconfig
+__pycache__/
+.swiftpm/

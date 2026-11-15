@@ -1,0 +1,15 @@
+name: Core safety tests
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: macos-15
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test bounded parser and transactions
+        run: swift test --package-path Packages/LegacyCore --parallel
