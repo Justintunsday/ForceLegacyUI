@@ -43,31 +43,114 @@ static id FLWorkspace(void) {
     return ((id (*)(id, SEL))objc_msgSend)(cls, selector);
 }
 NSArray<NSDictionary<NSString *, id> *> *FLInstalledApps(NSString **diagnostics) {
-    NSMutableArray *result = [NSMutableArray array];
-    @try {
-        id workspace = FLWorkspace();
-        id proxies = FLValue(workspace, @"allInstalledApplications");
-        if (![proxies isKindOfClass:NSArray.class]) {
-            if (diagnostics) *diagnostics = @"LSApplicationWorkspace did not expose the installed application list. Visibility may be restricted by signing or OS policy.";
-            return result;
-        }
-        NSMutableSet *seen = [NSMutableSet set];
-        for (id proxy in proxies) {
+    FLLoadServices();
+    NSMutableDictionary<NSString *, NSDictionary *> *result = [NSMutableDictionary dictionary];
+    NSMutableString *log = [NSMutableString string];
+    void (^accept)(id) = ^(id proxy) {
+        @try {
+            id placeholder = FLValue(proxy, @"placeholder") ?: FLValue(proxy, @"isPlaceholder");
+            if ([placeholder isKindOfClass:NSNumber.class] && [placeholder boolValue]) return;
             NSString *identifier = FLString(FLValue(proxy, @"applicationIdentifier"));
             if (!identifier.length) identifier = FLString(FLValue(proxy, @"bundleIdentifier"));
-            id bundleURL = FLValue(proxy, @"bundleURL");
-            if (!identifier.length || ![bundleURL isKindOfClass:NSURL.class] || [seen containsObject:identifier]) continue;
-            [seen addObject:identifier];
+            if (!identifier.length) return;
+            id bundleURL = FLValue(proxy, @"bundleURL") ?: FLValue(proxy, @"URL");
+            NSString *path = [bundleURL isKindOfClass:NSURL.class] ? FLNormalize([bundleURL path]) : @"";
             NSString *name = FLString(FLValue(proxy, @"localizedName"));
-            [result addObject:@{@"bundleID":identifier, @"name":name.length ? name : identifier,
-                @"bundlePath":FLNormalize([bundleURL path]), @"sdk":FLString(FLValue(proxy, @"sdkVersion")),
-                @"applicationType":FLString(FLValue(proxy, @"applicationType"))}];
+            NSString *sdk = FLString(FLValue(proxy, @"sdkVersion"));
+            NSDictionary *previous = result[identifier];
+            if (previous && [previous[@"bundlePath"] length] > 0 && path.length == 0) return;
+            // Lack of a readable bundle URL must not hide an otherwise visible app.
+            result[identifier] = @{@"bundleID":identifier, @"name":name.length ? name : identifier,
+                @"bundlePath":path, @"sdk":sdk, @"applicationType":FLString(FLValue(proxy, @"applicationType"))};
+        } @catch (NSException *exception) {
+            [log appendFormat:@"One application record could not be read: %@.\n", exception.name];
         }
-        if (diagnostics) *diagnostics = [NSString stringWithFormat:@"LSApplicationWorkspace returned %lu visible apps. Completeness is not guaranteed. SDK values are registration metadata, not observed appearance.", (unsigned long)result.count];
-    } @catch (NSException *exception) {
-        if (diagnostics) *diagnostics = [NSString stringWithFormat:@"LaunchServices exception: %@", exception.name];
+    };
+    id workspace = FLWorkspace();
+    for (NSString *key in @[@"allInstalledApplications", @"allApplications"]) {
+        @try {
+            id objects = FLValue(workspace, key);
+            if (![objects conformsToProtocol:@protocol(NSFastEnumeration)]) {
+                [log appendFormat:@"LSApplicationWorkspace.%@: unavailable.\n", key]; continue;
+            }
+            NSUInteger count = 0;
+            for (id object in objects) { if (++count > 10000) break; accept(object); }
+            [log appendFormat:@"LSApplicationWorkspace.%@: %lu raw records, %lu visible apps.\n", key, (unsigned long)count, (unsigned long)result.count];
+            if (result.count) break;
+        } @catch (NSException *exception) { [log appendFormat:@"%@: %@.\n", key, exception.name]; }
     }
-    return result;
+    if (!result.count) {
+        Class cls = NSClassFromString(@"LSApplicationRecord");
+        SEL selector = NSSelectorFromString(@"enumeratorWithOptions:");
+        @try {
+            if ([cls respondsToSelector:selector]) {
+                id enumerator = ((id (*)(id, SEL, uint64_t))objc_msgSend)(cls, selector, 0);
+                NSUInteger count = 0;
+                if ([enumerator respondsToSelector:@selector(nextObject)]) {
+                    id object;
+                    while (count < 10000 && (object = [enumerator nextObject])) { ++count; accept(object); }
+                }
+                [log appendFormat:@"LSApplicationRecord: %lu raw records, %lu visible apps.\n", (unsigned long)count, (unsigned long)result.count];
+            } else { [log appendString:@"LSApplicationRecord enumeration unavailable.\n"]; }
+        } @catch (NSException *exception) { [log appendFormat:@"LSApplicationRecord: %@.\n", exception.name]; }
+    }
+    if (!result.count) {
+        SEL selector = NSSelectorFromString(@"enumerateApplicationsOfType:block:");
+        if ([workspace respondsToSelector:selector]) {
+            @try {
+                for (NSUInteger kind = 0; kind < 2; ++kind)
+                    ((void (*)(id, SEL, NSUInteger, void (^)(id)))objc_msgSend)(workspace, selector, kind, accept);
+                [log appendFormat:@"Workspace callback enumeration: %lu visible apps.\n", (unsigned long)result.count];
+            } @catch (NSException *exception) { [log appendFormat:@"Workspace enumeration: %@.\n", exception.name]; }
+        }
+    }
+    [log appendString:@"Enumeration may be restricted by iOS. Missing path/SDK fields remain unavailable; they are not guessed.\n"];
+    if (diagnostics) *diagnostics = log;
+    return result.allValues;
+}
+
+NSDictionary<NSString *, id> *FLAppGroupContext(void) {
+    NSString *configured = FLString([NSBundle.mainBundle objectForInfoDictionaryKey:@"FLAppGroupIdentifier"]);
+    NSString *bundleID = NSBundle.mainBundle.bundleIdentifier ?: @"";
+    static void *security; static dispatch_once_t once;
+    dispatch_once(&once, ^{ security = dlopen("/System/Library/Frameworks/Security.framework/Security", RTLD_LAZY | RTLD_LOCAL); });
+    CFTypeRef (*createTask)(CFAllocatorRef) = security ? dlsym(security, "SecTaskCreateFromSelf") : NULL;
+    CFTypeRef (*copyEntitlement)(CFTypeRef, CFStringRef, CFErrorRef *) = security ? dlsym(security, "SecTaskCopyValueForEntitlement") : NULL;
+    if (createTask && copyEntitlement) {
+        CFTypeRef task = createTask(kCFAllocatorDefault);
+        if (task) {
+            CFErrorRef failure = NULL;
+            CFTypeRef value = copyEntitlement(task, CFSTR("com.apple.security.application-groups"), &failure);
+            id groups = value ? CFBridgingRelease(value) : nil;
+            BOOL succeeded = failure == NULL;
+            if (failure) CFRelease(failure);
+            CFRelease(task);
+            if (succeeded && (!groups || [groups isKindOfClass:NSArray.class])) {
+                return @{@"configured":configured, @"bundleID":bundleID, @"groups":groups ?: @[], @"source":@"Running signature (SecTask)"};
+            }
+        }
+    }
+    // The profile is a source of candidate names only. containerURL remains the permission check.
+    NSURL *profileURL = [NSBundle.mainBundle URLForResource:@"embedded" withExtension:@"mobileprovision"];
+    id sizeValue = nil; [profileURL getResourceValue:&sizeValue forKey:NSURLFileSizeKey error:nil];
+    NSNumber *size = [sizeValue isKindOfClass:NSNumber.class] ? sizeValue : nil;
+    if (size && size.unsignedLongLongValue <= 8 * 1024 * 1024) {
+        NSData *data = [NSData dataWithContentsOfURL:profileURL];
+        NSRange start = [data rangeOfData:[@"<?xml" dataUsingEncoding:NSUTF8StringEncoding] options:0 range:NSMakeRange(0, data.length)];
+        if (data && start.location != NSNotFound) {
+            NSRange end = [data rangeOfData:[@"</plist>" dataUsingEncoding:NSUTF8StringEncoding] options:0 range:NSMakeRange(start.location, data.length - start.location)];
+            if (end.location != NSNotFound) {
+                NSData *xml = [data subdataWithRange:NSMakeRange(start.location, NSMaxRange(end) - start.location)];
+                id plist = [NSPropertyListSerialization propertyListWithData:xml options:0 format:NULL error:nil];
+                if ([plist isKindOfClass:NSDictionary.class]) {
+                    id entitlements = plist[@"Entitlements"];
+                    id groups = [entitlements isKindOfClass:NSDictionary.class] ? entitlements[@"com.apple.security.application-groups"] : nil;
+                    return @{@"configured":configured, @"bundleID":bundleID, @"groups":[groups isKindOfClass:NSArray.class] ? groups : @[], @"source":@"Embedded profile (runtime access still required)"};
+                }
+            }
+        }
+    }
+    return @{@"configured":configured, @"bundleID":bundleID, @"groups":@[], @"source":@"Entitlement metadata unavailable; checking configured group directly"};
 }
 static NSString *FLSysctl(const char *key) {
     char buffer[256] = {0}; size_t size = sizeof(buffer);

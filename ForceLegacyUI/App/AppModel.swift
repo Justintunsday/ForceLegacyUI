@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import UIKit
 import LegacyCore
 
 @MainActor
@@ -16,6 +17,25 @@ final class AppModel: ObservableObject {
     private let engine = ResearchEngine()
 
     var apps: [InstalledApplication] { inspection?.applications ?? [] }
+    var liveWriteAvailable: Bool {
+        guard let inspection else { return false }
+        if inspection.isDemo { return true }
+        guard inspection.layoutValidated, let profile = ReviewedLayouts.profile(for: inspection.device) else { return false }
+        return ReviewedLayouts.liveWriteDigests.contains(profile.digest)
+    }
+    var catalogIssue: String {
+        guard let inspection else { return "Run read-only inspection to check app visibility and App Group access." }
+        if inspection.appGroup?.state == .missing {
+            return "App Group unavailable. The signer may have renamed or removed this app's group. Diagnostics shows the configured and reported group identifiers."
+        }
+        if inspection.appGroup?.state == .ambiguous {
+            return "Several matching App Groups are accessible. Configure one dedicated group before cache inspection."
+        }
+        return inspection.storeError ?? "iOS exposed no application records. Open Diagnostics to review each enumeration method and cache access."
+    }
+    func copyDiagnostics() {
+        UIPasteboard.general.string = inspection?.log ?? "Inspection has not completed."
+    }
     func selectable(_ app: InstalledApplication) -> Bool {
         app.bundlePath.hasPrefix("/private/var/containers/Bundle/Application/") && app.reportedSDK != nil
     }
@@ -26,6 +46,10 @@ final class AppModel: ObservableObject {
         if ProcessInfo.processInfo.arguments.contains("--self-test") {
             do { try await engine.simulatorSelfTest() }
             catch { failed = true; message = "Simulator self-test failed: \(error.localizedDescription)" }
+        }
+        if ProcessInfo.processInfo.arguments.contains("--catalog-self-test") {
+            do { try await engine.simulatorCatalogSelfTest() }
+            catch { failed = true; message = "Simulator catalog self-test failed: \(error.localizedDescription)" }
         }
         #endif
         await scan()

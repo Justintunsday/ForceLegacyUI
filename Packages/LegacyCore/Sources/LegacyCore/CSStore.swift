@@ -145,6 +145,58 @@ public struct CSStore {
         return try Self.unitString(bytes, unit: unit, maximum: 4096)
     }
 
+    /// Read-only inventory for an unknown Bundle payload layout. No SDK location is inferred.
+    /// Require repeated, unambiguous identifier references and a matching UUID container/path pair.
+    /// These are cache registrations, not proof of current installation or mutation authorization.
+    public func discoverRegistrations() throws -> [InstalledApplication] {
+        let units = tables["Bundle", default: [:]]
+        guard units.count <= 10000 else { throw LegacyError.unsupported("Cache inventory exceeds its bounded record limit.") }
+        var strings: [UInt32: String] = [:]
+        let bytes = BoundedBytes(data: data)
+        let stringUnits = tables["<string>", default: [:]]
+        guard stringUnits.count <= 200000 else { throw LegacyError.unsupported("Cache inventory exceeds its bounded string limit.") }
+        var stringBytes = 0
+        for (key, unit) in stringUnits where unit.size <= 4096 {
+            stringBytes += unit.size
+            guard stringBytes <= Self.maximumSize else { throw LegacyError.unsupported("Cache inventory exceeds its string decoding budget.") }
+            if let value = try? Self.unitString(bytes, unit: unit, maximum: 4096) { strings[key] = value }
+        }
+        func bundleIdentifier(_ value: String) -> Bool {
+            let parts = value.split(separator: ".", omittingEmptySubsequences: false)
+            return value.count >= 8 && value.count <= 255 && parts.count >= 2 && parts.allSatisfy { part in
+                !part.isEmpty && part.unicodeScalars.allSatisfy {
+                    CharacterSet(charactersIn: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_").contains($0)
+                }
+            }
+        }
+        var observed: [String: [InstalledApplication]] = [:]
+        var fieldsRead = 0
+        for unit in units.values where unit.size >= 4 && unit.size <= 4096 {
+            var counts: [String: Int] = [:]
+            for field in stride(from: 0, through: unit.size - 4, by: 4) {
+                fieldsRead += 1
+                guard fieldsRead <= 2_000_000 else { throw LegacyError.unsupported("Cache inventory exceeded its bounded field budget.") }
+                if let value = strings[try bytes.u32(unit.body + field)] { counts[value, default: 0] += 1 }
+            }
+            let ids = counts.filter { $0.value >= 2 && bundleIdentifier($0.key) }.map(\.key)
+            let names = counts.keys.filter {
+                !ids.contains($0) && $0.hasSuffix(".app") && $0.count > 4 && ($0 as NSString).lastPathComponent == $0 && !$0.contains("/")
+            }
+            let placeholders = counts.keys.filter { ($0 as NSString).lastPathComponent == "SerializedPlaceholder.ipa" }
+            guard ids.count == 1, names.count == 1, placeholders.count == 1,
+                  let id = ids.first, let name = names.first, var placeholder = placeholders.first else { continue }
+            if placeholder.hasPrefix("/var/") { placeholder = "/private" + placeholder }
+            let parent = (placeholder as NSString).deletingLastPathComponent
+            guard (parent as NSString).deletingLastPathComponent == "/private/var/containers/Bundle/Application",
+                  UUID(uuidString: (parent as NSString).lastPathComponent) != nil else { continue }
+            let app = InstalledApplication(bundleID: id, name: (name as NSString).deletingPathExtension,
+                bundlePath: parent + "/" + name, reportedSDK: nil, applicationType: "Cache registration (read-only)")
+            observed[id, default: []].append(app)
+        }
+        // Duplicate identities are ambiguous even if one registration looks newer.
+        return observed.values.compactMap { $0.count == 1 ? $0.first : nil }.sorted { $0.bundleID < $1.bundleID }
+    }
+
     public func applications(profile: LayoutProfile, device: DeviceIdentity) throws -> [StoreApplication] {
         try profile.validate(for: device)
         let bytes = BoundedBytes(data: data)

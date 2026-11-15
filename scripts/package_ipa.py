@@ -5,6 +5,7 @@ import hashlib
 import json
 import plistlib
 import zipfile
+from macho_entitlements import read_entitlements
 
 parser = argparse.ArgumentParser()
 parser.add_argument("products", type=Path); parser.add_argument("output", type=Path)
@@ -16,6 +17,9 @@ for app in apps:
     info = plistlib.loads((app / "Info.plist").read_bytes())
     executable = app / info["CFBundleExecutable"]
     if not executable.is_file(): raise SystemExit(f"Missing executable for {app.name}")
+    group = info.get("FLAppGroupIdentifier")
+    if group and group not in read_entitlements(executable.read_bytes()).get("com.apple.security.application-groups", []):
+        raise SystemExit("App Group signing metadata is missing. Run scripts/prepare_sideload_metadata.py before packaging, or use a correctly provisioned signed build.")
     suffix = "unsigned" if args.unsigned else "signed"
     output = args.output / f"{app.stem}-{suffix}.ipa"
     with zipfile.ZipFile(output, "w", compression=zipfile.ZIP_DEFLATED) as archive:
@@ -26,6 +30,7 @@ for app in apps:
     print(f"Packaged {output.name}; signing required: {args.unsigned}")
 (args.output / "PACKAGING.txt").write_text(
     "Unsigned IPAs require signing with your own provisioning profile before installation.\n"
+    "An ad-hoc signature carries requested entitlements for sideloading tools; it does not grant device permissions.\n"
     "ForceLegacyUI needs a dedicated, correctly provisioned App Group.\n"
     "Signing ForceLegacyUI/probes does not modify or re-sign the target applications.\n"
     "No appearance override is verified; see the investigation and testing documentation.\n")

@@ -5,8 +5,9 @@ import LegacyCore
 struct ContentView: View {
     @EnvironmentObject private var model: AppModel
     @State private var search = ""
+    @State private var selectedTab = 0
     var body: some View {
-        TabView {
+        TabView(selection: $selectedTab) {
             NavigationStack {
                 List {
                     Section {
@@ -28,8 +29,16 @@ struct ContentView: View {
                         Text("Toggles select a proposed change. They do not indicate that legacy appearance is active. Live batch writes remain disabled.")
                     }
                     if model.apps.isEmpty {
-                        ContentUnavailableView("No visible applications", systemImage: "app.dashed", description: Text("Run inspection. If iOS restricts the list, check Diagnostics or open the demo laboratory."))
-                            .listRowBackground(Color.clear)
+                        Section {
+                            if model.busy { ProgressView("Inspecting application access…") }
+                            else {
+                                Label("Application list unavailable", systemImage: "exclamationmark.magnifyingglass").font(.headline)
+                                Text(model.catalogIssue).font(.subheadline).foregroundStyle(.secondary)
+                                Button("Open Diagnostics") { selectedTab = 1 }
+                                Button("Copy Diagnostic Log") { model.copyDiagnostics() }
+                                Button("Retry Read-Only Inspection") { Task { await model.scan() } }
+                            }
+                        }
                     }
                 }
                 .navigationTitle("ForceLegacyUI")
@@ -37,9 +46,9 @@ struct ContentView: View {
                 .toolbar { ToolbarItem(placement: .topBarTrailing) { Button { Task { await model.scan() } } label: { Image(systemName: "arrow.clockwise") }.disabled(model.busy).accessibilityLabel("Run read-only inspection") } }
                 .safeAreaInset(edge: .bottom) { actionBar }
                 .refreshable { await model.scan() }
-            }.tabItem { Label("Applications", systemImage: "square.grid.2x2") }
-            DiagnosticsView().tabItem { Label("Diagnostics", systemImage: "waveform.path.ecg") }
-            BackupsView().tabItem { Label("Restore", systemImage: "clock.arrow.circlepath") }
+            }.tabItem { Label("Applications", systemImage: "square.grid.2x2") }.tag(0)
+            DiagnosticsView().tabItem { Label("Diagnostics", systemImage: "waveform.path.ecg") }.tag(1)
+            BackupsView().tabItem { Label("Restore", systemImage: "clock.arrow.circlepath") }.tag(2)
         }
         .tint(Color(red: 0.08, green: 0.35, blue: 0.72))
         .task { await model.start() }
@@ -66,7 +75,10 @@ struct ContentView: View {
                 }.frame(maxWidth: .infinity).padding(.vertical, 8)
             }
             .buttonStyle(.borderedProminent)
-            .disabled(model.busy || model.selection.isEmpty)
+            .disabled(model.busy || model.selection.isEmpty || (!model.dryRun && !model.liveWriteAvailable))
+            if !model.demo && !model.dryRun && !model.liveWriteAvailable {
+                Text("Live writes are unavailable on this OS build.").font(.caption).foregroundStyle(.secondary)
+            }
         }.padding().background(Color(uiColor: .systemBackground))
     }
 }
@@ -106,12 +118,14 @@ private struct DiagnosticsView: View {
         NavigationStack {
             List {
                 Section("Environment") {
+                    LabeledContent("App version", value: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "unknown")
                     if let info = model.inspection {
                         LabeledContent("iOS", value: info.device.osVersion)
                         LabeledContent("Build", value: info.device.osBuild)
                         LabeledContent("Architecture", value: info.device.architecture)
                         LabeledContent("Override", value: info.status.rawValue)
                         LabeledContent("Layout", value: info.layoutID ?? "Unknown")
+                        LabeledContent("App list source", value: info.catalogSource)
                         if let summary = info.storeSummary {
                             LabeledContent("Snapshot", value: "\(summary.bytes) bytes")
                             LabeledContent("Bundle record sizes", value: summary.bundleRecordSizes.keys.sorted().map(String.init).joined(separator: ", "))
@@ -119,6 +133,19 @@ private struct DiagnosticsView: View {
                     }
                     Toggle("Demo laboratory", isOn: $model.demo).disabled(model.busy)
                         .onChange(of: model.demo) { _, _ in model.selection.removeAll(); Task { await model.scan() } }
+                }
+                if let group = model.inspection?.appGroup {
+                    Section("App Group signing") {
+                        LabeledContent("Configured", value: group.configured)
+                        LabeledContent("Detected", value: group.selected ?? "No usable matching group")
+                        LabeledContent("State", value: group.state.rawValue)
+                        Text("Reported groups: \(group.reportedGroups.isEmpty ? "none" : group.reportedGroups.joined(separator: ", "))")
+                            .font(.caption).textSelection(.enabled)
+                        Text(model.inspection?.appGroupSource ?? "").font(.caption).foregroundStyle(.secondary)
+                        if group.state == .missing {
+                            Text("Re-sign with a profile that authorizes ForceLegacyUI's dedicated App Group. A custom plist string cannot create that permission.").font(.caption).foregroundStyle(.orange)
+                        }
+                    }
                 }
                 Section {
                     Button("Run Read-Only Inspection") { Task { await model.scan() } }
@@ -133,6 +160,7 @@ private struct DiagnosticsView: View {
                     Text("Exports stay on this device until shared. Reports contain application identifiers; raw stores can contain more private metadata.").font(.caption).foregroundStyle(.secondary)
                 }
                 Section("Technical log") {
+                    Button("Copy Diagnostic Log") { model.copyDiagnostics() }
                     Text(model.inspection?.log ?? "Run an inspection to begin.").font(.caption.monospaced()).textSelection(.enabled)
                 }
                 Section("Research") {

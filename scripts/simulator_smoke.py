@@ -55,5 +55,21 @@ for name in ["ForceLegacyUI", "CompatibilityProbeModern", "CompatibilityProbeLeg
         (output / f"{name}-launch-facts.json").write_text(json.dumps(facts, indent=2, sort_keys=True) + "\n")
     evidence["launches"].append({"bundleID": identifier, "launchResult": launch, "factsExported": facts is not None})
     run("xcrun", "simctl", "terminate", udid, identifier)
+# Test the real LaunchServices enumeration path too; the synthetic demo cannot cover app visibility.
+main_info = plistlib.loads((products / "ForceLegacyUI.app/Info.plist").read_bytes())
+main_id = main_info["CFBundleIdentifier"]
+run("xcrun", "simctl", "launch", udid, main_id, "--catalog-self-test")
+container = Path(run("xcrun", "simctl", "get_app_container", udid, main_id, "data"))
+catalog_file = container / "Documents/simulator-catalog-test.json"
+for _ in range(20):
+    if catalog_file.exists(): break
+    time.sleep(1)
+if not catalog_file.exists(): raise SystemExit("Native application catalog self-test did not produce evidence")
+catalog = json.loads(catalog_file.read_text())
+if catalog["isDemo"] or not any(app["bundleID"] == main_id for app in catalog["applications"]):
+    raise SystemExit("Native catalog was empty or used synthetic data")
+(output / "simulator-catalog-test.json").write_text(json.dumps(catalog, indent=2, sort_keys=True) + "\n")
+run("xcrun", "simctl", "io", udid, "screenshot", str(output / "ForceLegacyUI-native-catalog-simulator.png"))
+run("xcrun", "simctl", "terminate", udid, main_id)
 (output / "simulator-evidence.json").write_text(json.dumps(evidence, indent=2, sort_keys=True) + "\n")
 print("Simulator launch smoke checks passed. No physical-device compatibility claim is made.")

@@ -11,6 +11,10 @@ struct Inspection: Codable {
     var isDemo: Bool
     var log: String
     var status: OverrideStatus
+    var appGroup: AppGroupResolution?
+    var appGroupSource: String?
+    var catalogSource: String = "LaunchServices"
+    var storeError: String?
 }
 
 actor ResearchEngine {
@@ -36,13 +40,29 @@ actor ResearchEngine {
     }
     private var profile: LayoutProfile? { demo ? DemoFixture.profile : (importedProfile ?? ReviewedLayouts.profile(for: identity)) }
 
+    private func resolveAppGroup() -> (AppGroupResolution, String) {
+        let context = FLAppGroupContext()
+        let configured = context["configured"] as? String ?? ""
+        let bundleID = context["bundleID"] as? String ?? ""
+        let reported = context["groups"] as? [String] ?? []
+        let candidates = AppGroupResolution.candidates(configured: configured, bundleID: bundleID, reportedGroups: reported)
+        let accessible = Set(candidates.filter { files.containerURL(forSecurityApplicationGroupIdentifier: $0) != nil })
+        return (AppGroupResolution.resolve(configured: configured, bundleID: bundleID, reportedGroups: reported,
+            accessibleGroups: accessible), context["source"] as? String ?? "unknown")
+    }
+
     private func withStore<T>(extended: Bool = false, _ body: (URL, String) throws -> T) throws -> T {
         if demo {
             try files.createDirectory(at: demoRoot, withIntermediateDirectories: true)
             if !files.fileExists(atPath: demoStore.path) { try BackupRepository.durableWrite(DemoFixture.make().data, to: demoStore) }
             return try body(demoStore, "Synthetic app-owned store. No installed application is changed.")
         }
-        let group = Bundle.main.object(forInfoDictionaryKey: "FLAppGroupIdentifier") as? String ?? ""
+        let (resolution, _) = resolveAppGroup()
+        guard let group = resolution.selected else {
+            throw LegacyError.unsupported(resolution.state == .ambiguous
+                ? "More than one rewritten ForceLegacyUI App Group is usable. Configure the dedicated group explicitly; no group was selected."
+                : "App Group unavailable. The configured group does not match a usable group in this app's signature. Re-sign ForceLegacyUI with its dedicated App Group; changing an Info.plist string alone does not grant access.")
+        }
         let cached = UserDefaults.standard.string(forKey: "LastLSCacheDirectory")
         var failure: NSError?
         guard let session = FLOpenStore(group, cached, extended, &failure) else {
@@ -68,6 +88,11 @@ actor ResearchEngine {
         }
         var output = Inspection(device: identity, applications: apps, layoutValidated: false,
                                 isDemo: demo, log: message as String? ?? "", status: .unsupported)
+        if !demo {
+            let (group, source) = resolveAppGroup()
+            output.appGroup = group; output.appGroupSource = source
+            output.log += "\nBundle ID: \(Bundle.main.bundleIdentifier ?? "unknown")\nConfigured App Group: \(group.configured)\nGroup metadata: \(source)\nReported groups: \(group.reportedGroups.joined(separator: ", "))\nGroup state: \(group.state.rawValue); selected: \(group.selected ?? "none")\n"
+        } else { output.catalogSource = "Synthetic demo" }
         do {
             try withStore(extended: extended) { url, accessLog in
                 let data = try TransactionEngine.readSnapshot(url)
@@ -81,6 +106,12 @@ actor ResearchEngine {
                 } catch {
                     output.log += "Store validator refused: \(error.localizedDescription)\n"
                     throw error
+                }
+                if !demo && apps.isEmpty {
+                    let registrations = try store.discoverRegistrations()
+                    output.applications = registrations
+                    output.catalogSource = "Read-only cache registrations"
+                    output.log += "Read-only cache fallback: \(registrations.count) unambiguous registrations. SDK offsets were not inferred; installation state and layout remain unverified.\n"
                 }
                 if let profile {
                     let records = try store.applications(profile: profile, device: identity)
@@ -102,7 +133,7 @@ actor ResearchEngine {
                     output.log += "The compatibility key string was not found. This does not prove that a derived flag or encoded metadata is absent.\n"
                 }
             }
-        } catch { output.log += "\n\(error.localizedDescription)\n" }
+        } catch { output.storeError = error.localizedDescription; output.log += "\n\(error.localizedDescription)\n" }
         output.applications.sort { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
         lastInspection = output
         return output
@@ -153,6 +184,15 @@ actor ResearchEngine {
     func backups() throws -> [BackupEntry] { try BackupRepository.list(backupRoot) }
 
     #if targetEnvironment(simulator)
+    func simulatorCatalogSelfTest() throws {
+        let result = inspect(demo: false)
+        guard result.applications.contains(where: { $0.bundleID == Bundle.main.bundleIdentifier }) else {
+            throw LegacyError.invalid("The native LS catalog could not identify this installed simulator app.")
+        }
+        let encoder = JSONEncoder(); encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        try BackupRepository.durableWrite(encoder.encode(result), to: documents.appendingPathComponent("simulator-catalog-test.json"))
+    }
+
     func simulatorSelfTest() throws {
         let inspection = inspect(demo: true)
         guard inspection.layoutValidated else { throw LegacyError.invalid("Demo inspection failed.") }
