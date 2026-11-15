@@ -1,0 +1,61 @@
+name: Build and package iOS app
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      signed:
+        description: Build a provisioned device IPA using configured signing secrets
+        type: boolean
+        default: false
+permissions:
+  contents: read
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 35
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.2.app/Contents/Developer
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify reproducible project
+        run: python3 scripts/generate_project.py --check
+      - name: Core safety tests
+        run: swift test --package-path Packages/LegacyCore --parallel
+      - name: Build device apps
+        run: |
+          set -eo pipefail
+          mkdir -p build
+          xcodebuild -project ForceLegacyUI.xcodeproj -scheme ForceLegacyUI -configuration Release \
+            -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build/device \
+            CODE_SIGNING_ALLOWED=NO build | tee build/device.log
+          python3 scripts/package_ipa.py build/device/Build/Products/Release-iphoneos dist --unsigned
+      - name: Build and smoke test simulator
+        run: |
+          set -eo pipefail
+          xcodebuild -project ForceLegacyUI.xcodeproj -scheme ForceLegacyUI -configuration Debug \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath build/simulator \
+            CODE_SIGNING_ALLOWED=NO build | tee build/simulator.log
+          python3 scripts/simulator_smoke.py
+      - name: Optional signed build
+        if: github.event_name == 'workflow_dispatch' && inputs.signed
+        env:
+          FL_CERTIFICATE_BASE64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
+          FL_CERTIFICATE_PASSWORD: ${{ secrets.P12_PASSWORD }}
+          FL_PROFILE_BASE64: ${{ secrets.BUILD_PROVISION_PROFILE_BASE64 }}
+          FL_BUNDLE_ID: ${{ vars.FL_BUNDLE_ID }}
+          FL_APP_GROUP: ${{ vars.FL_APP_GROUP }}
+        run: python3 scripts/signed_build.py
+      - name: Upload apps, screenshots and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ForceLegacyUI-${{ github.sha }}
+          path: |
+            dist/
+            build/*.log
+          if-no-files-found: error
+          retention-days: 30
