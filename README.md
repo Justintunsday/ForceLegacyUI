@@ -31,6 +31,10 @@ CI packages unsigned device IPAs; an optional manual signing job can produce a
 device-installable main-app IPA when matching credentials and provisioning are
 configured. Unsigned IPAs require signing before installation.
 
+[Download the validated build artifacts](https://github.com/Justintunsday/ForceLegacyUI/actions/runs/43770790014).
+The validated source passed 17 safety tests, device/simulator builds and the
+synthetic preview/apply/restore flow. See the full [validation record](docs/VALIDATION.md).
+
 ```sh
 swift test --package-path Packages/LegacyCore --parallel
 python3 scripts/generate_project.py --check

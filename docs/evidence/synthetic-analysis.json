@@ -1,0 +1,14 @@
+{
+  "bundleRecordSizes": {
+    "160": 3
+  },
+  "bytes": 1632,
+  "compatibilityKeyStringOccurrences": 0,
+  "liveWriteAuthorized": false,
+  "sha256": "036b8a8fea6b258779071264cbde428629d4a588fd6800365fec8bbf7ea10e36",
+  "tables": {
+    "<string>": 15,
+    "Bundle": 3
+  },
+  "warning": "A matching byte pattern or string does not prove a field's semantics or appearance behavior."
+}

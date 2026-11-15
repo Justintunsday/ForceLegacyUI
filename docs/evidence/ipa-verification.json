@@ -1,0 +1,20 @@
+[
+  {
+    "ipa": "CompatibilityProbeLegacy-unsigned.ipa",
+    "bundleID": "org.forcelegacyui.app.probe.legacy",
+    "sha256": "5fa86ad25c14e2ff63c75e833ad293acd4bbd3805eddc728e346c829814a100b",
+    "requiresSigning": true
+  },
+  {
+    "ipa": "CompatibilityProbeModern-unsigned.ipa",
+    "bundleID": "org.forcelegacyui.app.probe.modern",
+    "sha256": "9fb5e388d7c2db69dc1f20518ce39f42e4fb1c14b3d2815a34e0f4e50659e7b5",
+    "requiresSigning": true
+  },
+  {
+    "ipa": "ForceLegacyUI-unsigned.ipa",
+    "bundleID": "org.forcelegacyui.app",
+    "sha256": "17ac2610a43d4f3c3d50ed0c316fe8306c711ca44e745008bc2862f776d09003",
+    "requiresSigning": true
+  }
+]
