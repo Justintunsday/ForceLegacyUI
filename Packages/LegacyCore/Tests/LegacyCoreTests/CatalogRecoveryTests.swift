@@ -5,6 +5,33 @@ final class CatalogRecoveryTests: XCTestCase {
     private let configured = "group.org.forcelegacyui.app"
     private let bundleID = "org.forcelegacyui.app.TEAM123"
 
+    private func inventoryData() throws -> Data {
+        // Use a separate string-reference domain. The demo's tiny integer keys deliberately
+        // collide with SDK/kind integers; unknown-layout discovery must reject that ambiguity.
+        var data = DemoFixture.make().data
+        let store = try CSStore(data: data)
+        let bytes = BoundedBytes(data: data)
+        let stringName = try XCTUnwrap(data.range(of: Data("<string>\0".utf8)))
+        let descriptor = stringName.lowerBound - 8
+        let hash = Int(try bytes.u32(descriptor + 0x4c))
+        func rekey(_ offset: Int) throws {
+            var value = (try bytes.u32(offset) + 0x10000).littleEndian
+            withUnsafeBytes(of: &value) { data.replaceSubrange(offset..<(offset + 4), with: $0) }
+        }
+        for bucket in 0..<Int(try bytes.u32(hash)) {
+            let count = Int(try bytes.u32(hash + 4 + bucket * 8))
+            let start = Int(try bytes.u32(hash + 8 + bucket * 8))
+            for index in 0..<count { try rekey(start + index * 8) }
+        }
+        let p = DemoFixture.profile
+        for unit in store.tables["Bundle", default: [:]].values {
+            for field in [p.identifier, p.duplicateIdentifier, p.name, p.fallbackName, p.bundleName, p.placeholder, p.signer] {
+                try rekey(unit.body + field)
+            }
+        }
+        return try SyntheticStoreValidator().repairingChecksum(data)
+    }
+
     func testConfiguredGroupUsesRuntimeAccessEvenWithoutEntitlementReader() {
         let result = AppGroupResolution.resolve(configured: configured, bundleID: bundleID,
             reportedGroups: [], accessibleGroups: [configured])
@@ -52,7 +79,7 @@ final class CatalogRecoveryTests: XCTestCase {
     }
     func testUnknownLayoutStillPermitsReadOnlyRegistrationInventory() throws {
         let fixture = DemoFixture.make()
-        let registrations = try CSStore(data: fixture.data).discoverRegistrations()
+        let registrations = try CSStore(data: inventoryData()).discoverRegistrations()
         XCTAssertEqual(registrations.map(\.bundleID), fixture.catalog.map(\.bundleID))
         XCTAssertEqual(registrations.map(\.bundlePath), fixture.catalog.map(\.bundlePath))
         XCTAssertTrue(registrations.allSatisfy { $0.reportedSDK == nil && $0.applicationType == "Cache registration (read-only)" })
@@ -60,21 +87,25 @@ final class CatalogRecoveryTests: XCTestCase {
     }
     func testCacheFallbackDoesNotInventAnSDK() throws {
         let fixture = DemoFixture.make()
-        let store = try CSStore(data: fixture.data)
+        let original = try inventoryData()
+        let store = try CSStore(data: original)
         let records = try store.applications(profile: DemoFixture.profile, device: DemoFixture.device)
-        var changed = fixture.data
+        var changed = original
         for record in records { changed.replaceSubrange(record.sdkOffset..<(record.sdkOffset + 24), with: Data(repeating: 255, count: 24)) }
         let registrations = try CSStore(data: changed).discoverRegistrations()
         XCTAssertEqual(registrations.count, 3)
         XCTAssertTrue(registrations.allSatisfy { $0.reportedSDK == nil })
     }
     func testCacheFallbackRejectsARecordWithoutRepeatedIdentity() throws {
-        let fixture = DemoFixture.make()
-        let store = try CSStore(data: fixture.data)
+        let original = try inventoryData()
+        let store = try CSStore(data: original)
         let unit = try XCTUnwrap(store.tables["Bundle"]?.values.first)
-        var changed = fixture.data
+        var changed = original
         changed.replaceSubrange((unit.body + DemoFixture.profile.identifier)..<(unit.body + DemoFixture.profile.identifier + 4), with: [0, 0, 0, 0])
         changed.replaceSubrange((unit.body + DemoFixture.profile.duplicateIdentifier)..<(unit.body + DemoFixture.profile.duplicateIdentifier + 4), with: [0, 0, 0, 0])
         XCTAssertEqual(try CSStore(data: changed).discoverRegistrations().count, 2)
+    }
+    func testAmbiguousIntegerStringCollisionsDoNotInventRegistrations() throws {
+        XCTAssertTrue(try CSStore(data: DemoFixture.make().data).discoverRegistrations().isEmpty)
     }
 }
