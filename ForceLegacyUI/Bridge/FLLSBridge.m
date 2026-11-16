@@ -323,7 +323,7 @@ static NSArray<NSString *> *FLInodeDiscovery(NSTimeInterval deadline, NSMutableS
         BOOL looksLikeStore = strstr(buffer, "com.apple.LaunchServices-") && strstr(buffer, ".csstore");
         // Limit decoded paths to system-container candidates or explicit LS filenames.
         if (!looksLikeStore && !strstr(buffer, "/Containers/Data/InternalDaemon/") &&
-            !strstr(buffer, "/containers/Data/System/")) continue;
+            !strstr(buffer, "/containers/Data/System/") && !strstr(buffer, "/Containers/Data/System/")) continue;
         NSString *path = FLNormalize([NSString stringWithUTF8String:buffer] ?: @"");
         if (looksLikeStore) {
             if (++matchingNames <= 5) [log appendFormat:@"Inode LS filename observation: %@ (path/format still must be checked).\n", path];

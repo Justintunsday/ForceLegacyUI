@@ -64,6 +64,8 @@ int main(int argc, const char *argv[]) {
                 NSString *container = [root stringByAppendingPathComponent:uuid];
                 require([FLCacheDirectoryForResolvedPath([container stringByAppendingPathComponent:@"Library/Preferences/service.plist"]) isEqual:cache], @"Container path was discarded without a store filename");
                 require([FLCacheDirectoryForResolvedPath(container) isEqual:cache], @"Container directory itself was discarded");
+                NSString *mobileSystem = [@"/private/var/mobile/Containers/Data/System" stringByAppendingPathComponent:uuid];
+                require([FLCacheDirectoryForResolvedPath(mobileSystem) isEqual:[mobileSystem stringByAppendingPathComponent:@"Library/Caches"]], @"3105 mobile System root was discarded");
                 require(!FLCacheDirectoryForResolvedPath(@"/private/var/mobile/Containers/Data/Application/04BA7A11-12F4-4567-89AB-0123456789AB/Library/a"), @"Application data entered LS discovery");
             });
             test(@"Inode progress resumes only on the same volume and build", ^{
@@ -160,7 +162,7 @@ int main(int argc, const char *argv[]) {
                     [directories addObject:[[root stringByAppendingPathComponent:identifier] stringByAppendingPathComponent:@"Library/Caches"]];
                 }
                 a.roots = @{root:directories}; require(!find(a, nil, YES, [NSMutableString string], NULL), @"Empty bounded search selected a store");
-                require(a.attempted.count == 259, @"Container search exceeded its directory bound");
+                require(a.attempted.count == 260, @"Container search exceeded its directory bound");
             });
         } @catch (NSException *exception) { fprintf(stderr, "%s\n", exception.reason.UTF8String); return 1; }
         NSDictionary *result = @{@"passed":@YES, @"cases":passed, @"physicalDeviceAccessTested":@NO,

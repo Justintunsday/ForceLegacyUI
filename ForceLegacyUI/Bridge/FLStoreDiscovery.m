@@ -15,7 +15,8 @@ NSString *FLNormalizeStorePath(NSString *path) {
     return path;
 }
 NSArray<NSString *> *FLStoreContainerRoots(void) {
-    return @[@"/private/var/mobile/Containers/Data/InternalDaemon", @"/private/var/containers/Data/System"];
+    return @[@"/private/var/mobile/Containers/Data/InternalDaemon", @"/private/var/mobile/Containers/Data/System",
+             @"/private/var/containers/Data/System"];
 }
 BOOL FLIsLaunchServicesStoreName(NSString *name) {
     return [name hasPrefix:@"com.apple.LaunchServices-"] && [name hasSuffix:@"-v2.csstore"] &&
@@ -95,6 +96,7 @@ static NSString *FLAllowedStore(NSString *path) {
             if (FLIsAllowedStoreDirectory(cached)) [directories addObject:FLNormalizeStorePath(cached)];
             // Metadata queries can return nothing in a sandbox. Still try the documented upstream locations.
             [directories addObjectsFromArray:@[@"/private/var/containers/Data/System/com.apple.lsd/Library/Caches",
+                                               @"/private/var/mobile/Containers/Data/System/com.apple.lsd/Library/Caches",
                                                @"/private/var/db/lsd", @"/private/var/mobile/Library/Caches"]];
         }
         [log appendFormat:@"Initial cache directories: %lu.\n", (unsigned long)directories.count];
