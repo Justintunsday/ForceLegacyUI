@@ -21,13 +21,20 @@ def run(*args, timeout=120, **kwargs):
 devices = json.loads(run("xcrun", "simctl", "list", "devices", "available", "--json"))["devices"]
 candidates = [(runtime, d) for runtime, items in devices.items() if "iOS-26-" in runtime for d in items if "iPhone" in d["name"]]
 if not candidates: raise SystemExit("No iOS 26 iPhone simulator runtime available; smoke test cannot be claimed")
-runtime, device = sorted(candidates, key=lambda value: (value[0], value[1]["name"]))[-1]
+sdk_version = run("xcrun", "--sdk", "iphonesimulator", "--show-sdk-version")
+sdk_pair = tuple(int(part) for part in sdk_version.split(".")[:2])
+def simulator_priority(value):
+    runtime, device = value
+    version = tuple(int(part) for part in runtime.rsplit("iOS-", 1)[1].split("-"))
+    return (version[:2] == sdk_pair, version, device["state"] == "Booted", device["name"] == "iPhone 17 Pro", device["name"])
+runtime, device = max(candidates, key=simulator_priority)
+print(f"Selected {runtime} / {device['name']} for toolchain simulator SDK {sdk_version}", flush=True)
 udid = device["udid"]
 if device["state"] != "Booted": run("xcrun", "simctl", "boot", udid)
 run("xcrun", "simctl", "bootstatus", udid, "-b", timeout=300)
 output = root / "dist"; output.mkdir(exist_ok=True)
 products = root / "build/simulator/Build/Products/Debug-iphonesimulator"
-evidence = {"runtime": runtime, "device": device["name"], "udid": udid, "deviceTest": False, "launches": []}
+evidence = {"runtime": runtime, "toolchainSDK":sdk_version, "device": device["name"], "udid": udid, "deviceTest": False, "launches": []}
 for name in ["ForceLegacyUI", "CompatibilityProbeModern", "CompatibilityProbeLegacy"]:
     app = products / f"{name}.app"
     info = plistlib.loads((app / "Info.plist").read_bytes()); identifier = info["CFBundleIdentifier"]
