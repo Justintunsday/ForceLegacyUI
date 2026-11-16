@@ -15,6 +15,26 @@ calling private APIs; MHA queries require explicit mode, the exact host identity
 class 10/12 and the fixed lsd identifier.
 Time budgets are checked between synchronous system calls and cannot interrupt a
 blocked private API. A failed or bounded search does not establish that no store exists.
+The recent-inode anchor is a heuristic from a temporary file in our own sandbox;
+that file is unlinked after fstat/volume checks. It is not a write to any LS store.
+The older cursor is scoped to volume/build/boot, and old ascending cursors are not
+reused. Token verification requires a successful read-only directory probe; an
+ineffective positive token is released before retrying another flag set.
+
+MHA object activation does not depend on optional manual token symbols. Each lease
+owns its transport functions, query and activation object until the session ends.
+The manual route consumes a token only when its release function is available.
+An activation result still requires a real read-only directory-open check.
+
+`SystemDataOnly-` prefixed stores have an unverified catalog role. A single readable
+prefixed source can be inspected as a diagnostic fallback; it does not suppress
+primary-name discovery. SDK planning, writing and restore reject this source class.
+
+The MHA catalog fallback enumerates class-2 data-registration metadata without
+activation/token requests or app-data file reads. Only validated unique identifier
+strings are retained. Bundle/SDK fields are filled from matching individual LS
+responses, never inferred from a data-container path. Registration presence does
+not establish installation or grant SDK-write authority.
 
 | Stage | Required condition | Failure behavior |
 | --- | --- | --- |

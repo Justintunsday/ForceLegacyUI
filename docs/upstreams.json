@@ -1,14 +1,16 @@
 {
-  "investigatedOn": "2026-11-16",
+  "investigatedOn": "2026-11-17",
   "timeZone": "Asia/Hong_Kong",
   "repositories": [
     {
       "name": "ForceDuoApp",
       "url": "https://github.com/34306/ForceDuoApp",
-      "commit": "65e8b6866e637ba695f594d4d718108c13a51635",
+      "commit": "5b65200015f7ed0a0fdf34708bd857e4a34e1f80",
+      "release": "1.2",
+      "releaseURL": "https://github.com/34306/ForceDuoApp/releases/tag/1.2",
       "licenseFound": false,
       "sourceRedistributed": false,
-      "use": "Implementation technique and file-format investigation"
+      "use": "Implementation technique and file-format investigation; 1.2 recent-inode-first discovery and post-token verification"
     },
     {
       "name": "worse_query",
@@ -20,7 +22,7 @@
         "worse_query/worse_query.m": "edad488641c58bdcfaa30622a5f1c8bcb08c1990d7dfeb1cb26c473ce3cd8c51",
         "worse_query/worse_query.h": "02c919ddec399349ff0a8c1230fea01d590fd30880688da6edbb51ac38365408"
       },
-      "changes": ["Nonrecursive cleanup", "Reject nonempty dedicated group caches", "Free query on symlink failure", "Recover interrupted symlink setup"]
+      "changes": ["Nonrecursive cleanup", "Reject nonempty dedicated group caches", "Free query on symlink failure", "Recover interrupted symlink setup", "Resolve paired consume/release symbols from explicit system libraries"]
     },
     {
       "name": "3105",

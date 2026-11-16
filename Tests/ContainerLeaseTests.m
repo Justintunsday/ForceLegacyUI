@@ -20,6 +20,8 @@ static void setIdentifiers(void *query, xpc_object_t value) {
     snprintf(state.identifier, sizeof(state.identifier), "%s", text ?: "");
 }
 static void setFlags(void *query, uint64_t value) { (void)query; state.flags = value; }
+static void setPart(void *query, uint64_t value) { (void)query; (void)value; }
+static void setDomain(void *query, const char *value) { (void)query; (void)value; }
 static void *getResult(void *query) { return state.result ? query : NULL; }
 static const char *getPath(void *object) { (void)object; return state.root; }
 static void dispose(void *query) { ++state.disposed; free(query); }
@@ -56,6 +58,17 @@ static FLContainerRuntime runtime(void) {
 NSArray<NSString *> *FLRunContainerLeaseTests(void) {
     NSMutableArray *passed = [NSMutableArray array];
     void (^test)(NSString *, void (^)(void)) = ^(NSString *name, void (^body)(void)) { body(); [passed addObject:name]; };
+    test(@"Production symbol resolution uses the operation part and part-domain APIs", ^{
+        NSMutableArray *lookedUp = [NSMutableArray array];
+        FLContainerRuntime api = FLTestResolveContainerRuntime(^void *(const char *name) {
+            [lookedUp addObject:[NSString stringWithUTF8String:name]];
+            if (strcmp(name, "container_query_operation_set_part") == 0) return (void *)setPart;
+            if (strcmp(name, "container_query_operation_set_part_domain") == 0) return (void *)setDomain;
+            return NULL;
+        });
+        check(api.part == setPart && api.domain == setDomain, @"Correct exported part APIs were not resolved");
+        check(![lookedUp containsObject:@"container_query_set_part"] && ![lookedUp containsObject:@"container_query_set_part_domain"], @"Nonexistent API names returned to the production loader");
+    });
     test(@"MCM catalog reads metadata without token or object activation APIs", ^{
         FLContainerRuntime api = runtime(); api.iterate = iterateMetadata; api.identifier = getIdentifier;
         NSArray<NSDictionary<NSString *, id> *> *records = FLTestMHAAppDataCatalog(&api, 4096, [NSMutableString string]);

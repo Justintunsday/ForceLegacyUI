@@ -32,26 +32,31 @@ static void *FLSymbol(const char *name, void *manager, void *sandbox, void *fram
     if (!value && framework) value = dlsym(framework, name);
     return value;
 }
+static FLContainerRuntime FLResolveContainerRuntime(FLContainerSymbolLookup lookup) {
+    FLContainerRuntime api = {0};
+#define FL_SYMBOL(field, name) api.field = (__typeof(api.field))lookup(name)
+    FL_SYMBOL(create, "container_query_create"); FL_SYMBOL(kind, "container_query_set_class");
+    FL_SYMBOL(identifiers, "container_query_set_identifiers"); FL_SYMBOL(groups, "container_query_set_group_identifiers");
+    FL_SYMBOL(flags, "container_query_operation_set_flags"); FL_SYMBOL(part, "container_query_operation_set_part");
+    FL_SYMBOL(domain, "container_query_operation_set_part_domain"); FL_SYMBOL(result, "container_query_get_single_result");
+    FL_SYMBOL(path, "container_object_get_path"); FL_SYMBOL(token, "container_copy_sandbox_token");
+    FL_SYMBOL(iterate, "container_query_iterate_results_sync"); FL_SYMBOL(identifier, "container_object_get_identifier");
+    FL_SYMBOL(duplicate, "container_object_copy"); FL_SYMBOL(activate, "container_object_sandbox_extension_activate");
+    FL_SYMBOL(freeObject, "container_object_free"); FL_SYMBOL(dispose, "container_query_free");
+    FL_SYMBOL(failure, "container_query_get_last_error"); FL_SYMBOL(message, "container_error_get_message");
+    FL_SYMBOL(posix, "container_error_get_posix_errno"); FL_SYMBOL(consume, "sandbox_extension_consume");
+    FL_SYMBOL(release, "sandbox_extension_release");
+#undef FL_SYMBOL
+    api.readableDirectory = FLReadDirectory;
+    return api;
+}
 static FLContainerRuntime *FLContainerFunctions(void) {
     static FLContainerRuntime api; static dispatch_once_t once;
     dispatch_once(&once, ^{
         void *manager = dlopen("/usr/lib/system/libsystem_containermanager.dylib", RTLD_NOW | RTLD_LOCAL);
         void *sandbox = dlopen("/usr/lib/system/libsystem_sandbox.dylib", RTLD_NOW | RTLD_LOCAL);
         void *framework = dlopen("/System/Library/PrivateFrameworks/MobileContainerManager.framework/MobileContainerManager", RTLD_LAZY | RTLD_LOCAL);
-#define FL_SYMBOL(field, name) api.field = (__typeof(api.field))FLSymbol(name, manager, sandbox, framework)
-        FL_SYMBOL(create, "container_query_create"); FL_SYMBOL(kind, "container_query_set_class");
-        FL_SYMBOL(identifiers, "container_query_set_identifiers"); FL_SYMBOL(groups, "container_query_set_group_identifiers");
-        FL_SYMBOL(flags, "container_query_operation_set_flags"); FL_SYMBOL(part, "container_query_set_part");
-        FL_SYMBOL(domain, "container_query_set_part_domain"); FL_SYMBOL(result, "container_query_get_single_result");
-        FL_SYMBOL(path, "container_object_get_path"); FL_SYMBOL(token, "container_copy_sandbox_token");
-        FL_SYMBOL(iterate, "container_query_iterate_results_sync"); FL_SYMBOL(identifier, "container_object_get_identifier");
-        FL_SYMBOL(duplicate, "container_object_copy"); FL_SYMBOL(activate, "container_object_sandbox_extension_activate");
-        FL_SYMBOL(freeObject, "container_object_free"); FL_SYMBOL(dispose, "container_query_free");
-        FL_SYMBOL(failure, "container_query_get_last_error"); FL_SYMBOL(message, "container_error_get_message");
-        FL_SYMBOL(posix, "container_error_get_posix_errno"); FL_SYMBOL(consume, "sandbox_extension_consume");
-        FL_SYMBOL(release, "sandbox_extension_release");
-#undef FL_SYMBOL
-        api.readableDirectory = FLReadDirectory;
+        api = FLResolveContainerRuntime(^void *(const char *name) { return FLSymbol(name, manager, sandbox, framework); });
         // Keep handles loaded while sessions hold copied function tables.
     });
     return &api;
@@ -63,8 +68,8 @@ static NSArray<NSString *> *FLMissingQuery(FLContainerRuntime *api, BOOL travers
     FL_NEED(flags, "container_query_operation_set_flags"); FL_NEED(result, "container_query_get_single_result");
     FL_NEED(dispose, "container_query_free");
     if (traversal) {
-        FL_NEED(groups, "container_query_set_group_identifiers"); FL_NEED(part, "container_query_set_part");
-        FL_NEED(domain, "container_query_set_part_domain");
+        FL_NEED(groups, "container_query_set_group_identifiers"); FL_NEED(part, "container_query_operation_set_part");
+        FL_NEED(domain, "container_query_operation_set_part_domain");
     } else { FL_NEED(identifiers, "container_query_set_identifiers"); FL_NEED(path, "container_object_get_path"); }
 #undef FL_NEED
     return missing;
@@ -240,6 +245,7 @@ int64_t FLTraversalTokenForCacheDirectory(NSString *directory, NSMutableString *
 }
 @end
 #if defined(FL_CONTAINER_TESTING)
+FLContainerRuntime FLTestResolveContainerRuntime(FLContainerSymbolLookup lookup) { return FLResolveContainerRuntime(lookup); }
 FLLSDContainerLease *FLTestOpenLSDLease(uint64_t kind, const FLContainerRuntime *runtime, NSMutableString *log) {
     return [FLLSDContainerLease openForClass:kind runtime:runtime log:log];
 }

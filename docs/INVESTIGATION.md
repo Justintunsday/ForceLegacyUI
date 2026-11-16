@@ -29,8 +29,8 @@ are recorded in [upstreams.json](upstreams.json).
 
 ### ForceDuoApp
 
-Inspected [revision 65e8b686](https://github.com/34306/ForceDuoApp/tree/65e8b6866e637ba695f594d4d718108c13a51635), including
-`FDEngine.m`, entitlements and project settings. Its mechanism is:
+Inspected [release 1.2 / revision 5b652000](https://github.com/34306/ForceDuoApp/tree/5b65200015f7ed0a0fdf34708bd857e4a34e1f80), including
+`FDEngine.m`, `FDSandbox.m`, entitlements and project settings. Its mechanism is:
 
 1. Obtain the `com.apple.lsd` container path through containermanager metadata;
    also inspect the process's mapped store paths, with inode discovery as a fallback.
@@ -49,6 +49,28 @@ appearance toggle on 26.6.2.
 No explicit license was found in that clone. ForceLegacyUI does not redistribute
 its engine or UI code. The bounded reader and transaction engine here are separate
 implementations informed by the investigated data organization and techniques.
+
+The 1.2 change replaces a low-to-high inode scan with a descending search starting
+above the inode of a fresh app-owned temporary file. This is a recency heuristic,
+not an APFS completeness guarantee. It also verifies token effectiveness and tries
+another flag set when a consumed token does not grant access. The layout offsets
+and claimed appearance effect did not acquire new iOS 26.6.2 evidence in that diff.
+
+ForceLegacyUI 0.1.4 independently implements recent-first scanning, with a checked
+64-bit anchor (no fixed forty-million ceiling when a valid probe is available),
+a 20-second budget, bounded sibling search after a primary-name observation,
+and volume/build/boot-scoped older progress. Each run revisits a recent window;
+prefixed diagnostic observations do not shorten primary discovery. Explicit LS
+filenames outrank generic container paths, which no longer terminate scanning
+when their candidate limit is reached. The probe is created/deleted only in our
+temporary directory, and its volume is checked against the home volume.
+
+App Group requests now release unreadable positive tokens and retry the alternate
+flags before traversal fallback. Unlike the reference's grant probe, this app
+requires a successful read-only directory open: neither EPERM nor EACCES is usable
+read access. It retains the pre-grant-lstat bypass because inaccessible metadata
+does not reliably establish target absence. Only our dedicated matching App Group
+is used; unrelated entitled groups are not tried or modified.
 
 ### worse_query
 
@@ -109,6 +131,32 @@ cursor, and records its bounded range. Lexical alias comparison replaces filesys
 dependent `standardizingPath`, which can remove `/private` prefixes. Unknown fields
 and multiple store candidates still fail closed; live-write authorization is not
 expanded to these additional read-only locations.
+
+The subsequent 0.1.3 device report confirmed the expected MHA identity and returned
+lsd container paths, but its shared capability gate stopped before MHA activation.
+Version 0.1.4 separates query, object activation and paired manual-token requirements;
+the query's part setter is optional for the default part. It also corrects two
+mistyped symbol names to `container_query_operation_set_part` and
+`container_query_operation_set_part_domain`, matching the upstream API lookups.
+It resolves symbols through
+explicit system images as well as the default namespace and reports missing names.
+Injected-transport tests exercise the real lease implementation when manual APIs
+are absent, when activation/readability disagree, and when cleanup is required.
+
+The same device report observed a `SystemDataOnly-…csstore` filename. Its catalog
+role is not established by that name. The discovery policy can return one such
+source for read-only diagnostics after searching for primary-name stores; prefixed
+sources do not prevent extended discovery. Profile planning, writes and restore
+are explicitly disabled for this source class. Multiple primary-name candidates
+remain an error even if a diagnostic fallback exists.
+
+The MHA identity build also uses a bounded metadata-only class-2 enumeration if
+all bulk LS methods return nothing. It requires only the iterator/identifier
+metadata API, not activation or manual-token functions, and does not open app-data
+files. Unique identifiers are capped at 4,096 with 10,000 callback visits; up to
+512 identifiers receive individual LS proxy lookups. Unavailable bundle paths/SDKs
+stay empty. The source is labeled as data registrations plus individual LS queries,
+not a complete or independently verified installed-app census.
 
 ## Approach A: LaunchServices Boolean override
 

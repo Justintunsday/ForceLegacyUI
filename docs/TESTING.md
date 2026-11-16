@@ -11,6 +11,25 @@ sandbox access was tested. These checks supplement the Swift package's transacti
 tests and the native simulator catalog smoke test; they do not validate worse_query
 on a physical device.
 
+The native executable also injects a transport into the production MHA lease
+implementation (test entry points are compiled only into this test executable).
+It covers missing manual APIs with working object activation, paired manual
+fallback, refusal to consume unreleasable tokens, actual-readability requirements,
+existing readable access, path rejection, denied queries and lifetime cleanup.
+Prefixed-cache cases verify diagnostic classification, continued primary search
+and refusal to hide ambiguity. These are synthetic responses, not device grants.
+Metadata tests separately cover class/flags, deduplication, invalid-ID rejection,
+record limits, absent iterator symbols, query cleanup and unavailable SDK/path
+fields. They assert that metadata enumeration performs no activation or file probe.
+
+The symbol-lookup test exercises the production resolver using the exported
+operation-part/part-domain names. New scan tests inject inode paths and time to
+check descending anchors above forty million, overflow fallback, primary filename
+priority, continued scanning after diagnostic observations, timeout/resume and
+stale/malformed checkpoint rejection. Grant tests require a successful read probe,
+release ineffective positive tokens and retry alternate flags; EPERM and EACCES
+both remain failures. These tests do not measure device filesystem performance.
+
 ## First run on iOS 26.6.2
 
 1. Sign and install ForceLegacyUI with a dedicated, provisioned App Group as

@@ -4,6 +4,7 @@
 #import "FLDeviceIdentity.h"
 #import "FLContainerAccess.h"
 FOUNDATION_EXPORT NSArray<NSString *> *FLRunContainerLeaseTests(void);
+FOUNDATION_EXPORT NSArray<NSString *> *FLRunStoreScanTests(void);
 
 @interface TestDiscoveryAccess : NSObject <FLStoreDiscoveryAccess>
 @property (nonatomic, copy) NSArray<NSString *> *mapped;
@@ -55,6 +56,7 @@ int main(int argc, const char *argv[]) {
         void (^test)(NSString *, void (^)(void)) = ^(NSString *name, void (^body)(void)) { body(); [passed addObject:name]; };
         @try {
             [passed addObjectsFromArray:FLRunContainerLeaseTests()];
+            [passed addObjectsFromArray:FLRunStoreScanTests()];
             test(@"A prefixed cache is classified and returned only as a diagnostic source", ^{
                 NSString *diagnostic = [legacy stringByAppendingPathComponent:[@"SystemDataOnly-" stringByAppendingString:store(legacy, @"1").lastPathComponent]];
                 require(FLIsDiagnosticLSStoreName(diagnostic.lastPathComponent) && !FLIsLaunchServicesStoreName(diagnostic.lastPathComponent), @"Prefixed cache became a primary store");
@@ -93,14 +95,6 @@ int main(int argc, const char *argv[]) {
                 NSString *mobileSystem = [@"/private/var/mobile/Containers/Data/System" stringByAppendingPathComponent:uuid];
                 require([FLCacheDirectoryForResolvedPath(mobileSystem) isEqual:[mobileSystem stringByAppendingPathComponent:@"Library/Caches"]], @"3105 mobile System root was discarded");
                 require(!FLCacheDirectoryForResolvedPath(@"/private/var/mobile/Containers/Data/Application/04BA7A11-12F4-4567-89AB-0123456789AB/Library/a"), @"Application data entered LS discovery");
-            });
-            test(@"Inode progress resumes only on the same volume and build", ^{
-                NSDictionary *checkpoint = FLInodeCheckpoint(@"volume:build", 4319232);
-                require(FLInodeStartForCheckpoint(checkpoint, @"volume:build") == 4319232, @"Search restarted instead of resuming");
-                require(FLInodeStartForCheckpoint(checkpoint, @"other-volume:build") == 16, @"Stale volume checkpoint reused");
-                require(FLInodeStartForCheckpoint(FLInodeCheckpoint(@"volume:build", 40000000), @"volume:build") == 16, @"Completed range did not restart");
-                require(FLInodeStartForCheckpoint(@{@"context":@"volume:build", @"next":@4319232.5}, @"volume:build") == 16 &&
-                    FLInodeStartForCheckpoint(@{@"context":@"volume:build", @"next":@(-1)}, @"volume:build") == 16, @"Malformed cursor accepted");
             });
             test(@"MHA identity requires explicit mode and unchanged bundle identifier", ^{
                 require(FLHouseArrestIdentityAllowed(@"com.apple.mobile.MobileHouseArrest", @"house-arrest"), @"Dedicated identity refused");

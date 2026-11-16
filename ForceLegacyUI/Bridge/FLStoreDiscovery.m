@@ -49,14 +49,94 @@ NSString *FLCacheDirectoryForResolvedPath(NSString *path) {
     }
     return nil;
 }
-uint64_t FLInodeStartForCheckpoint(NSDictionary *checkpoint, NSString *context) {
-    if (![checkpoint isKindOfClass:NSDictionary.class] || ![checkpoint[@"context"] isEqual:context]) return 16;
-    NSNumber *value = [checkpoint[@"next"] isKindOfClass:NSNumber.class] ? checkpoint[@"next"] : nil;
-    uint64_t next = value.unsignedLongLongValue;
-    return next >= 16 && next < 40000000 && value.doubleValue == (double)next ? next : 16;
+uint64_t FLInodeScanUpperBound(uint64_t probeInode) {
+    const uint64_t margin = 262144;
+    return probeInode >= 16 && probeInode <= UINT64_MAX - margin ? probeInode + margin : 40000000;
 }
-NSDictionary *FLInodeCheckpoint(NSString *context, uint64_t nextInode) {
-    return @{@"context":context, @"next":@(nextInode >= 16 && nextInode < 40000000 ? nextInode : 16)};
+static BOOL FLInodeNumber(id value, uint64_t minimum, uint64_t maximum) {
+    if (![value isKindOfClass:NSNumber.class]) return NO;
+    uint64_t number = [value unsignedLongLongValue];
+    return number >= minimum && number <= maximum && [value doubleValue] == (double)number;
+}
+NSArray<NSString *> *FLScanStoreInodes(uint64_t probeInode, NSDictionary *checkpoint, NSString *context,
+    NSTimeInterval deadline, NSString *(^resolve)(uint64_t), NSTimeInterval (^now)(void), NSDictionary **nextCheckpoint, NSMutableString *log) {
+    const uint64_t recentWindow = 1048576, siblingWindow = 262144;
+    uint64_t upper = FLInodeScanUpperBound(probeInode);
+    uint64_t recentLower = upper > recentWindow + 16 ? upper - recentWindow + 1 : 16;
+    BOOL resume = [checkpoint isKindOfClass:NSDictionary.class] && [checkpoint[@"schema"] isEqual:@2] &&
+        [checkpoint[@"context"] isEqual:context] && FLInodeNumber(checkpoint[@"upper"], recentLower, upper) &&
+        FLInodeNumber(checkpoint[@"next"], 16, [checkpoint[@"upper"] unsignedLongLongValue]);
+    uint64_t olderNext = recentLower - 1;
+    if (resume) olderNext = MIN(olderNext, [checkpoint[@"next"] unsignedLongLongValue]);
+    uint64_t cursor = upper, examined = 0, resolved = 0, primaryNames = 0, diagnosticNames = 0;
+    uint64_t siblingRemaining = 0;
+    BOOL recent = YES, timedOut = NO, overflow = NO, siblingLimit = NO;
+    NSTimeInterval began = now();
+    NSMutableOrderedSet<NSString *> *storeDirectories = [NSMutableOrderedSet orderedSet];
+    NSMutableOrderedSet<NSString *> *otherDirectories = [NSMutableOrderedSet orderedSet];
+    while (cursor >= 16) {
+        if ((examined & 1023) == 0 && now() >= deadline) { timedOut = YES; break; }
+        BOOL firstPrimary = NO;
+        @autoreleasepool {
+            NSString *path = resolve(cursor);
+            if (path) {
+                ++resolved; path = FLNormalizeStorePath(path);
+                NSString *directory = FLCacheDirectoryForResolvedPath(path);
+                BOOL primary = FLIsLaunchServicesStoreName(path.lastPathComponent);
+                BOOL diagnostic = FLIsDiagnosticLSStoreName(path.lastPathComponent);
+                if ((primary || diagnostic) && FLIsAllowedStoreDirectory(path.stringByDeletingLastPathComponent)) {
+                    if (primary) { firstPrimary = primaryNames == 0; ++primaryNames; }
+                    else ++diagnosticNames;
+                    if (primaryNames + diagnosticNames <= 5)
+                        [log appendFormat:@"Inode LS filename observation: %@ (path/format/access still must be checked).\n", path];
+                    [storeDirectories addObject:path.stringByDeletingLastPathComponent];
+                    if (storeDirectories.count > 64) overflow = YES;
+                } else if (directory && otherDirectories.count < 64) [otherDirectories addObject:directory];
+            }
+        }
+        ++examined; --cursor;
+        if (overflow) break;
+        if (firstPrimary) siblingRemaining = siblingWindow;
+        else if (siblingRemaining && --siblingRemaining == 0) { siblingLimit = YES; break; }
+        if (recent && cursor < recentLower) { recent = NO; cursor = olderNext; }
+    }
+    NSDictionary *saved = @{@"schema":@2, @"context":context, @"upper":@(upper), @"next":@(cursor >= 16 ? cursor : 0)};
+    if (nextCheckpoint) *nextCheckpoint = saved;
+    [log appendFormat:@"Inode discovery: descending from %llu (temporary probe %llu; heuristic), %llu inode lookups, %llu decoded paths, %llu primary-name / %llu prefixed LS observations, %.2f seconds.\n",
+        (unsigned long long)upper, (unsigned long long)probeInode, (unsigned long long)examined, (unsigned long long)resolved,
+        (unsigned long long)primaryNames, (unsigned long long)diagnosticNames, now() - began];
+    [log appendFormat:@"Inode outcome: %@; older sweep %@; next %llu. Each run revisits the recent window. Root, name and inode scans do not prove completeness.\n",
+        overflow ? @"candidate limit exceeded; refusing scan results" : timedOut ? @"time budget reached" : siblingLimit ? @"bounded primary sibling window reached" : @"heuristic range exhausted",
+        resume ? @"resumed" : @"new", (unsigned long long)cursor];
+    if (overflow) return @[];
+    for (NSString *directory in otherDirectories) {
+        if (storeDirectories.count >= 64) break;
+        [storeDirectories addObject:directory];
+    }
+    [log appendFormat:@"Inode cache-directory candidates: %lu (maximum 64; filenames prioritized over other container paths).\n", (unsigned long)storeDirectories.count];
+    return storeDirectories.array;
+}
+int64_t FLVerifiedDirectoryGrant(NSString *directory, int64_t (^request)(BOOL), void (^releaseToken)(int64_t),
+    BOOL (^readable)(int *), NSMutableString *log) {
+    if (!FLIsAllowedStoreDirectory(directory) && ![FLStoreContainerRoots() containsObject:FLNormalizeStorePath(directory)]) return -100;
+    int64_t last = -1;
+    for (unsigned attempt = 0; attempt < 2; ++attempt) {
+        BOOL alternate = attempt == 1;
+        int64_t token = request(alternate); last = token;
+        if (token >= 0) {
+            int failure = 0;
+            if (readable(&failure)) {
+                [log appendFormat:@"Grant %@: %@ flags, handle %lld; read-only directory probe succeeded.\n", directory, alternate ? @"alternate" : @"standard", (long long)token];
+                return token;
+            }
+            releaseToken(token); last = -8;
+            [log appendFormat:@"Grant %@: %@ handle %lld released; directory probe failed, errno %d.\n", directory, alternate ? @"alternate" : @"standard", (long long)token, failure];
+        } else {
+            [log appendFormat:@"Grant %@: %@ query returned %lld; no usable token.\n", directory, alternate ? @"alternate" : @"standard", (long long)token];
+            if (token == -2) break;
+        }
+    }
+    return last;
 }
 static NSString *FLAllowedStore(NSString *path) {
     path = FLNormalizeStorePath(path);

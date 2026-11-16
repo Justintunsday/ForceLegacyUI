@@ -30,8 +30,11 @@ typedef struct {
     BOOL (* _Nullable readableDirectory)(const char *, int * _Nullable);
 } FLContainerRuntime;
 
+typedef void * _Nullable (^FLContainerSymbolLookup)(const char *name);
+
 #if defined(FL_CONTAINER_TESTING)
 @class FLLSDContainerLease;
+FOUNDATION_EXPORT FLContainerRuntime FLTestResolveContainerRuntime(FLContainerSymbolLookup lookup);
 FOUNDATION_EXPORT FLLSDContainerLease * _Nullable FLTestOpenLSDLease(uint64_t kind, const FLContainerRuntime * _Nonnull runtime, NSMutableString * _Nonnull log);
 FOUNDATION_EXPORT NSArray<NSDictionary<NSString *, id> *> *FLTestMHAAppDataCatalog(const FLContainerRuntime *runtime, NSUInteger limit, NSMutableString *log);
 #endif

@@ -156,7 +156,7 @@ private struct DiagnosticsView: View {
                     Button("Extended Store Discovery") { Task { await model.scan(extended: true) } }
                     Button("Restart Inode Search") { Task { await model.restartInodeDiscovery() } }.disabled(model.demo)
                     Button("Import Layout for Copy Experiment") { importing = true }.disabled(model.demo)
-                } footer: { Text("Extended discovery tries container cache directories, then scans inode paths with a 20-second budget. Repeated scans resume from the saved cursor. System queries can take longer. Imported profiles never authorize live writes.") }
+                } footer: { Text("Extended discovery tries container cache directories, then searches recent inode paths first with a 20-second budget. Repeated scans revisit recent paths and resume older progress. System queries can take longer. Imported profiles never authorize live writes.") }
                 .disabled(model.busy)
                 Section("Export") {
                     Button("Save Diagnostic Report") { Task { await model.export(includeSnapshot: false) } }
