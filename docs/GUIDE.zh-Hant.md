@@ -94,6 +94,27 @@ Mach-O CPU 架構。這項修正避免後續架構比對錯誤，但不會自行
 只讀快取後備結果會標示 `Read-only cache registrations`，
 其 SDK 會保持 `unavailable`；程式不會猜測 SDK 位移，也不將快取登記當成目前安裝狀態的保證。
 
+## 已讀到 App，但不能修改
+
+0.1.4 的使用者日誌已顯示：一般 App Group 版在 26.6.2（23G90）找到一般名稱的 LS
+快取、成功開啟目錄、通過系統 checksum／格式驗證，並讀出 134 筆登記。
+這個結果表示搜尋與讀取已成功，並不等於寫入權限或 SDK 欄位已驗證。
+目前實機版沒有內建的 26.6.2 格式配置，且寫入白名單為空；關閉 Dry run 也不會啟用 Apply。
+
+要繼續建立這個 build 的配置，需要實際快取內容，只有 Technical log 的 hash 與登記數不足以決定欄位：
+
+1. 關閉 **Demo laboratory**，執行 **Run Read-Only Inspection**。
+2. 點 **Save Report and Raw Snapshot**。
+3. 在 iPhone 的「檔案」App 找到 **ForceLegacyUI → Diagnostics → 最新資料夾**。
+4. 取出 `report.json`、`snapshot.csstore`，以及用來核對的 `snapshot.sha256`。
+
+目前 **Share Report** 只分享 `report.json`；原始快取需從「檔案」附上。
+MHA 版的相同資料夾多一層 `ForceLegacyUI`。原始快取可包含 App 登記等私人 metadata，
+可先自行檢查再提供。
+
+分析後仍須核對真實 SDK 欄位、產生只改指定欄位的 dry run，才可接通單一 App 的
+實驗寫入與備份還原。出現相容性 key 字串不表示可以把那段字串直接當成 Boolean 修改。
+
 ## 測試已完成的 Demo 功能
 
 1. **Diagnostics → Demo laboratory** 開啟。

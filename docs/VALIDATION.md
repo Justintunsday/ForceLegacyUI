@@ -40,6 +40,24 @@ some activation paths. Build 6 fixes those code defects. It does not establish
 physical lsd access, the prefixed cache's role, complete app visibility, a reviewed
 iOS 26.6.2 layout or a legacy appearance change. The live-write allowlist is empty.
 
+### Additional user-provided 0.1.4 device feedback
+
+After publication, the user supplied an extended log from the regular App Group
+build on iOS 26.6.2 (23G90), iPhone17,3, arm64. The renamed dedicated group resolved
+successfully; all bulk LS methods still returned zero. Recent-first discovery
+observed a primary-name LS cache after 524,851 inode lookups in a reported 1.24
+seconds. A standard-flag worse_query grant opened its directory; the selected
+primary-name snapshot parsed and passed the system CoreServicesStore validator.
+Generic read-only parsing returned 134 unambiguous registrations.
+
+This is user-provided evidence of successful discovery and reading with 0.1.4,
+not an independently operated phone test. No O_RDWR capability, SDK field layout,
+live write or appearance change was demonstrated. The registrations have no
+inferred SDK values; the empty layout/write allowlists still block modification.
+The next required capture is the raw snapshot plus its diagnostic report. Device
+container UUIDs, signing-team identifiers and the raw user snapshot are not
+published in this record.
+
 ## 0.1.3 validation
 
 Source [`ef889664`](https://github.com/Justintunsday/ForceLegacyUI/commit/ef8896641ef2ecb28f3115de0270f8f2aaf70766)
