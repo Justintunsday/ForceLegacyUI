@@ -158,13 +158,14 @@ private struct DiagnosticsView: View {
                     Button("Import Exact-build Layout") { importing = true }.disabled(model.demo)
                 } footer: { Text("Extended discovery searches recent paths and resumes older progress. System queries can take longer. Importing a layout alone does not enable writing.") }
                 .disabled(model.busy)
-                Section("Single-app SDK experiment") {
+                Section {
                     Toggle("Enable single-app experiment", isOn: Binding(get: { model.singleAppExperiment }, set: { value in
                         Task { await model.setSingleAppExperiment(value) }
                     })).disabled(model.demo)
                     LabeledContent("Independent SDK observations", value: "\(model.inspection?.bundleFacts.count ?? 0)")
                     Text(model.inspection?.writeReadinessReason ?? "Run an inspection first.").font(.caption).foregroundStyle(.secondary)
-                } footer: { Text("Requires an exact-build layout, independent SDK checks, writable-open access and a fresh one-app preview. Apply backs up and verifies the change. This experiments with SDK metadata; legacy appearance remains unverified.") }
+                } header: { Text("Single-app SDK experiment") }
+                footer: { Text("Requires an exact-build layout, independent SDK checks, writable-open access and a fresh one-app preview. Apply backs up and verifies the change. This experiments with SDK metadata; legacy appearance remains unverified.") }
                 .disabled(model.busy)
                 Section("Export") {
                     Button("Save Diagnostic Report") { Task { await model.export(includeSnapshot: false) } }

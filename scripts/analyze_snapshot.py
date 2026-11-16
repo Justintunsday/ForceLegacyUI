@@ -5,6 +5,8 @@ import argparse
 import hashlib
 import json
 import struct
+from collections import defaultdict
+from pathlib import PurePosixPath
 
 class Store:
     def __init__(self, data):
@@ -62,36 +64,92 @@ class Store:
             "liveWriteAuthorized": False,
             "warning": "A matching byte pattern or string does not prove a field's semantics or appearance behavior."}
         if catalog:
+            declared = (catalog.get("storeSummary") or {}).get("sha256")
+            if declared and declared != result["sha256"]:
+                raise ValueError("Diagnostic report and snapshot SHA-256 differ; capture a matching pair")
+            result["device"] = catalog.get("device")
+            if len(self.tables["<string>"]) > 200000 or len(self.tables["Bundle"]) > 10000:
+                raise ValueError("Evidence analysis exceeds its bounded string/record budget")
             strings = {}
+            values = {}
             for key, (offset, size) in self.tables["<string>"].items():
                 if size <= 4096:
-                    try: strings.setdefault(self.text(offset, size), set()).add(key)
+                    try:
+                        value = self.text(offset, size)
+                        strings.setdefault(value, set()).add(key)
+                        values[key] = value
                     except UnicodeDecodeError: pass
             observations = []
+            sources = []
             for app in catalog.get("applications", []):
-                sdk = app.get("reportedSDK")
-                if not sdk: continue
+                # A value just decoded from this same cache is not an independent witness.
+                source = catalog.get("catalogSource", "LaunchServices")
+                if "cache" not in source.lower() and app.get("reportedSDK"):
+                    sources.append((app, "reported catalog SDK"))
+            for fact in catalog.get("bundleFacts", []):
+                sources.append(({**fact, "reportedSDK": fact.get("sdk")}, "executable load commands"))
+            if len(sources) > 10000: raise ValueError("Too many SDK observations")
+            examined = 0
+            for app, source in sources:
+                sdk = app.get("reportedSDK") or {}
+                if not all(type(sdk.get(k)) is int and 0 <= sdk[k] <= 99 for k in ("major", "minor", "patch")) or sdk["major"] == 0:
+                    raise ValueError("Invalid SDK observation")
                 triple = struct.pack("<QQQ", sdk["major"], sdk["minor"], sdk["patch"])
                 keys = strings.get(app["bundleID"], set())
                 for record_key, (unit, size) in self.tables["Bundle"].items():
                     if size > 4096: continue
                     body = unit + 8
+                    examined += size // 4
+                    if examined > 2000000: raise ValueError("SDK analysis exceeded its field budget")
                     identity = [i for i in range(0, size - 3, 4) if self.u32(body + i) in keys]
                     if len(identity) < 2: continue
                     candidates = [i for i in range(0, size - 23, 4) if self.data[body + i:body + i + 24] == triple]
-                    observations.append({"bundleID": app["bundleID"], "recordKey": record_key, "recordSize": size,
-                        "recordBody": body, "candidateIdentityOffsets": identity, "candidateSDKOffsets": candidates})
+                    path = app.get("bundlePath", "")
+                    if path.startswith("/var/"): path = "/private" + path
+                    bundle = PurePosixPath(path)
+                    placeholders = set()
+                    for value, string_keys in strings.items():
+                        normalized = "/private" + value if value.startswith("/var/") else value
+                        if normalized == str(bundle.parent / "SerializedPlaceholder.ipa"): placeholders |= string_keys
+                    bundle_keys = strings.get(bundle.name, set())
+                    observations.append({"bundleID": app["bundleID"], "bundlePath":path, "source":source,
+                        "observedSDK":f'{sdk["major"]}.{sdk["minor"]}.{sdk["patch"]}',
+                        "recordKey": record_key, "recordSize": size, "recordBody": body,
+                        "candidateIdentityOffsets": identity, "candidateSDKOffsets": candidates,
+                        "candidateBundleNameOffsets":[i for i in range(0, size - 3, 4) if self.u32(body+i) in bundle_keys],
+                        "candidatePlaceholderOffsets":[i for i in range(0, size - 3, 4) if self.u32(body+i) in placeholders]})
             result["readOnlyObservations"] = observations
+            groups = defaultdict(list)
+            for row in observations:
+                if row["source"] == "executable load commands": groups[row["recordSize"]].append(row)
+            consensus = []
+            for size, rows in sorted(groups.items()):
+                ids = [r["bundleID"] for r in rows]
+                versions = {r["observedSDK"] for r in rows}
+                offsets = set.intersection(*(set(r["candidateSDKOffsets"]) for r in rows))
+                unique = len(ids) == len(set(ids))
+                consensus.append({"recordSize":size, "bundleIDs":sorted(set(ids)), "distinctSDKs":sorted(versions),
+                    "sharedSDKOffsetCandidates":sorted(offsets), "duplicateRecordIdentities":not unique,
+                    "enoughIndependentWitnesses": unique and len(ids) >= 3 and len(versions) >= 2,
+                    "liveWriteAuthorized":False})
+            result["executableSDKColumnConsensus"] = consensus
+            result["profileGenerated"] = False
         return result
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("snapshot", type=Path)
     parser.add_argument("--catalog", type=Path, help="ForceLegacyUI diagnostic report.json")
+    parser.add_argument("--sha256", type=Path, help="Optional exported snapshot SHA-256 sidecar")
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
     if args.snapshot.stat().st_size > 64 * 1024 * 1024: raise SystemExit("Snapshot exceeds 64 MiB")
     store = Store(args.snapshot.read_bytes())
+    if args.sha256:
+        expected = args.sha256.read_text().strip().split()
+        if len(expected) != 1 or expected[0] != hashlib.sha256(store.data).hexdigest():
+            raise ValueError("Snapshot SHA-256 sidecar does not match")
+    if args.catalog and args.catalog.stat().st_size > 4*1024*1024: raise ValueError("Diagnostic report exceeds 4 MiB")
     catalog = json.loads(args.catalog.read_text()) if args.catalog else None
     output = json.dumps(store.report(catalog), indent=2, sort_keys=True) + "\n"
     if args.output: args.output.write_text(output, encoding="utf-8")
