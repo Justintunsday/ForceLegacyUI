@@ -106,4 +106,35 @@ final class SingleAppEvidenceTests: XCTestCase {
         XCTAssertThrowsError(try EvidenceArchive.make(files: ["../escape":Data()]))
         XCTAssertThrowsError(try EvidenceArchive.make(files: ["/absolute":Data()]))
     }
+
+    func testCandidateSignaturesNeedActualThreeAppSDKCorrelation() throws {
+        for shape in RuntimeLayoutCandidates.candidates(for: DemoFixture.device) {
+            // Alternate synthetic shapes test the checker; these are not captured phone records.
+            let shaped = DemoFixture.make(profile: shape)
+            var log = ""
+            let match = try RuntimeLayoutCandidates.correlate(data: shaped.data, device: DemoFixture.device,
+                observations: facts, validator: validator, log: &log)
+            XCTAssertEqual(match, shape)
+            XCTAssertNil(try RuntimeLayoutCandidates.correlate(data: shaped.data, device: DemoFixture.device,
+                observations: Array(facts.prefix(2)), validator: validator, log: &log))
+            var changed = facts
+            changed[0] = BundleSDKObservation(bundleID: facts[0].bundleID, bundlePath: facts[0].bundlePath, sdk: SDKVersion(26, 5),
+                infoSHA256: facts[0].infoSHA256, loadCommandsSHA256: facts[0].loadCommandsSHA256)
+            XCTAssertNil(try RuntimeLayoutCandidates.correlate(data: shaped.data, device: DemoFixture.device,
+                observations: changed, validator: validator, log: &log))
+        }
+    }
+    func testAByteCountOrUnsupportedOSCannotSelectCandidateOffsets() throws {
+        let base = try XCTUnwrap(RuntimeLayoutCandidates.candidates(for: DemoFixture.device).first)
+        let shifted = LayoutProfile(id: "synthetic-shifted", osVersion: base.osVersion, osBuild: base.osBuild,
+            architectures: base.architectures, recordSize: base.recordSize, identifier: base.identifier,
+            duplicateIdentifier: base.duplicateIdentifier, kind: base.kind, sdk: base.sdk+4, name: base.name,
+            fallbackName: base.fallbackName, bundleName: base.bundleName, placeholder: base.placeholder, signer: base.signer,
+            evidence: ["Synthetic shifted field; not a real layout"])
+        var log = ""
+        XCTAssertNil(try RuntimeLayoutCandidates.correlate(data: DemoFixture.make(profile: shifted).data,
+            device: DemoFixture.device, observations: facts, validator: validator, log: &log))
+        XCTAssertTrue(RuntimeLayoutCandidates.candidates(for: DeviceIdentity(osVersion: "27.1", osBuild: "other",
+            architecture: "arm64", model: "test")).isEmpty)
+    }
 }

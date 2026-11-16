@@ -10,7 +10,7 @@ public struct DemoFixture {
         identifier: 12, duplicateIdentifier: 16, kind: 20, sdk: 32, name: 60, fallbackName: 64,
         bundleName: 68, placeholder: 72, signer: 76, evidence: ["Synthetic fixture, not a captured iOS layout"])
 
-    public static func make() -> DemoFixture {
+    public static func make(profile: LayoutProfile = DemoFixture.profile) -> DemoFixture {
         var data = Data(count: 100)
         func put32(_ value: UInt32, _ offset: Int) {
             var le = value.littleEndian
@@ -43,11 +43,11 @@ public struct DemoFixture {
             let bundle = "Sample\(index).app"
             let identifier = text(id), name = text(names[index]), bundleKey = text(bundle)
             let placeholder = text(parent + "/SerializedPlaceholder.ipa"), signer = text("Synthetic signer")
-            let record = unit(Data(count: 160)), body = record + 8
-            put32(identifier, body + 12); put32(identifier, body + 16); put32(2, body + 20)
-            data.replaceSubrange((body + 32)..<(body + 56), with: versions[index].bytes)
-            put32(name, body + 60); put32(name, body + 64); put32(bundleKey, body + 68)
-            put32(placeholder, body + 72); put32(signer, body + 76)
+            let record = unit(Data(count: profile.recordSize)), body = record + 8
+            put32(identifier, body + profile.identifier); put32(identifier, body + profile.duplicateIdentifier); put32(2, body + profile.kind)
+            data.replaceSubrange((body + profile.sdk)..<(body + profile.sdk + 24), with: versions[index].bytes)
+            put32(name, body + profile.name); put32(name, body + profile.fallbackName); put32(bundleKey, body + profile.bundleName)
+            put32(placeholder, body + profile.placeholder); put32(signer, body + profile.signer)
             bundles.append((UInt32(index + 1), record))
             catalog.append(InstalledApplication(bundleID: id, name: names[index], bundlePath: parent + "/" + bundle, reportedSDK: versions[index]))
         }

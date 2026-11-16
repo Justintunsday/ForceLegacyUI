@@ -27,6 +27,7 @@ actor ResearchEngine {
     private let files = FileManager.default
     private let documents: URL
     private var importedProfile: LayoutProfile?
+    private var correlatedProfile: LayoutProfile?
     private var lastInspection: Inspection?
     private var lastPreview: String?
     private var previewFacts: [BundleSDKObservation]?
@@ -47,7 +48,7 @@ actor ResearchEngine {
         return DeviceIdentity(osVersion: d["osVersion"] ?? "unknown", osBuild: d["osBuild"] ?? "unknown",
             architecture: d["architecture"] ?? "unknown", model: d["model"] ?? "unknown")
     }
-    private var profile: LayoutProfile? { demo ? DemoFixture.profile : (importedProfile ?? ReviewedLayouts.profile(for: identity)) }
+    private var profile: LayoutProfile? { demo ? DemoFixture.profile : (importedProfile ?? correlatedProfile ?? ReviewedLayouts.profile(for: identity)) }
 
     private func resolveAppGroup() -> (AppGroupResolution, String) {
         let context = FLAppGroupContext()
@@ -150,6 +151,10 @@ actor ResearchEngine {
                 }
                 if !demo && !diagnosticOnly {
                     output.bundleFacts = observations(output.applications, log: &output.log)
+                    if profile == nil {
+                        correlatedProfile = try RuntimeLayoutCandidates.correlate(data: data, device: identity,
+                            observations: output.bundleFacts, validator: validator, log: &output.log)
+                    }
                 }
                 if diagnosticOnly {
                     output.log += "Diagnostic source only; continuing extended scans can search for a primary-name catalog.\n"
