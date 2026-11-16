@@ -18,6 +18,20 @@ CoreServicesStore organization, SDK metadata and system checksum techniques.
 No explicit redistribution license was found. Its source and artwork are not
 vendored. ForceLegacyUI has its own parser, transaction engine, UI, probes and icon.
 
+## 3105 / MHA-C2 and bad_query research credit
+
+[YangJiiii/3105](https://github.com/YangJiiii/3105) revision
+`a72617ed4c764a65d8aac1e91aca95231e72a2cb` was inspected for MHA identity/signing
+requirements, retained container access, LS cache locations and inode discovery.
+Its original material is GPL-3.0; its third-party notices identify separate upstream
+terms, including research without an exposed redistribution license.
+[forcequitOS/bad_query](https://github.com/forcequitOS/bad_query) revision
+`73ef6da1adabef0982fd00e36cb85f21b8f8194a` was inspected for class-13 partDomain
+query semantics; no repository license was found. Neither project's source files
+or artwork are redistributed here. `FLContainerAccess` and the bounded discovery
+policy are independent implementations restricted to LS cache discovery. MHA-C2
+research is credited through 3105 to 0xjohnnydev / FilzaSlop and its contributors.
+
 ## Apple sources
 
 Apple developer documentation and the open dyld implementation were consulted as

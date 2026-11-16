@@ -1,0 +1,23 @@
+{
+  "device": "iPhone SE (3rd generation)",
+  "deviceTest": false,
+  "launches": [
+    {
+      "bundleID": "org.forcelegacyui.app",
+      "factsExported": false,
+      "launchResult": "org.forcelegacyui.app: 6250"
+    },
+    {
+      "bundleID": "org.forcelegacyui.app.probe.modern",
+      "factsExported": true,
+      "launchResult": "org.forcelegacyui.app.probe.modern: 8686"
+    },
+    {
+      "bundleID": "org.forcelegacyui.app.probe.legacy",
+      "factsExported": true,
+      "launchResult": "org.forcelegacyui.app.probe.legacy: 9285"
+    }
+  ],
+  "runtime": "com.apple.CoreSimulator.SimRuntime.iOS-26-2",
+  "udid": "A1285399-F2F4-46E9-8CF2-4AA227FF7EF3"
+}

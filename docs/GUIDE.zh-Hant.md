@@ -1,21 +1,24 @@
-# ForceLegacyUI 0.1.2 安裝與「找不到 App」排查
+# ForceLegacyUI 0.1.3 安裝與「找不到 App」排查
+
+若你已在 iOS 26.6.2 上用企業簽名 3105 成功存取資料，請先看
+[MHA 企業測試版教程](ENTERPRISE-MHA.zh-Hant.md)。該版本與 3105 使用相同 Bundle ID，安裝會替換 3105。
 
 目前這是研究版。可以列出可見的 App、讀取診斷，以及測試備份與還原；
 **尚未驗證能把其他已安裝 App 的外觀恢復成 iOS 18。真實快取寫入仍預設禁用。**
 
 ## 先更新 IPA
 
-直接下載：[ForceLegacyUI 0.1.2 IPA](https://github.com/Justintunsday/ForceLegacyUI/releases/download/v0.1.2/ForceLegacyUI-unsigned.ipa)。
+一般版直接下載：[ForceLegacyUI 0.1.3 IPA](https://github.com/Justintunsday/ForceLegacyUI/releases/download/v0.1.3/ForceLegacyUI-unsigned.ipa)。
 下載後仍須用你的側載工具重新簽名。
 
 也可以從建置紀錄取得：
 
 1. 打開 [GitHub Actions](https://github.com/Justintunsday/ForceLegacyUI/actions/workflows/build.yml)，
-   選擇版本為 **0.1.2** 的成功建置。
+   選擇版本為 **0.1.3** 的成功建置。
 2. 登入 GitHub，在該次執行頁面的 **Artifacts** 下載壓縮檔。
 3. 解壓縮後，使用 `dist/ForceLegacyUI-unsigned.ipa`。另外兩個 `CompatibilityProbe` 是對照測試 App。
 4. 用原本的側載工具更新 ForceLegacyUI。保留 App Groups 權限，讓工具用你的帳戶重新簽名並配置描述檔。
-5. 打開 **Diagnostics**，確認 **App version** 顯示 `0.1.2`。
+5. 打開 **Diagnostics**，確認 **App version** 顯示 `0.1.3`。
 
 檔名中的 `unsigned` 表示沒有 Apple 核發的安裝簽名，仍須由側載工具簽名。
 0.1.1 起先以 ad-hoc 簽名攜帶請求的 App Group 資訊，供重新簽名工具讀取；
@@ -64,12 +67,16 @@ App Group entitlement。不要繼續用舊產物排查這個問題。
    其中應包含 Bundle ID、Configured App Group、Reported groups、Group state，
    以及每一個列舉方式的原始記錄數和可見 App 數。
 
+0.1.3 的延伸搜尋會從容器路徑找快取，並儲存 inode 進度；再按同一按鈕會接續搜尋，
+不會一直重掃前 8 秒。每次 inode 掃描的預算改為 20 秒，另有目錄搜尋及系統查詢時間。
+日誌中的 `Inode checkpoint` 顯示下次起點；**Restart Inode Search** 可以重設進度。
+
 如果你的日誌已顯示 `Group state: renamed; selected: ...`，表示側載改名後的群組容器已可用，
 不用繼續更改群組設定。`0 raw records` 與 `Mapped store candidates: 0` 是下一層的存取／搜尋問題。
 
-0.1.2 修正了這個情況下直接結束搜尋的遺漏：一般檢查會補試已知 lsd 位置；延伸檢查會
-嘗試兩個限定的系統容器目錄，僅列舉符合條件的 `Library/Caches`，時間預算 10 秒，
-最多 256 個候選目錄；仍無結果才做最多約 8 秒的 inode 路徑搜尋。
+0.1.2 開始修正了這個情況下直接結束搜尋的遺漏：一般檢查會補試已知 lsd 位置；延伸檢查會
+嘗試限定的系統容器目錄，僅列舉符合條件的 `Library/Caches`，時間預算 10 秒，
+最多 256 個候選目錄；0.1.3 納入 mobile Data/System 路徑，仍無結果才做分段 inode 搜尋。
 系統查詢本身可能需要額外時間。這些路徑不保證在每個 iOS build 上可存取。
 
 新版日誌也會包含完整 iOS 版本／build、掃描模式、每個查詢與授權結果。

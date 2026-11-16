@@ -1,5 +1,37 @@
 # Validation evidence
 
+## 0.1.3 validation
+
+Source [`ef889664`](https://github.com/Justintunsday/ForceLegacyUI/commit/ef8896641ef2ecb28f3115de0270f8f2aaf70766)
+passed [run 43861332081](https://github.com/Justintunsday/ForceLegacyUI/actions/runs/43861332081).
+
+* 28 core XCTest cases and 17 native policy cases passed. New coverage includes
+  lexical alias stability, deriving a cache candidate from another container path,
+  resuming valid inode checkpoints, rejecting stale/malformed checkpoints,
+  preserving the exact MHA identity contract and refusing unrelated traversal targets.
+* Standard device apps, the separate enterprise-identity main app and normal
+  simulator apps built. Metadata preparation and packaging checked each variant's
+  expected identity/mode and requested entitlements.
+* The standard simulator app launched, exported 148 native LS records, and completed
+  its synthetic preview/apply/backup/restore test. Both control probes launched and
+  exported facts. The MHA variant was device-built, not simulator/device-exploit tested.
+* Four downloaded IPA payloads were independently checked: ZIP integrity, SHA-256,
+  version 0.1.3, arm64 executable, bundle ID, access mode and XML entitlement request.
+  The MHA artifact has ID `com.apple.mobile.MobileHouseArrest`, mode `house-arrest`,
+  no App Group request, and requires enterprise-provisioned re-signing. No Apple
+  certificate/profile was supplied to this build.
+
+Main IPA SHA-256: `0a684c212fcabc14b9898af82216a42d96cb4548aae48e3fc0f23f66b0ceae48`.
+MHA IPA SHA-256: `922331a5cbb09ef7ee997c04cc0d9fa30e42e0603a3cb15c1f456827b91b9d05`.
+Artifact ID `14224101265`; ZIP digest
+`4689d6575430745a4000ff6c7ba496c8f1cefcc9a11662885451d9af7f48a33c`.
+Evidence: [0.1.3 records](evidence/v0.1.3/).
+
+The user's enterprise-signed 3105 result on iOS 26.6.2 is recorded as user-reported
+app-data access, not as our verification of the new binary, lsd access, a live-write
+layout or appearance. Installation shares/replaces 3105's identity; the
+[MHA instructions](ENTERPRISE-MHA.zh-Hant.md) explain that before download/use.
+
 ## 0.1.2 validation
 
 Application source commit [`a1a6602f`](https://github.com/Justintunsday/ForceLegacyUI/commit/a1a6602f1a803e0775156d691c8bd416f345decb)

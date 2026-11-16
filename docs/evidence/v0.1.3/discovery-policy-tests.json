@@ -1,0 +1,24 @@
+{
+  "cases" : [
+    "Path normalization stays lexical, stable and rejects traversal",
+    "A container descendant yields a candidate without finding the store inode",
+    "Inode progress resumes only on the same volume and build",
+    "MHA identity requires explicit mode and unchanged bundle identifier",
+    "Traversal backend cannot request unrelated file paths",
+    "Architecture uses Mach-O CPU type and strips capability flags",
+    "Denied metadata still probes fixed lsd locations",
+    "Empty discovery preserves actionable diagnostic log",
+    "Mapped active file excludes unrelated cache files",
+    "Multiple mapped stores refuse before granting directories",
+    "Multiple readable stores do not select an arbitrary file",
+    "Extended search finds UUID cache after all initial queries fail",
+    "Root fallback rejects other application data and nested paths",
+    "Bounded inode fallback is attempted after empty roots",
+    "Cached aliases and duplicate file results collapse safely",
+    "Directory listing cannot return a file from another directory",
+    "Extended root candidate count is bounded"
+  ],
+  "passed" : true,
+  "physicalDeviceAccessTested" : false,
+  "scope" : "Production discovery coordinator with injected denied\/empty\/path\/ambiguity responses; no sandbox grants"
+}

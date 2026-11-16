@@ -6,13 +6,19 @@ and a guarded SDK-metadata experiment engine.
 
 [繁體中文安裝與「找不到 App」排查教程](docs/GUIDE.zh-Hant.md)
 
-[Download 0.1.2 IPA (re-signing required)](https://github.com/Justintunsday/ForceLegacyUI/releases/download/v0.1.2/ForceLegacyUI-unsigned.ipa)
+[Download 0.1.3 IPA (re-signing required)](https://github.com/Justintunsday/ForceLegacyUI/releases/download/v0.1.3/ForceLegacyUI-unsigned.ipa)
 
-Version 0.1.2 adds missing cache-discovery fallbacks when LaunchServices and
-container metadata queries return nothing, records per-stage access failures,
-and fixes physical-device architecture reporting. It retains the 0.1.1 App Group
-signing/rename fixes. Physical-device cache access remains unverified; updating
-permissions does not enable unverified live overrides.
+[Enterprise MHA variant and installation instructions](docs/ENTERPRISE-MHA.zh-Hant.md)
+
+Version 0.1.3 adds a dedicated MobileHouseArrest identity build informed by the
+reported enterprise-signed 3105 result on iOS 26.6.2, scoped traversal fallback,
+and resumable inode discovery. The MHA variant shares 3105's bundle ID and replaces
+that app when installed. Physical lsd access and appearance changes still need
+device verification.
+
+The regular build resolves matching signing-tool App Group renames, records
+per-stage discovery failures and reports process architecture separately from
+phone model. A permission grant does not establish an appearance override.
 
 **No legacy appearance override is currently verified on iOS 26.6.2.** The shipped
 live-write allowlist is empty. The app does not modify signed app bundles, install
@@ -42,12 +48,13 @@ device-installable main-app IPA when matching credentials and provisioning are
 configured. Unsigned IPAs require signing before installation.
 
 [Find the latest build artifacts](https://github.com/Justintunsday/ForceLegacyUI/actions/workflows/build.yml).
-Use a successful 0.1.2 build for sideloading; the old 0.1.0 package omitted App
+Use a successful 0.1.3 build for sideloading; the old 0.1.0 package omitted App
 Group signing metadata. See the [validation record](docs/VALIDATION.md) for test scope.
-The [0.1.2 build](https://github.com/Justintunsday/ForceLegacyUI/actions/runs/43855369259)
-passed 28 core safety tests and 12 native discovery/architecture regression cases,
+The [0.1.3 build](https://github.com/Justintunsday/ForceLegacyUI/actions/runs/43861332081)
+passed 28 core safety tests and 17 native discovery/access regression cases,
 requested-entitlement packaging checks, device/simulator builds, synthetic
-transaction testing and native simulator app enumeration.
+transaction testing and native simulator app enumeration. The separate MHA device
+identity variant also built; its private-API access has not been verified on a phone.
 
 ```sh
 swift test --package-path Packages/LegacyCore --parallel

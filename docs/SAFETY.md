@@ -3,12 +3,16 @@
 The app ships with an empty live-write profile allowlist. A JSON profile, plausible
 SDK byte pattern, matching record size or successful sandbox grant cannot change it.
 
-Read-only discovery may probe the exact legacy cache directory `/private/var/db/lsd`
-and UUID/lsd `Library/Caches` directories under two system-container roots. Extended
+Read-only discovery may probe exact legacy LS cache directories and UUID/lsd
+`Library/Caches` directories under the three listed system-container roots. Extended
 search only lists root names and matching cache-file metadata; it does not inspect
 unrelated application data. It has directory/entry/time budgets and releases each
-extension before advancing. It refuses multiple discovered stores rather than
-selecting the newest. The legacy path is not added to live-write authorization.
+temporary extension before advancing. MHA lsd leases remain owned by the current
+read-only session and are released at its end. It refuses multiple discovered
+stores rather than selecting the newest. Additional read-only paths are not added
+to live-write authorization. Traversal requests reject unrelated paths before
+calling private APIs; MHA queries require explicit mode, the exact host identity,
+class 10/12 and the fixed lsd identifier.
 Time budgets are checked between synchronous system calls and cannot interrupt a
 blocked private API. A failed or bounded search does not establish that no store exists.
 

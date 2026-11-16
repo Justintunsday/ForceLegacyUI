@@ -21,6 +21,22 @@
         "worse_query/worse_query.h": "02c919ddec399349ff0a8c1230fea01d590fd30880688da6edbb51ac38365408"
       },
       "changes": ["Nonrecursive cleanup", "Reject nonempty dedicated group caches", "Free query on symlink failure", "Recover interrupted symlink setup"]
+    },
+    {
+      "name": "3105",
+      "url": "https://github.com/YangJiiii/3105",
+      "commit": "a72617ed4c764a65d8aac1e91aca95231e72a2cb",
+      "license": "GPL-3.0 for original material; separate third-party terms",
+      "sourceRedistributed": false,
+      "use": "MHA identity and retained access, mobile System LS cache location, container discovery techniques"
+    },
+    {
+      "name": "bad_query",
+      "url": "https://github.com/forcequitOS/bad_query",
+      "commit": "73ef6da1adabef0982fd00e36cb85f21b8f8194a",
+      "licenseFound": false,
+      "sourceRedistributed": false,
+      "use": "Class-13 partDomain traversal query semantics; independent scoped implementation"
     }
   ]
 }

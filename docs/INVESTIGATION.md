@@ -84,6 +84,32 @@ Physical-device process architecture now comes from the running Mach-O header.
 The previous `uname.machine` value identifies a phone model such as `iPhone17,3`,
 not its arm64/arm64e process architecture. Hardware model remains a separate field.
 
+### 3105 / MobileHouseArrest follow-up
+
+Inspected [3105 revision a72617ed](https://github.com/YangJiiii/3105/tree/a72617ed4c764a65d8aac1e91aca95231e72a2cb),
+including `mcm_bridge.m`, `bad_query.c`, `ContainerStore.swift` and `SupportPolicy.swift`.
+The public policy lists through 26.6.1 and requires enterprise signing preserving
+`com.apple.mobile.MobileHouseArrest`. The user reports successful access/deletion
+of other applications' data and `Library/Caches` with that setup on 26.6.2 (23G90).
+This is useful device evidence for app-data access beyond the published table;
+it does not yet identify the successful backend or establish access to lsd.
+
+Version 0.1.3 adds a dedicated identity build and an independently implemented,
+LS-only MHA lease: class 10/12, fixed `com.apple.lsd` identity, validated cache
+directory, retained query/extension until the read-only session ends. It also
+adds a scoped class-13 `partDomain` traversal fallback based on the documented
+bad_query mechanism. Its older published range is not presented as a new device
+verification. No third-party browser, patch engine, kernel exploit or unlicensed
+source file is vendored by this change.
+
+The reference's `/var/mobile/Containers/Data/System` is included alongside
+InternalDaemon and the global System root for read-only discovery. Inode discovery
+now derives cache candidates from container paths, resumes a volume/build/boot-scoped
+cursor, and records its bounded range. Lexical alias comparison replaces filesystem-
+dependent `standardizingPath`, which can remove `/private` prefixes. Unknown fields
+and multiple store candidates still fail closed; live-write authorization is not
+expanded to these additional read-only locations.
+
 ## Approach A: LaunchServices Boolean override
 
 No field with established ownership, representation, checksum consequences and
