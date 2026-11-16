@@ -6,15 +6,21 @@ and a guarded SDK-metadata experiment engine.
 
 [繁體中文安裝與「找不到 App」排查教程](docs/GUIDE.zh-Hant.md)
 
-[Download 0.1.3 IPA (re-signing required)](https://github.com/Justintunsday/ForceLegacyUI/releases/download/v0.1.3/ForceLegacyUI-unsigned.ipa)
+[Download 0.1.4 IPA (re-signing required)](https://github.com/Justintunsday/ForceLegacyUI/releases/download/v0.1.4/ForceLegacyUI-unsigned.ipa)
 
 [Enterprise MHA variant and installation instructions](docs/ENTERPRISE-MHA.zh-Hant.md)
 
-Version 0.1.3 adds a dedicated MobileHouseArrest identity build informed by the
-reported enterprise-signed 3105 result on iOS 26.6.2, scoped traversal fallback,
-and resumable inode discovery. The MHA variant shares 3105's bundle ID and replaces
-that app when installed. Physical lsd access and appearance changes still need
-device verification.
+Version 0.1.4 (build 6) reworks cache discovery after reviewing
+[ForceDuoApp 1.2](https://github.com/34306/ForceDuoApp/releases/tag/1.2): it searches
+recent inodes first, resumes older progress and retries alternate query flags when
+a consumed token does not actually open the directory. It also fixes MHA capability
+gating and part/part-domain symbol names, and adds bounded registration metadata
+as an app-list fallback when bulk LaunchServices enumeration is empty.
+
+The enterprise variant is named **ForceLegacyUI MHA**. It shares 3105's bundle ID
+and replaces that app when installed. A prefixed `SystemDataOnly` cache can be
+inspected only as a diagnostic source of unverified role. Physical lsd access,
+app-list completeness and appearance changes still need device verification.
 
 The regular build resolves matching signing-tool App Group renames, records
 per-stage discovery failures and reports process architecture separately from
@@ -48,12 +54,13 @@ device-installable main-app IPA when matching credentials and provisioning are
 configured. Unsigned IPAs require signing before installation.
 
 [Find the latest build artifacts](https://github.com/Justintunsday/ForceLegacyUI/actions/workflows/build.yml).
-Use a successful 0.1.3 build for sideloading; the old 0.1.0 package omitted App
+Use the 0.1.4 build 6 release for sideloading; the old 0.1.0 package omitted App
 Group signing metadata. See the [validation record](docs/VALIDATION.md) for test scope.
-The [0.1.3 build](https://github.com/Justintunsday/ForceLegacyUI/actions/runs/43861332081)
-passed 28 core safety tests and 17 native discovery/access regression cases,
+The [0.1.4 build](https://github.com/Justintunsday/ForceLegacyUI/actions/runs/43963044213)
+passed 28 core safety tests and 40 native discovery/access regression cases,
 requested-entitlement packaging checks, device/simulator builds, synthetic
-transaction testing and native simulator app enumeration. The separate MHA device
+transaction testing and native simulator app enumeration (155 records on iOS 26.5).
+The separate MHA device
 identity variant also built; its private-API access has not been verified on a phone.
 
 ```sh

@@ -1,0 +1,18 @@
+{
+  "version": "0.1.4",
+  "build": "6",
+  "sourceCommit": "a91aa39361bea6b2f235e99a6e281442b60806d3",
+  "workflowRun": 43963044213,
+  "workflowJob": 133635204631,
+  "artifactID": 14275649201,
+  "artifactDigestReportedByGitHub": "sha256:941a2be4b40b9f94bc756c4d517fa17335a2d27829c08fc634ffaec59fee8873",
+  "runner": "macos-26",
+  "xcode": "26.2",
+  "coreTestsPassed": 28,
+  "nativeRegressionCasesPassed": 40,
+  "forceDuoReference": "5b65200015f7ed0a0fdf34708bd857e4a34e1f80",
+  "forceDuoRelease": "1.2",
+  "physicalDeviceAccessVerified": false,
+  "legacyAppearanceVerified": false,
+  "liveWriteAllowlistEmpty": true
+}

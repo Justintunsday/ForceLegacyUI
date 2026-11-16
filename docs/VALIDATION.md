@@ -1,5 +1,45 @@
 # Validation evidence
 
+## 0.1.4 validation
+
+Version **0.1.4, build 6**, source
+[`a91aa393`](https://github.com/Justintunsday/ForceLegacyUI/commit/a91aa39361bea6b2f235e99a6e281442b60806d3),
+passed [run 43963044213](https://github.com/Justintunsday/ForceLegacyUI/actions/runs/43963044213)
+on the macOS 26 arm64 runner with Xcode 26.2 selected explicitly.
+
+* 28 core XCTest cases and 40 native regression cases passed. The native checks
+  exercise production symbol lookup, MHA transport/lifetime and metadata enumeration,
+  unreadable positive-token release and alternate-flag retries, recent-inode anchors
+  beyond forty million, timeout/resume, checkpoint rejection, diagnostic-source
+  handling and ambiguous-store refusal. Private API, path and clock responses are
+  injected; this does not verify sandbox access or scanning speed on a phone.
+* Standard device apps, the separate enterprise-identity main app and normal
+  simulator apps built. The iOS 26.5 iPhone Air simulator launched all three normal
+  apps, exported both probes' facts, returned 155 native LS records, and completed
+  the synthetic preview/apply/backup/restore cycle with the original SHA restored.
+  The MHA variant was device-built only; no phone execution is claimed.
+* All four downloaded IPA payloads passed independent ZIP, SHA-256 sidecar,
+  version/build, arm64 Mach-O and XML entitlement checks. The MHA artifact has
+  display name `ForceLegacyUI MHA`, exact ID `com.apple.mobile.MobileHouseArrest`,
+  mode `house-arrest` and no App Group request. The regular app requests its
+  dedicated group. No Apple certificate/profile was supplied; the provisioned
+  signing job was skipped and every IPA still requires re-signing.
+
+Main IPA SHA-256: `21a77256f5f0496d095e1be84da41bf423cc4d89cee992b2ea5d0b21a804f176`.
+MHA IPA SHA-256: `99fe5a42942f1b81ecd72e36eb1327a6cfc66717a7e5f7713b07e651e11fdec3`.
+Artifact ID `14275649201`; GitHub-reported artifact ZIP digest
+`941a2be4b40b9f94bc756c4d517fa17335a2d27829c08fc634ffaec59fee8873`.
+Evidence: [0.1.4 records](evidence/v0.1.4/).
+
+The release includes the independent recent-inode-first and post-grant retry
+changes after [ForceDuoApp 1.2](https://github.com/34306/ForceDuoApp/releases/tag/1.2)
+review. Earlier unpublished 0.1.4 build 5 artifacts are not this release. The user's
+0.1.3 MHA report established returned lsd paths and a prefixed filename, while
+mistyped operation-part/part-domain symbols and a shared capability gate prevented
+some activation paths. Build 6 fixes those code defects. It does not establish
+physical lsd access, the prefixed cache's role, complete app visibility, a reviewed
+iOS 26.6.2 layout or a legacy appearance change. The live-write allowlist is empty.
+
 ## 0.1.3 validation
 
 Source [`ef889664`](https://github.com/Justintunsday/ForceLegacyUI/commit/ef8896641ef2ecb28f3115de0270f8f2aaf70766)

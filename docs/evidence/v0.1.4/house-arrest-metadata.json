@@ -1,0 +1,10 @@
+[
+  {
+    "accessMode": "house-arrest",
+    "bundleID": "com.apple.mobile.MobileHouseArrest",
+    "requestedEntitlements": {},
+    "requiresAppleProvisionedResigning": true,
+    "signatureKind": "ad-hoc metadata only",
+    "version": "0.1.4"
+  }
+]

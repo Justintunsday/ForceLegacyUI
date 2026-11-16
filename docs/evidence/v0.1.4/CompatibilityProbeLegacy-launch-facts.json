@@ -1,0 +1,15 @@
+{
+  "DTSDKName": "iphonesimulator26.2",
+  "appearanceVerified": false,
+  "architecture": "arm64",
+  "bundleID": "org.forcelegacyui.app.probe.legacy",
+  "dyldSDK": "26.2.0",
+  "environment": "simulator",
+  "launchServicesSDK": "26.2",
+  "machOMinOS": "18.0.0",
+  "machOSDK": "26.2.0",
+  "model": "arm64",
+  "osBuild": "simulator-host-kernel:25G332",
+  "osVersion": "26.5.0",
+  "plistCompatibilityValue": true
+}

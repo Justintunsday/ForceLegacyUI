@@ -1,5 +1,7 @@
 # 0.1.4：企業簽名 MHA 測試版
 
+本次發佈為 **0.1.4，build 6**；[建置與驗證紀錄](VALIDATION.md#014-validation)。
+
 此版本依據你在 iOS 26.6.2（23G90）上以企業簽名 3105 成功存取 App 資料的實測，
 加入保留原始 MobileHouseArrest 身分的 LaunchServices 只讀存取路徑。
 它尚未在這台手機驗證讀到 lsd 快取，也尚未驗證能改變其他 App 的外觀。

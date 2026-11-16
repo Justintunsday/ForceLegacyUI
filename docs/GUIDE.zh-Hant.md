@@ -13,8 +13,7 @@
 
 也可以從建置紀錄取得：
 
-1. 打開 [GitHub Actions](https://github.com/Justintunsday/ForceLegacyUI/actions/workflows/build.yml)，
-   選擇版本為 **0.1.4** 的成功建置。
+1. 打開 [0.1.4（build 6）的成功建置](https://github.com/Justintunsday/ForceLegacyUI/actions/runs/43963044213)。
 2. 登入 GitHub，在該次執行頁面的 **Artifacts** 下載壓縮檔。
 3. 解壓縮後，使用 `dist/ForceLegacyUI-unsigned.ipa`。另外兩個 `CompatibilityProbe` 是對照測試 App。
 4. 用原本的側載工具更新 ForceLegacyUI。保留 App Groups 權限，讓工具用你的帳戶重新簽名並配置描述檔。
