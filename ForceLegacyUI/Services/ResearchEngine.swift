@@ -171,6 +171,7 @@ actor ResearchEngine {
                                                                  observations: output.bundleFacts, validator: validator)
                             output.applications = records.map { InstalledApplication(bundleID: $0.bundleID, name: $0.name,
                                 bundlePath: $0.bundlePath, reportedSDK: $0.sdk, applicationType: "Validated cache registration") }
+                            output.catalogSource = "Validated cache registrations with executable SDK corroboration"
                             do {
                                 try TransactionEngine.probeWritable(url, expected: data)
                                 output.writableOpen = true; output.singleAppWriteReady = true

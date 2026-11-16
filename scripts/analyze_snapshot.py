@@ -64,6 +64,7 @@ class Store:
             "liveWriteAuthorized": False,
             "warning": "A matching byte pattern or string does not prove a field's semantics or appearance behavior."}
         if catalog:
+            if not isinstance(catalog, dict): raise ValueError("Diagnostic report must be an object")
             declared = (catalog.get("storeSummary") or {}).get("sha256")
             if declared and declared != result["sha256"]:
                 raise ValueError("Diagnostic report and snapshot SHA-256 differ; capture a matching pair")
@@ -71,28 +72,33 @@ class Store:
             if len(self.tables["<string>"]) > 200000 or len(self.tables["Bundle"]) > 10000:
                 raise ValueError("Evidence analysis exceeds its bounded string/record budget")
             strings = {}
-            values = {}
+            normalized_strings = {}
             for key, (offset, size) in self.tables["<string>"].items():
                 if size <= 4096:
                     try:
                         value = self.text(offset, size)
                         strings.setdefault(value, set()).add(key)
-                        values[key] = value
+                        normalized = "/private" + value if value.startswith("/var/") else value
+                        normalized_strings.setdefault(normalized, set()).add(key)
                     except UnicodeDecodeError: pass
             observations = []
             sources = []
+            for fact in catalog.get("bundleFacts", []):
+                if not isinstance(fact, dict): raise ValueError("Invalid bundle observation")
+                sources.append(({**fact, "reportedSDK": fact.get("sdk")}, "executable load commands"))
             for app in catalog.get("applications", []):
+                if not isinstance(app, dict): raise ValueError("Invalid catalog entry")
                 # A value just decoded from this same cache is not an independent witness.
                 source = catalog.get("catalogSource", "LaunchServices")
                 if "cache" not in source.lower() and app.get("reportedSDK"):
                     sources.append((app, "reported catalog SDK"))
-            for fact in catalog.get("bundleFacts", []):
-                sources.append(({**fact, "reportedSDK": fact.get("sdk")}, "executable load commands"))
             if len(sources) > 10000: raise ValueError("Too many SDK observations")
+            result["omittedSDKObservations"] = max(0, len(sources)-32)
+            sources = sources[:32]
             examined = 0
             for app, source in sources:
                 sdk = app.get("reportedSDK") or {}
-                if not all(type(sdk.get(k)) is int and 0 <= sdk[k] <= 99 for k in ("major", "minor", "patch")) or sdk["major"] == 0:
+                if not isinstance(sdk, dict) or not all(type(sdk.get(k)) is int and 0 <= sdk[k] <= 99 for k in ("major", "minor", "patch")) or sdk["major"] == 0:
                     raise ValueError("Invalid SDK observation")
                 triple = struct.pack("<QQQ", sdk["major"], sdk["minor"], sdk["patch"])
                 keys = strings.get(app["bundleID"], set())
@@ -107,10 +113,7 @@ class Store:
                     path = app.get("bundlePath", "")
                     if path.startswith("/var/"): path = "/private" + path
                     bundle = PurePosixPath(path)
-                    placeholders = set()
-                    for value, string_keys in strings.items():
-                        normalized = "/private" + value if value.startswith("/var/") else value
-                        if normalized == str(bundle.parent / "SerializedPlaceholder.ipa"): placeholders |= string_keys
+                    placeholders = normalized_strings.get(str(bundle.parent / "SerializedPlaceholder.ipa"), set())
                     bundle_keys = strings.get(bundle.name, set())
                     observations.append({"bundleID": app["bundleID"], "bundlePath":path, "source":source,
                         "observedSDK":f'{sdk["major"]}.{sdk["minor"]}.{sdk["patch"]}',

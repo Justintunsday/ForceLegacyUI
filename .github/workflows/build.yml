@@ -58,6 +58,8 @@ jobs:
             -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath build/simulator \
             CODE_SIGNING_ALLOWED=NO build | tee build/simulator.log
           python3 scripts/simulator_smoke.py
+      - name: Offline evidence analysis regression tests
+        run: python3 -m unittest discover -s Tests -p test_snapshot_analysis.py -v
       - name: Optional signed build
         if: github.event_name == 'workflow_dispatch' && inputs.signed
         env:
