@@ -144,6 +144,10 @@ static NSArray<NSDictionary<NSString *, id> *> *FLReadMHAAppDataCatalog(const FL
 NSArray<NSDictionary<NSString *, id> *> *FLMHAAppDataCatalog(NSMutableString *log) {
     if (!FLHouseArrestIdentityAllowed(NSBundle.mainBundle.bundleIdentifier ?: @"",
         [NSBundle.mainBundle objectForInfoDictionaryKey:@"FLAccessMode"] ?: @"")) return @[];
+    NSOperatingSystemVersion version = NSProcessInfo.processInfo.operatingSystemVersion;
+    if (version.majorVersion != 26 || version.minorVersion > 7 || (version.minorVersion == 7 && version.patchVersion > 2)) {
+        [log appendString:@"MCM metadata fallback skipped outside the configured iOS 26 research range.\n"]; return @[];
+    }
     return FLReadMHAAppDataCatalog(FLContainerFunctions(), 4096, log);
 }
 int64_t FLTraversalTokenForCacheDirectory(NSString *directory, NSMutableString *log) {
