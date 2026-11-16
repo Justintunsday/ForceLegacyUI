@@ -15,6 +15,8 @@ typedef struct {
     void (* _Nullable domain)(void *, const char *);
     void * _Nullable (* _Nullable result)(void *);
     const char * _Nullable (* _Nullable path)(void *);
+    bool (* _Nullable iterate)(void *, bool (^callback)(void *));
+    const char * _Nullable (* _Nullable identifier)(void *);
     char * _Nullable (* _Nullable token)(void *);
     void * _Nullable (* _Nullable duplicate)(void *);
     bool (* _Nullable activate)(void *, bool);
@@ -31,5 +33,6 @@ typedef struct {
 #if defined(FL_CONTAINER_TESTING)
 @class FLLSDContainerLease;
 FOUNDATION_EXPORT FLLSDContainerLease * _Nullable FLTestOpenLSDLease(uint64_t kind, const FLContainerRuntime * _Nonnull runtime, NSMutableString * _Nonnull log);
+FOUNDATION_EXPORT NSArray<NSDictionary<NSString *, id> *> *FLTestMHAAppDataCatalog(const FLContainerRuntime *runtime, NSUInteger limit, NSMutableString *log);
 #endif
 NS_ASSUME_NONNULL_END

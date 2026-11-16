@@ -7,6 +7,7 @@ FOUNDATION_EXPORT int64_t FLTraversalTokenForCacheDirectory(NSString *directory,
 FOUNDATION_EXPORT NSString *FLContainerRuntimeDiagnostics(void);
 FOUNDATION_EXPORT void FLReleaseDirectoryToken(int64_t token);
 FOUNDATION_EXPORT BOOL FLCanReleaseDirectoryTokens(void);
+FOUNDATION_EXPORT NSArray<NSDictionary<NSString *, id> *> *FLMHAAppDataCatalog(NSMutableString *log);
 
 /// Holds only a com.apple.lsd query/extension for the lifetime of a read-only session.
 @interface FLLSDContainerLease : NSObject

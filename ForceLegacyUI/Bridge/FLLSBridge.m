@@ -113,6 +113,30 @@ NSArray<NSDictionary<NSString *, id> *> *FLInstalledApps(NSString **diagnostics)
             } @catch (NSException *exception) { [log appendFormat:@"Workspace enumeration: %@.\n", exception.name]; }
         }
     }
+    if (!result.count) {
+        NSArray<NSDictionary *> *metadata = FLMHAAppDataCatalog(log);
+        Class proxyClass = NSClassFromString(@"LSApplicationProxy");
+        SEL lookup = NSSelectorFromString(@"applicationProxyForIdentifier:");
+        NSUInteger lookups = 0;
+        for (NSDictionary *record in metadata) {
+            NSString *identifier = record[@"bundleID"];
+            if (lookups < 512 && [proxyClass respondsToSelector:lookup]) {
+                ++lookups;
+                @try {
+                    id proxy = ((id (*)(id, SEL, NSString *))objc_msgSend)(proxyClass, lookup, identifier);
+                    NSString *returnedID = FLString(FLValue(proxy, @"applicationIdentifier"));
+                    if (!returnedID.length) returnedID = FLString(FLValue(proxy, @"bundleIdentifier"));
+                    if ([returnedID isEqualToString:identifier]) accept(proxy);
+                } @catch (NSException *exception) { [log appendFormat:@"Individual LS lookup: %@.\n", exception.name]; }
+            }
+            NSMutableDictionary *entry = [result[identifier] ?: record mutableCopy];
+            entry[@"catalogSource"] = record[@"catalogSource"];
+            entry[@"applicationType"] = @"MCM-derived registration (read-only)";
+            result[identifier] = entry;
+        }
+        if (metadata.count) [log appendFormat:@"MCM catalog fallback: %lu registrations; %lu individual LS lookups (limit 512). Missing SDK/path fields stay unavailable.\n",
+            (unsigned long)metadata.count, (unsigned long)lookups];
+    }
     [log appendString:@"Enumeration may be restricted by iOS. Missing path/SDK fields remain unavailable; they are not guessed.\n"];
     if (diagnostics) *diagnostics = log;
     return result.allValues;

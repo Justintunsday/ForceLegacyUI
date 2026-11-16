@@ -44,6 +44,7 @@ static FLContainerRuntime *FLContainerFunctions(void) {
         FL_SYMBOL(flags, "container_query_operation_set_flags"); FL_SYMBOL(part, "container_query_set_part");
         FL_SYMBOL(domain, "container_query_set_part_domain"); FL_SYMBOL(result, "container_query_get_single_result");
         FL_SYMBOL(path, "container_object_get_path"); FL_SYMBOL(token, "container_copy_sandbox_token");
+        FL_SYMBOL(iterate, "container_query_iterate_results_sync"); FL_SYMBOL(identifier, "container_object_get_identifier");
         FL_SYMBOL(duplicate, "container_object_copy"); FL_SYMBOL(activate, "container_object_sandbox_extension_activate");
         FL_SYMBOL(freeObject, "container_object_free"); FL_SYMBOL(dispose, "container_query_free");
         FL_SYMBOL(failure, "container_query_get_last_error"); FL_SYMBOL(message, "container_error_get_message");
@@ -83,11 +84,21 @@ static NSArray<NSString *> *FLMissingObject(FLContainerRuntime *api) {
     return missing;
 }
 static NSString *FLCapability(NSArray *missing) { return missing.count ? [missing componentsJoinedByString:@", "] : @"available"; }
+static NSArray<NSString *> *FLMissingMetadata(FLContainerRuntime *api) {
+    NSMutableArray *missing = [NSMutableArray array];
+    if (!api->create) [missing addObject:@"container_query_create"];
+    if (!api->kind) [missing addObject:@"container_query_set_class"];
+    if (!api->flags) [missing addObject:@"container_query_operation_set_flags"];
+    if (!api->dispose) [missing addObject:@"container_query_free"];
+    if (!api->iterate) [missing addObject:@"container_query_iterate_results_sync"];
+    if (!api->identifier) [missing addObject:@"container_object_get_identifier"];
+    return missing;
+}
 NSString *FLContainerRuntimeDiagnostics(void) {
     FLContainerRuntime *api = FLContainerFunctions();
-    return [NSString stringWithFormat:@"MHA lookup symbols: %@.\nMHA object activation symbols: %@.\nManual token symbols: %@.\nTraversal query symbols: %@.\n",
+    return [NSString stringWithFormat:@"MHA lookup symbols: %@.\nMHA object activation symbols: %@.\nManual token symbols: %@.\nTraversal query symbols: %@.\nMCM metadata symbols: %@.\n",
         FLCapability(FLMissingQuery(api, NO)), FLCapability(FLMissingObject(api)),
-        FLCapability(FLMissingManual(api)), FLCapability(FLMissingQuery(api, YES))];
+        FLCapability(FLMissingManual(api)), FLCapability(FLMissingQuery(api, YES)), FLCapability(FLMissingMetadata(api))];
 }
 void FLReleaseDirectoryToken(int64_t token) {
     FLContainerRuntime *api = FLContainerFunctions();
@@ -99,6 +110,41 @@ static void FLLogQueryFailure(FLContainerRuntime *api, void *query, NSMutableStr
     int code = failure && api->posix ? api->posix(failure) : 0;
     const char *message = failure && api->message ? api->message(failure) : NULL;
     [log appendFormat:@"Container query detail: posix %d; %s.\n", code, message ?: "no detail returned"];
+}
+static NSArray<NSDictionary<NSString *, id> *> *FLReadMHAAppDataCatalog(const FLContainerRuntime *runtime, NSUInteger limit, NSMutableString *log) {
+    FLContainerRuntime api = *runtime; limit = MIN(limit, 4096);
+    NSArray *missing = FLMissingMetadata(&api);
+    if (missing.count || limit == 0) { [log appendFormat:@"MCM app-data metadata enumeration unavailable: %@.\n", FLCapability(missing)]; return @[]; }
+    void *query = api.create(); if (!query) return @[];
+    NSMutableArray *records = [NSMutableArray array]; NSMutableSet *seen = [NSMutableSet set];
+    __block NSUInteger examined = 0;
+    @try {
+        api.kind(query, 2); api.flags(query, 0x100000000ULL);
+        if (api.part) api.part(query, 0);
+        NSCharacterSet *invalid = [NSCharacterSet characterSetWithCharactersInString:@"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.-_"].invertedSet;
+        BOOL iterated = api.iterate(query, ^bool(void *object) {
+            if (++examined > 10000) return false;
+            const char *raw = object ? api.identifier(object) : NULL;
+            NSString *identifier = raw ? [NSString stringWithUTF8String:raw] : nil;
+            if (identifier.length && identifier.length <= 255 && [identifier containsString:@"."] &&
+                ![identifier hasPrefix:@"."] && ![identifier hasSuffix:@"."] && ![identifier containsString:@".."] &&
+                [identifier rangeOfCharacterFromSet:invalid].location == NSNotFound && ![seen containsObject:identifier]) {
+                [seen addObject:identifier];
+                [records addObject:@{@"bundleID":identifier, @"name":identifier, @"bundlePath":@"", @"sdk":@"",
+                    @"applicationType":@"MCM app-data registration (read-only)", @"catalogSource":@"MCM app-data registrations + individual LS lookups"}];
+            }
+            return records.count < limit;
+        });
+        [log appendFormat:@"MCM app-data metadata: %lu records examined, %lu unique identifiers; data registrations do not guarantee current installation.\n",
+            (unsigned long)examined, (unsigned long)records.count];
+        if (!iterated && records.count < limit && examined <= 10000) FLLogQueryFailure(&api, query, log);
+        return records;
+    } @finally { api.dispose(query); }
+}
+NSArray<NSDictionary<NSString *, id> *> *FLMHAAppDataCatalog(NSMutableString *log) {
+    if (!FLHouseArrestIdentityAllowed(NSBundle.mainBundle.bundleIdentifier ?: @"",
+        [NSBundle.mainBundle objectForInfoDictionaryKey:@"FLAccessMode"] ?: @"")) return @[];
+    return FLReadMHAAppDataCatalog(FLContainerFunctions(), 4096, log);
 }
 int64_t FLTraversalTokenForCacheDirectory(NSString *directory, NSMutableString *log) {
     NSString *domain = FLTraversalDomainForCacheDirectory(directory);
@@ -192,5 +238,8 @@ int64_t FLTraversalTokenForCacheDirectory(NSString *directory, NSMutableString *
 #if defined(FL_CONTAINER_TESTING)
 FLLSDContainerLease *FLTestOpenLSDLease(uint64_t kind, const FLContainerRuntime *runtime, NSMutableString *log) {
     return [FLLSDContainerLease openForClass:kind runtime:runtime log:log];
+}
+NSArray<NSDictionary<NSString *, id> *> *FLTestMHAAppDataCatalog(const FLContainerRuntime *runtime, NSUInteger limit, NSMutableString *log) {
+    return FLReadMHAAppDataCatalog(runtime, limit, log);
 }
 #endif

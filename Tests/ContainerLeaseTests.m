@@ -6,7 +6,7 @@
 #include <string.h>
 
 static struct {
-    unsigned queries, disposed, copies, freedObjects, activations, tokens, consumes, releases, probes;
+    unsigned queries, disposed, copies, freedObjects, activations, tokens, consumes, releases, probes, metadataCallbacks;
     uint64_t kind, flags;
     BOOL readable, activation, result;
     const char *root;
@@ -33,6 +33,16 @@ static BOOL readable(const char *path, int *error) {
     check(strcmp(path, state.root) == 0, @"Unexpected directory probe"); ++state.probes;
     if (error) *error = state.readable ? 0 : EACCES; return state.readable;
 }
+static const char *getIdentifier(void *object) { return (const char *)object; }
+static bool iterateMetadata(void *query, bool (^callback)(void *)) {
+    (void)query;
+    const char *identifiers[] = {"org.example.one", "org.example.one", "../bad", "org.example.two", "org.example.three"};
+    for (unsigned index = 0; index < 5; ++index) {
+        ++state.metadataCallbacks;
+        if (!callback((void *)identifiers[index])) return false;
+    }
+    return true;
+}
 static FLContainerRuntime runtime(void) {
     memset(&state, 0, sizeof(state)); state.readable = YES; state.activation = YES; state.result = YES;
     state.root = "/private/var/mobile/Containers/Data/InternalDaemon/04BA7A11-12F4-4567-89AB-0123456789AB";
@@ -46,6 +56,23 @@ static FLContainerRuntime runtime(void) {
 NSArray<NSString *> *FLRunContainerLeaseTests(void) {
     NSMutableArray *passed = [NSMutableArray array];
     void (^test)(NSString *, void (^)(void)) = ^(NSString *name, void (^body)(void)) { body(); [passed addObject:name]; };
+    test(@"MCM catalog reads metadata without token or object activation APIs", ^{
+        FLContainerRuntime api = runtime(); api.iterate = iterateMetadata; api.identifier = getIdentifier;
+        NSArray<NSDictionary<NSString *, id> *> *records = FLTestMHAAppDataCatalog(&api, 4096, [NSMutableString string]);
+        check(records.count == 3 && state.kind == 2 && state.flags == 0x100000000ULL, @"App-data metadata query was not bounded/deduplicated");
+        check([records.firstObject[@"bundlePath"] isEqual:@""] && [records.firstObject[@"sdk"] isEqual:@""], @"Data metadata fabricated bundle/SDK fields");
+        check(!state.activations && !state.tokens && !state.probes && state.disposed == 1, @"Metadata enumeration acquired data access or leaked query ownership");
+    });
+    test(@"MCM catalog stops at the requested record limit", ^{
+        FLContainerRuntime api = runtime(); api.iterate = iterateMetadata; api.identifier = getIdentifier;
+        NSArray *records = FLTestMHAAppDataCatalog(&api, 1, [NSMutableString string]);
+        check(records.count == 1 && state.metadataCallbacks == 1 && state.disposed == 1, @"Metadata limit was not enforced");
+    });
+    test(@"Missing metadata iterator is independent of MHA lease capabilities", ^{
+        FLContainerRuntime api = runtime(); NSMutableString *log = [NSMutableString string];
+        check(!FLTestMHAAppDataCatalog(&api, 4096, log).count && !state.queries, @"Incomplete metadata API issued a query");
+        check([log containsString:@"container_query_iterate_results_sync"], @"Missing metadata symbol was hidden");
+    });
     test(@"MHA object activation works without manual-token or optional part symbols", ^{
         FLContainerRuntime api = runtime();
         @autoreleasepool {

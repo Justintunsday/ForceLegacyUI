@@ -94,6 +94,7 @@ actor ResearchEngine {
         }
         var output = Inspection(device: identity, applications: apps, layoutValidated: false,
                                 isDemo: demo, log: message as String? ?? "", status: .unsupported)
+        if let source = raw.first?["catalogSource"] as? String { output.catalogSource = source }
         let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "unknown"
         output.log = "ForceLegacyUI \(version)\niOS \(output.device.osVersion) (\(output.device.osBuild)); \(output.device.model); \(output.device.architecture)\nInspection: \(demo ? "demo" : (extended ? "extended" : "standard"))\n\n" + output.log
         output.accessBackend = demo ? "Synthetic demo" : (FLAccessMode() == "house-arrest" ? "MobileHouseArrest" : "App Group / worse_query + traversal fallback")
