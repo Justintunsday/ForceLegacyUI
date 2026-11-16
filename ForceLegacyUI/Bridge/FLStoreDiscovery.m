@@ -22,6 +22,10 @@ BOOL FLIsLaunchServicesStoreName(NSString *name) {
     return [name hasPrefix:@"com.apple.LaunchServices-"] && [name hasSuffix:@"-v2.csstore"] &&
         [name.lastPathComponent isEqualToString:name];
 }
+BOOL FLIsDiagnosticLSStoreName(NSString *name) {
+    NSString *prefix = @"SystemDataOnly-";
+    return [name hasPrefix:prefix] && FLIsLaunchServicesStoreName([name substringFromIndex:prefix.length]);
+}
 BOOL FLIsAllowedStoreDirectory(NSString *path) {
     path = FLNormalizeStorePath(path);
     if ([@[@"/private/var/db/lsd", @"/private/var/mobile/Library/Caches"] containsObject:path]) return YES;
@@ -56,7 +60,7 @@ NSDictionary *FLInodeCheckpoint(NSString *context, uint64_t nextInode) {
 }
 static NSString *FLAllowedStore(NSString *path) {
     path = FLNormalizeStorePath(path);
-    return FLIsLaunchServicesStoreName(path.lastPathComponent) &&
+    return (FLIsLaunchServicesStoreName(path.lastPathComponent) || FLIsDiagnosticLSStoreName(path.lastPathComponent)) &&
         FLIsAllowedStoreDirectory(path.stringByDeletingLastPathComponent) ? path : nil;
 }
 
@@ -66,13 +70,19 @@ static NSString *FLAllowedStore(NSString *path) {
                          log:(NSMutableString *)log error:(NSError **)error {
     [log appendFormat:@"Store discovery mode: %@.\n", extended ? @"extended" : @"standard"];
     NSMutableOrderedSet<NSString *> *mapped = [NSMutableOrderedSet orderedSet];
+    NSMutableOrderedSet<NSString *> *mappedDiagnostic = [NSMutableOrderedSet orderedSet];
     for (NSString *path in [access mappedStorePathsWithLog:log]) {
         NSString *allowed = FLAllowedStore(path);
-        if (allowed) [mapped addObject:allowed];
+        if (allowed) {
+            if (FLIsDiagnosticLSStoreName(allowed.lastPathComponent)) [mappedDiagnostic addObject:allowed];
+            else [mapped addObject:allowed];
+        }
     }
     [log appendFormat:@"Mapped store candidates: %lu.\n", (unsigned long)mapped.count];
+    [log appendFormat:@"Mapped prefixed diagnostic stores: %lu; catalog role unverified.\n", (unsigned long)mappedDiagnostic.count];
     NSMutableOrderedSet<NSString *> *directories = [NSMutableOrderedSet orderedSet];
     NSMutableOrderedSet<NSString *> *candidates = [NSMutableOrderedSet orderedSet];
+    NSMutableOrderedSet<NSString *> *diagnostic = [NSMutableOrderedSet orderedSet];
     NSMutableSet<NSString *> *visited = [NSMutableSet set];
     void (^probe)(NSString *) = ^(NSString *directory) {
         directory = FLNormalizeStorePath(directory);
@@ -81,14 +91,16 @@ static NSString *FLAllowedStore(NSString *path) {
         [visited addObject:directory];
         for (NSString *path in [access storePathsInDirectory:directory group:group log:log]) {
             NSString *allowed = FLAllowedStore(path);
-            if (allowed && [allowed.stringByDeletingLastPathComponent isEqualToString:directory] &&
-                (!mapped.count || [mapped containsObject:allowed])) [candidates addObject:allowed];
+            if (!allowed || ![allowed.stringByDeletingLastPathComponent isEqualToString:directory]) continue;
+            if (FLIsDiagnosticLSStoreName(allowed.lastPathComponent)) [diagnostic addObject:allowed];
+            else if (!mapped.count || [mapped containsObject:allowed]) [candidates addObject:allowed];
         }
     };
     if (mapped.count <= 1) {
         if (mapped.count) {
             [directories addObject:[mapped.firstObject stringByDeletingLastPathComponent]];
         } else {
+            for (NSString *path in mappedDiagnostic) [directories addObject:path.stringByDeletingLastPathComponent];
             for (NSNumber *kind in @[@10, @12]) {
                 NSString *directory = [access cacheDirectoryForContainerClass:kind.unsignedLongLongValue log:log];
                 if (FLIsAllowedStoreDirectory(directory)) [directories addObject:FLNormalizeStorePath(directory)];
@@ -124,9 +136,13 @@ static NSString *FLAllowedStore(NSString *path) {
             [log appendString:@"Extended discovery not run. Use Diagnostics > Extended Store Discovery for bounded container/inode search.\n"];
         }
     }
+    if (!mapped.count && !candidates.count && diagnostic.count == 1) {
+        [log appendFormat:@"Selected prefixed diagnostic cache: %@. Its catalog role is unverified; profile planning and live writes are disabled. Extended scans continue looking for primary-name stores.\n", diagnostic.firstObject];
+        return diagnostic.firstObject;
+    }
     if (mapped.count > 1 || candidates.count != 1) {
         NSString *reason = mapped.count > 1 ? @"Multiple mapped stores; the active store is ambiguous."
-            : [NSString stringWithFormat:@"Read-only store discovery found %lu distinct candidates; exactly one is required.", (unsigned long)candidates.count];
+            : [NSString stringWithFormat:@"Read-only store discovery found %lu primary-name and %lu prefixed diagnostic candidates; an unambiguous source is required.", (unsigned long)candidates.count, (unsigned long)diagnostic.count];
         if (error) *error = [NSError errorWithDomain:@"ForceLegacyUI" code:1
             userInfo:@{NSLocalizedDescriptionKey:[NSString stringWithFormat:@"%@\n%@", reason, log]}];
         return nil;

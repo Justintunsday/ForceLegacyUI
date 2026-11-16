@@ -129,6 +129,7 @@ private struct DiagnosticsView: View {
                         LabeledContent("Override", value: info.status.rawValue)
                         LabeledContent("Layout", value: info.layoutID ?? "Unknown")
                         LabeledContent("App list source", value: info.catalogSource)
+                        if let role = info.storeRole { LabeledContent("Cache source", value: role) }
                         if let summary = info.storeSummary {
                             LabeledContent("Snapshot", value: "\(summary.bytes) bytes")
                             LabeledContent("Bundle record sizes", value: summary.bundleRecordSizes.keys.sorted().map(String.init).joined(separator: ", "))

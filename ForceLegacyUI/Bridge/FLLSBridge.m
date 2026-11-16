@@ -39,6 +39,7 @@ static NSString *FLString(id object) { return [object isKindOfClass:NSString.cla
 NSString *FLAccessMode(void) {
     return FLString([NSBundle.mainBundle objectForInfoDictionaryKey:@"FLAccessMode"]);
 }
+BOOL FLStoreIsDiagnosticOnly(NSString *path) { return FLIsDiagnosticLSStoreName(path.lastPathComponent); }
 void FLResetStoreDiscoveryProgress(void) { [NSUserDefaults.standardUserDefaults removeObjectForKey:@"FLStoreInodeCheckpoint"]; }
 static NSString *FLNormalize(NSString *path) {
     return FLNormalizeStorePath(path);
@@ -271,7 +272,8 @@ static NSArray<NSString *> *FLMappedStores(NSMutableString *log) {
         char buffer[PATH_MAX] = {0};
         if (filename(getpid(), address, buffer, sizeof(buffer)) > 0) {
             NSString *path = FLNormalize([NSString stringWithUTF8String:buffer] ?: @"");
-            if (FLIsLaunchServicesStoreName(path.lastPathComponent) && FLIsAllowedStoreDirectory(path.stringByDeletingLastPathComponent)) [paths addObject:path];
+            if ((FLIsLaunchServicesStoreName(path.lastPathComponent) || FLIsDiagnosticLSStoreName(path.lastPathComponent)) &&
+                FLIsAllowedStoreDirectory(path.stringByDeletingLastPathComponent)) [paths addObject:path];
         }
         address += size;
     }
@@ -355,7 +357,7 @@ static NSString *FLGrantOutcome(int64_t value) {
 }
 static int64_t FLGrantDirectory(NSString *directory, NSString *group, NSMutableString *log) {
     // create_dir only skips the pre-grant lstat; worse_query never creates the target.
-    if (group.length) {
+    if (group.length && FLCanReleaseDirectoryTokens()) {
         int64_t primary = worse_query(directory, group, false, true), alternate = -1;
         if (primary < 0) alternate = worse_query(directory, group, true, true);
         [log appendFormat:@"Grant %@: primary %lld (%@); alternate %@.\n", directory, primary, FLGrantOutcome(primary),
@@ -402,7 +404,8 @@ static int64_t FLGrantDirectory(NSString *directory, NSString *group, NSMutableS
             }
             if (++entries > 4096) { [log appendString:@"Cache listing exceeded 4096 entries; refusing incomplete candidate selection.\n"]; return @[]; }
             NSString *name = [NSString stringWithUTF8String:entry->d_name];
-            if (!name || !FLIsLaunchServicesStoreName(name)) continue;
+            if (!name || (!FLIsLaunchServicesStoreName(name) && !FLIsDiagnosticLSStoreName(name))) continue;
+            if (FLIsDiagnosticLSStoreName(name)) [log appendFormat:@"Prefixed LS cache observed: %@; catalog role unverified, diagnostic only.\n", name];
             struct stat st;
             if (fstatat(dirfd(stream), entry->d_name, &st, AT_SYMLINK_NOFOLLOW) != 0) {
                 [log appendFormat:@"Matching cache metadata unavailable: errno %d.\n", errno]; continue;
@@ -414,7 +417,7 @@ static int64_t FLGrantDirectory(NSString *directory, NSString *group, NSMutableS
         }
         [log appendFormat:@"Cache listing: %lu entries, %lu matching regular stores.\n", (unsigned long)entries, (unsigned long)paths.count];
         return paths;
-    } @finally { if (stream) closedir(stream); worse_query_release(token); }
+    } @finally { if (stream) closedir(stream); FLReleaseDirectoryToken(token); }
 }
 - (NSArray<NSString *> *)cacheDirectoriesInRoot:(NSString *)root group:(NSString *)group
                                       deadline:(NSTimeInterval)deadline log:(NSMutableString *)log {
@@ -444,7 +447,7 @@ static int64_t FLGrantDirectory(NSString *directory, NSString *group, NSMutableS
         [log appendFormat:@"Container root %@: %lu names inspected; %lu cache-directory candidates (bounded; not container identity proof).\n",
             root, (unsigned long)entries, (unsigned long)directories.count];
         return directories;
-    } @finally { if (stream) closedir(stream); worse_query_release(token); }
+    } @finally { if (stream) closedir(stream); FLReleaseDirectoryToken(token); }
 }
 @end
 @interface FLStoreSession ()
@@ -455,7 +458,7 @@ static int64_t FLGrantDirectory(NSString *directory, NSString *group, NSMutableS
 @end
 @implementation FLStoreSession
 - (instancetype)init { if ((self = [super init])) _token = -1; return self; }
-- (void)endAccess { if (_token >= 0) { worse_query_release(_token); _token = -1; } self.accessOwner = nil; }
+- (void)endAccess { if (_token >= 0) { FLReleaseDirectoryToken(_token); _token = -1; } self.accessOwner = nil; }
 - (void)dealloc { [self endAccess]; }
 @end
 
@@ -479,6 +482,7 @@ FLStoreSession *FLOpenStore(NSString *group, NSString *cachedDirectory, BOOL ext
         return nil;
     }
     NSMutableString *log = [NSMutableString string];
+    [log appendString:FLContainerRuntimeDiagnostics()];
     [log appendFormat:@"Access backend: %@.\n", houseArrest ? @"MHA lsd lease + scoped traversal fallback" : @"App Group / worse_query + scoped traversal fallback"];
     FLNativeStoreDiscoveryAccess *access = [FLNativeStoreDiscoveryAccess new];
     NSString *path = [FLStoreDiscovery findStoreUsing:access group:group

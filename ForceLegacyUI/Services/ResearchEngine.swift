@@ -16,6 +16,7 @@ struct Inspection: Codable {
     var catalogSource: String = "LaunchServices"
     var storeError: String?
     var accessBackend: String = "App Group / worse_query"
+    var storeRole: String?
 }
 
 actor ResearchEngine {
@@ -107,6 +108,9 @@ actor ResearchEngine {
         do {
             try withStore(extended: extended) { url, accessLog in
                 output.log += "\n\(accessLog)\n"
+                let diagnosticOnly = FLStoreIsDiagnosticOnly(url.path)
+                output.storeRole = diagnosticOnly ? "Prefixed cache; role unverified; diagnostic only" : "Primary-name cache"
+                if diagnosticOnly { output.log += "Prefixed cache role is unverified. Profile planning and writes are disabled for this source.\n" }
                 let data = try TransactionEngine.readSnapshot(url)
                 output.storePath = url.path
                 let store = try CSStore(data: data)
@@ -122,10 +126,12 @@ actor ResearchEngine {
                 if !demo && apps.isEmpty {
                     let registrations = try store.discoverRegistrations()
                     output.applications = registrations
-                    output.catalogSource = "Read-only cache registrations"
+                    output.catalogSource = diagnosticOnly ? "Prefixed cache registrations (read-only)" : "Read-only cache registrations"
                     output.log += "Read-only cache fallback: \(registrations.count) unambiguous registrations. SDK offsets were not inferred; installation state and layout remain unverified.\n"
                 }
-                if let profile {
+                if diagnosticOnly {
+                    output.log += "Diagnostic source only; continuing extended scans can search for a primary-name catalog.\n"
+                } else if let profile {
                     let records = try store.applications(profile: profile, device: identity)
                     if demo {
                         apps = records.map { InstalledApplication(bundleID: $0.bundleID, name: $0.name, bundlePath: $0.bundlePath, reportedSDK: $0.sdk) }
@@ -164,6 +170,7 @@ actor ResearchEngine {
             throw LegacyError.unsupported("No verified record layout exists for this OS build. Export read-only diagnostics first; a SDK downgrade cannot safely be planned from record size alone.")
         }
         return try withStore { url, _ in
+            guard !FLStoreIsDiagnosticOnly(url.path) else { throw LegacyError.unsupported("The prefixed cache is diagnostic only. SDK planning and writes are disabled for this source.") }
             let data = try TransactionEngine.readSnapshot(url)
             let store = try CSStore(data: data)
             let records = try store.applications(profile: profile, device: identity)
@@ -230,6 +237,7 @@ actor ResearchEngine {
     func restore(_ entry: BackupEntry) throws -> String {
         guard let profile else { throw LegacyError.unsupported("Restoration needs the original reviewed layout; no raw whole-store overwrite is allowed.") }
         return try withStore { url, _ in
+            guard !FLStoreIsDiagnosticOnly(url.path) else { throw LegacyError.unsupported("A prefixed diagnostic cache cannot be used as a restoration destination.") }
             guard entry.receipt.sourceName == url.lastPathComponent else { throw LegacyError.conflict("This backup belongs to a different store file.") }
             let current = try TransactionEngine.readSnapshot(url)
             let authorization = try demo ? WriteAuthorization.appOwned(directory: demoRoot) : WriteAuthorization.reviewedLive(profile: profile, device: identity)

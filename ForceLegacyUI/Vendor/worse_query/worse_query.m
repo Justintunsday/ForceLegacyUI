@@ -42,6 +42,20 @@ typedef char *(*container_copy_sandbox_token_fn)(void *);
 typedef int64_t (*sandbox_extension_consume_fn)(const char *);
 typedef int (*sandbox_extension_release_fn)(int64_t);
 
+// ForceLegacyUI: resolve paired consume/release APIs from an explicit system image
+// when the process's default symbol namespace does not export them.
+static void *wq_sandbox_symbol(const char *name) {
+    static void *sandbox, *manager; static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        sandbox = dlopen("/usr/lib/system/libsystem_sandbox.dylib", RTLD_NOW | RTLD_LOCAL);
+        manager = dlopen("/usr/lib/system/libsystem_containermanager.dylib", RTLD_NOW | RTLD_LOCAL);
+    });
+    void *value = dlsym(RTLD_DEFAULT, name);
+    if (!value && sandbox) value = dlsym(sandbox, name);
+    if (!value && manager) value = dlsym(manager, name);
+    return value;
+}
+
 // Remove symlink and recreate Caches directory
 static void clean_symlink(NSString *group) {
     if (group != NULL) {
@@ -89,8 +103,9 @@ int64_t worse_query(NSString *target, NSString *group, bool alt_flags, bool crea
     container_query_get_single_result_fn query_get_single_result = (container_query_get_single_result_fn)dlsym(mgr, "container_query_get_single_result");
     container_query_free_fn query_free = (container_query_free_fn)dlsym(mgr, "container_query_free");
     container_copy_sandbox_token_fn copy_sandbox_token = (container_copy_sandbox_token_fn)dlsym(mgr, "container_copy_sandbox_token");
-    sandbox_extension_consume_fn consume_extension = (sandbox_extension_consume_fn)dlsym(RTLD_DEFAULT, "sandbox_extension_consume");
-    if (!query_create || !query_set_class || !query_set_group_identifiers || !query_set_flags || !query_set_part || !query_get_single_result || !query_free || !copy_sandbox_token || !consume_extension) {
+    sandbox_extension_consume_fn consume_extension = (sandbox_extension_consume_fn)wq_sandbox_symbol("sandbox_extension_consume");
+    sandbox_extension_release_fn release_extension = (sandbox_extension_release_fn)wq_sandbox_symbol("sandbox_extension_release");
+    if (!query_create || !query_set_class || !query_set_group_identifiers || !query_set_flags || !query_set_part || !query_get_single_result || !query_free || !copy_sandbox_token || !consume_extension || !release_extension) {
         dlclose(mgr);
         return -2; // Failed to resolve a function (unsupported OS)
     }
@@ -161,6 +176,6 @@ int64_t worse_query(NSString *target, NSString *group, bool alt_flags, bool crea
 // You should probably call this when you're done
 void worse_query_release(int64_t handle) {
     if (handle < 0) return;
-    sandbox_extension_release_fn release_extension = (sandbox_extension_release_fn)dlsym(RTLD_DEFAULT, "sandbox_extension_release");
+    sandbox_extension_release_fn release_extension = (sandbox_extension_release_fn)wq_sandbox_symbol("sandbox_extension_release");
     if (release_extension) release_extension(handle);
 }

@@ -27,6 +27,7 @@ for app in apps:
         if len(apps) != 1 or info.get("CFBundleIdentifier") != "com.apple.mobile.MobileHouseArrest" or info.get("FLAccessMode") != "house-arrest":
             raise SystemExit("HouseArrest metadata requires the dedicated, unchanged enterprise identity build")
         info.pop("FLAppGroupIdentifier", None)
+        info["CFBundleDisplayName"] = "ForceLegacyUI MHA"
         (app / "Info.plist").write_bytes(plistlib.dumps(info))
     group = info.get("FLAppGroupIdentifier")
     entitlements = {"com.apple.security.application-groups": [group]} if group else {}

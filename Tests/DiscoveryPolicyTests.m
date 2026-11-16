@@ -3,6 +3,7 @@
 #import "FLStoreDiscovery.h"
 #import "FLDeviceIdentity.h"
 #import "FLContainerAccess.h"
+FOUNDATION_EXPORT NSArray<NSString *> *FLRunContainerLeaseTests(void);
 
 @interface TestDiscoveryAccess : NSObject <FLStoreDiscoveryAccess>
 @property (nonatomic, copy) NSArray<NSString *> *mapped;
@@ -53,6 +54,31 @@ int main(int argc, const char *argv[]) {
         NSString *cache = [[root stringByAppendingPathComponent:uuid] stringByAppendingPathComponent:@"Library/Caches"];
         void (^test)(NSString *, void (^)(void)) = ^(NSString *name, void (^body)(void)) { body(); [passed addObject:name]; };
         @try {
+            [passed addObjectsFromArray:FLRunContainerLeaseTests()];
+            test(@"A prefixed cache is classified and returned only as a diagnostic source", ^{
+                NSString *diagnostic = [legacy stringByAppendingPathComponent:[@"SystemDataOnly-" stringByAppendingString:store(legacy, @"1").lastPathComponent]];
+                require(FLIsDiagnosticLSStoreName(diagnostic.lastPathComponent) && !FLIsLaunchServicesStoreName(diagnostic.lastPathComponent), @"Prefixed cache became a primary store");
+                require(!FLIsDiagnosticLSStoreName([@"another-" stringByAppendingString:diagnostic.lastPathComponent]), @"Unknown prefix was accepted");
+                TestDiscoveryAccess *a = [TestDiscoveryAccess new]; a.stores = @{legacy:@[diagnostic]}; NSMutableString *log = [NSMutableString string];
+                require([find(a, nil, NO, log, NULL) isEqual:diagnostic] && [log containsString:@"diagnostic cache"], @"Readable prefixed cache was silently ignored");
+            });
+            test(@"A mapped prefixed cache does not suppress extended primary discovery", ^{
+                NSString *diagnostic = [legacy stringByAppendingPathComponent:[@"SystemDataOnly-" stringByAppendingString:store(legacy, @"1").lastPathComponent]];
+                TestDiscoveryAccess *a = [TestDiscoveryAccess new]; a.mapped = @[diagnostic]; a.inodes = @[cache];
+                a.stores = @{legacy:@[diagnostic], cache:@[store(cache, @"main")]};
+                require([find(a, nil, YES, [NSMutableString string], NULL) isEqual:store(cache, @"main")] && a.inodeCalls == 1, @"Prefixed cache stopped the primary search");
+            });
+            test(@"Diagnostic fallback never hides ambiguous primary stores", ^{
+                NSString *diagnostic = [legacy stringByAppendingPathComponent:[@"SystemDataOnly-" stringByAppendingString:store(legacy, @"1").lastPathComponent]];
+                TestDiscoveryAccess *a = [TestDiscoveryAccess new]; a.stores = @{legacy:@[diagnostic, store(legacy, @"1"), store(legacy, @"2")]};
+                require(!find(a, nil, NO, [NSMutableString string], NULL), @"Diagnostic fallback masked primary ambiguity");
+            });
+            test(@"Multiple prefixed diagnostic sources remain ambiguous", ^{
+                NSString *one = [legacy stringByAppendingPathComponent:@"SystemDataOnly-com.apple.LaunchServices-1-v2.csstore"];
+                NSString *two = [legacy stringByAppendingPathComponent:@"SystemDataOnly-com.apple.LaunchServices-2-v2.csstore"];
+                TestDiscoveryAccess *a = [TestDiscoveryAccess new]; a.stores = @{legacy:@[one, two]};
+                require(!find(a, nil, NO, [NSMutableString string], NULL), @"Arbitrary diagnostic source selected");
+            });
             test(@"Path normalization stays lexical, stable and rejects traversal", ^{
                 for (NSString *path in @[@"/var/db/lsd", @"/private/var/db/lsd", @"//var/./db/lsd/"]) {
                     NSString *normalized = FLNormalizeStorePath(path);
@@ -166,7 +192,7 @@ int main(int argc, const char *argv[]) {
             });
         } @catch (NSException *exception) { fprintf(stderr, "%s\n", exception.reason.UTF8String); return 1; }
         NSDictionary *result = @{@"passed":@YES, @"cases":passed, @"physicalDeviceAccessTested":@NO,
-            @"scope":@"Production discovery coordinator with injected denied/empty/path/ambiguity responses; no sandbox grants"};
+            @"scope":@"Production discovery and MHA lease transport with injected capability, query, activation, readability and cleanup responses; no sandbox grants"};
         NSData *json = [NSJSONSerialization dataWithJSONObject:result options:NSJSONWritingPrettyPrinted | NSJSONWritingSortedKeys error:nil];
         if (argc > 1 && ![json writeToFile:[NSString stringWithUTF8String:argv[1]] atomically:YES]) return 2;
         printf("%lu discovery policy regression cases passed.\n", (unsigned long)passed.count);

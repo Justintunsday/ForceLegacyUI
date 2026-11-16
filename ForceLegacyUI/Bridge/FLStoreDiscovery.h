@@ -5,6 +5,7 @@ NS_ASSUME_NONNULL_BEGIN
 FOUNDATION_EXPORT NSString *FLNormalizeStorePath(NSString * _Nullable path);
 FOUNDATION_EXPORT BOOL FLIsAllowedStoreDirectory(NSString * _Nullable path);
 FOUNDATION_EXPORT BOOL FLIsLaunchServicesStoreName(NSString *name);
+FOUNDATION_EXPORT BOOL FLIsDiagnosticLSStoreName(NSString *name);
 FOUNDATION_EXPORT NSArray<NSString *> *FLStoreContainerRoots(void);
 FOUNDATION_EXPORT NSString * _Nullable FLCacheDirectoryForResolvedPath(NSString *path);
 FOUNDATION_EXPORT uint64_t FLInodeStartForCheckpoint(NSDictionary * _Nullable checkpoint, NSString *context);

@@ -4,6 +4,9 @@ NS_ASSUME_NONNULL_BEGIN
 FOUNDATION_EXPORT BOOL FLHouseArrestIdentityAllowed(NSString *bundleID, NSString *mode);
 FOUNDATION_EXPORT NSString * _Nullable FLTraversalDomainForCacheDirectory(NSString *directory);
 FOUNDATION_EXPORT int64_t FLTraversalTokenForCacheDirectory(NSString *directory, NSMutableString *log);
+FOUNDATION_EXPORT NSString *FLContainerRuntimeDiagnostics(void);
+FOUNDATION_EXPORT void FLReleaseDirectoryToken(int64_t token);
+FOUNDATION_EXPORT BOOL FLCanReleaseDirectoryTokens(void);
 
 /// Holds only a com.apple.lsd query/extension for the lifetime of a read-only session.
 @interface FLLSDContainerLease : NSObject
