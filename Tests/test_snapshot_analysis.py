@@ -28,11 +28,14 @@ class SnapshotAnalysisTests(unittest.TestCase):
         output = module.Store(self.data).report(self.report())
         self.assertEqual(len(output["readOnlyObservations"]), 3)
         for row in output["readOnlyObservations"]:
-            self.assertEqual(row["candidateIdentityOffsets"], [12, 16])
+            self.assertTrue({12, 16}.issubset(row["candidateIdentityOffsets"]))
             self.assertEqual(row["candidateSDKOffsets"], [32])
             self.assertEqual(row["candidateBundleNameOffsets"], [68])
             self.assertEqual(row["candidatePlaceholderOffsets"], [72])
         group = output["executableSDKColumnConsensus"][0]
+        # Small numeric fields can collide with a string-table key in one record.
+        # Require cross-record consensus instead of pretending every candidate is an identifier.
+        self.assertEqual(set.intersection(*(set(r["candidateIdentityOffsets"]) for r in output["readOnlyObservations"])), {12, 16})
         self.assertTrue(group["enoughIndependentWitnesses"])
         self.assertEqual(group["sharedSDKOffsetCandidates"], [32])
         self.assertFalse(output["profileGenerated"])
