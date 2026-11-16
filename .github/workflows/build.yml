@@ -15,7 +15,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   build:
-    runs-on: macos-26-intel
+    runs-on: macos-15-intel
     timeout-minutes: 35
     env:
       DEVELOPER_DIR: /Applications/Xcode_26.2.app/Contents/Developer
@@ -56,7 +56,7 @@ jobs:
           set -eo pipefail
           xcodebuild -project ForceLegacyUI.xcodeproj -scheme ForceLegacyUI -configuration Debug \
             -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath build/simulator \
-            CODE_SIGNING_ALLOWED=NO build | tee build/simulator.log
+            CODE_SIGNING_ALLOWED=NO ONLY_ACTIVE_ARCH=YES ARCHS="$(uname -m)" COMPILER_INDEX_STORE_ENABLE=NO build | tee build/simulator.log
           python3 scripts/simulator_smoke.py
       - name: Offline evidence analysis regression tests
         run: python3 -m unittest discover -s Tests -p test_snapshot_analysis.py -v

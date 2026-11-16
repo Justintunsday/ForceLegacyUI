@@ -6,6 +6,7 @@ import plistlib
 import shlex
 import subprocess
 import time
+import uuid
 
 root = Path(__file__).resolve().parents[1]
 def run(*args, timeout=120, **kwargs):
@@ -29,12 +30,18 @@ def simulator_priority(value):
     return (version[:2] == sdk_pair, version, device["state"] == "Booted", device["name"] == "iPhone 17 Pro", device["name"])
 runtime, device = max(candidates, key=simulator_priority)
 print(f"Selected {runtime} / {device['name']} for toolchain simulator SDK {sdk_version}", flush=True)
-udid = device["udid"]
-if device["state"] != "Booted": run("xcrun", "simctl", "boot", udid)
+device_type = device.get("deviceTypeIdentifier")
+if not device_type:
+    types = json.loads(run("xcrun", "simctl", "list", "devicetypes", "--json"))["devicetypes"]
+    device_type = next(item["identifier"] for item in types if item["name"] == device["name"])
+# CI images can contain seeded devices awaiting an older data migration. Use our own empty device.
+udid = run("xcrun", "simctl", "create", "ForceLegacyUI-Smoke", device_type, runtime)
+uuid.UUID(udid)
+run("xcrun", "simctl", "boot", udid)
 run("xcrun", "simctl", "bootstatus", udid, "-b", timeout=300)
 output = root / "dist"; output.mkdir(exist_ok=True)
 products = root / "build/simulator/Build/Products/Debug-iphonesimulator"
-evidence = {"runtime": runtime, "toolchainSDK":sdk_version, "device": device["name"], "udid": udid, "deviceTest": False, "launches": []}
+evidence = {"runtime": runtime, "toolchainSDK":sdk_version, "device": device["name"], "udid": udid, "freshDevice":True, "deviceTest": False, "launches": []}
 for name in ["ForceLegacyUI", "CompatibilityProbeModern", "CompatibilityProbeLegacy"]:
     app = products / f"{name}.app"
     info = plistlib.loads((app / "Info.plist").read_bytes()); identifier = info["CFBundleIdentifier"]
