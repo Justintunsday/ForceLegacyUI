@@ -150,7 +150,29 @@ actor ResearchEngine {
                     output.log += "Read-only cache fallback: \(registrations.count) unambiguous registrations. SDK offsets were not inferred; installation state and layout remain unverified.\n"
                 }
                 if !demo && !diagnosticOnly {
-                    output.bundleFacts = observations(output.applications, log: &output.log)
+                    let receipts = try BackupRepository.list(backupRoot).filter {
+                        $0.status == .applied && $0.receipt.device == identity && $0.receipt.sourceName == url.lastPathComponent && $0.receipt.bundleEvidence != nil
+                    }
+                    let active = receipts.count == 1 ? receipts.first : nil
+                    let savedApps = active?.receipt.bundleEvidence?.map { InstalledApplication(bundleID: $0.bundleID, name: $0.bundleID,
+                        bundlePath: $0.bundlePath, reportedSDK: nil) }
+                    output.bundleFacts = observations(savedApps ?? output.applications,
+                        required: Set(active?.receipt.changes.map(\.bundleID) ?? []), log: &output.log)
+                    if let active {
+                        do {
+                            let saved = try WriteAuthorization.activeChangeLayout(backup: active, current: data, device: identity,
+                                observations: output.bundleFacts, source: url, validator: validator)
+                            let records = try store.applications(profile: saved, device: identity)
+                            correlatedProfile = saved
+                            output.applications = records.map { InstalledApplication(bundleID: $0.bundleID, name: $0.name,
+                                bundlePath: $0.bundlePath, reportedSDK: $0.sdk, applicationType: "Receipt-checked cache registration") }
+                            output.catalogSource = "Receipt-checked cache registrations"
+                            output.layoutID = saved.id; output.layoutValidated = true; output.status = .experimental
+                            output.writeReadinessReason = "A verified single-app SDK change is active. Restore it before another experiment."
+                            output.log += "Active receipt matches the current SDK change and unchanged bundle metadata. Restore remains available after relaunch.\n"
+                            return
+                        } catch { output.log += "Active receipt did not explain the current snapshot: \(error.localizedDescription)\n" }
+                    }
                     if profile == nil {
                         correlatedProfile = try RuntimeLayoutCandidates.correlate(data: data, device: identity,
                             observations: output.bundleFacts, validator: validator, log: &output.log)

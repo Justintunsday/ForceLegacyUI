@@ -79,6 +79,11 @@ final class SingleAppEvidenceTests: XCTestCase {
         let loaded = try BackupRepository.load(entry.directory)
         XCTAssertEqual(loaded.receipt.layout, DemoFixture.profile)
         XCTAssertEqual(loaded.receipt.bundleEvidence, facts)
+        XCTAssertEqual(try WriteAuthorization.activeChangeLayout(backup: loaded, current: plan.candidate, device: DemoFixture.device,
+            observations: facts, source: source, validator: validator), DemoFixture.profile)
+        let unrelated = try self.plan(plan.candidate, targets: [fixture.catalog[1].id:SDKVersion(17)]).candidate
+        XCTAssertThrowsError(try WriteAuthorization.activeChangeLayout(backup: loaded, current: unrelated, device: DemoFixture.device,
+            observations: facts, source: source, validator: validator))
         let undo = try TransactionEngine.restorationPlan(backup: loaded, current: plan.candidate, profile: DemoFixture.profile,
                                                         device: DemoFixture.device, validator: validator)
         let auth = try WriteAuthorization.validatedRestoration(plan: undo, backup: loaded, observations: facts, source: source, validator: validator)

@@ -160,6 +160,29 @@ public struct WriteAuthorization {
         return try boundSingleApp(plan: plan, source: source, observations: observations)
     }
 
+    /// Recognizes our own still-active SDK change without mistaking its expected SDK mismatch for a new layout.
+    public static func activeChangeLayout(backup: BackupEntry, current: Data, device: DeviceIdentity,
+                                          observations: [BundleSDKObservation], source: URL, validator: StoreValidator) throws -> LayoutProfile {
+        guard backup.status == .applied, let profile = backup.receipt.layout, LiveStorePolicy.storePath(source.path) else {
+            throw LegacyError.unsupported("No applied single-app receipt describes this source.")
+        }
+        let (checked, _, _) = try checkedBackup(backup, profile: profile, device: device,
+                                               observations: observations, source: source, validator: validator)
+        try validator.validate(current)
+        let records = try CSStore(data: current).applications(profile: profile, device: device)
+        guard let change = checked.receipt.changes.first, let target = records.first(where: { $0.bundleID == change.bundleID }),
+              target.sdk == change.target, target.bundlePath == change.bundlePath else {
+            throw LegacyError.conflict("The current SDK no longer matches the active receipt.")
+        }
+        for fact in observations {
+            guard let record = records.first(where: { $0.bundleID == fact.bundleID }), record.bundlePath == fact.bundlePath,
+                  record.sdk == (fact.bundleID == change.bundleID ? change.target : fact.sdk) else {
+                throw LegacyError.conflict("Current records contain an unexplained SDK/path change.")
+            }
+        }
+        return profile
+    }
+
     public static func validatedRecovery(backup: BackupEntry, profile: LayoutProfile, device: DeviceIdentity,
                                          observations: [BundleSDKObservation], source: URL, validator: StoreValidator) throws -> WriteAuthorization {
         let (checked, original, evidence) = try checkedBackup(backup, profile: profile, device: device,
