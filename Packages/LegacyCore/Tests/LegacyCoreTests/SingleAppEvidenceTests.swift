@@ -142,4 +142,19 @@ final class SingleAppEvidenceTests: XCTestCase {
         XCTAssertTrue(RuntimeLayoutCandidates.candidates(for: DeviceIdentity(osVersion: "27.1", osBuild: "other",
             architecture: "arm64", model: "test")).isEmpty)
     }
+    func testVarPlaceholderAliasesMatchIndependentCanonicalBundlePaths() throws {
+        var data = fixture.data
+        let store = try CSStore(data: data)
+        for unit in store.tables["<string>", default: [:]].values {
+            let bytes = data.subdata(in: unit.body..<(unit.body+unit.size)).prefix { $0 != 0 }
+            guard let text = String(data: bytes, encoding: .utf8), text.hasPrefix("/private/var/") else { continue }
+            var replacement = Data(text.dropFirst("/private".count).utf8); replacement.append(0)
+            replacement.append(Data(count: unit.size-replacement.count))
+            data.replaceSubrange(unit.body..<(unit.body+unit.size), with: replacement)
+        }
+        data = SyntheticStoreValidator.repair(data)
+        let records = try CSStore(data: data).applications(profile: DemoFixture.profile, device: DemoFixture.device)
+        XCTAssertEqual(records.map(\.bundlePath), fixture.catalog.map(\.bundlePath))
+        _ = try evidence(data: data)
+    }
 }

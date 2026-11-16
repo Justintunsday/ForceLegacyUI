@@ -38,7 +38,7 @@ evidence = {"runtime": runtime, "toolchainSDK":sdk_version, "device": device["na
 for name in ["ForceLegacyUI", "CompatibilityProbeModern", "CompatibilityProbeLegacy"]:
     app = products / f"{name}.app"
     info = plistlib.loads((app / "Info.plist").read_bytes()); identifier = info["CFBundleIdentifier"]
-    run("xcrun", "simctl", "install", udid, str(app))
+    run("xcrun", "simctl", "install", udid, str(app), timeout=300)
     arguments = ["--demo", "--self-test"] if name == "ForceLegacyUI" else []
     launch = run("xcrun", "simctl", "launch", udid, identifier, *arguments)
     time.sleep(3)

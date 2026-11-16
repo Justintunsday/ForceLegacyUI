@@ -215,7 +215,10 @@ public struct CSStore {
                   (placeholder as NSString).lastPathComponent == "SerializedPlaceholder.ipa" else {
                 throw LegacyError.invalid("An application record failed identity/path validation.")
             }
-            let parent = (placeholder as NSString).deletingLastPathComponent
+            guard let canonicalPlaceholder = LiveStorePolicy.canonical(placeholder) else {
+                throw LegacyError.invalid("Unexpected relative or traversing bundle placeholder path.")
+            }
+            let parent = (canonicalPlaceholder as NSString).deletingLastPathComponent
             guard (parent as NSString).deletingLastPathComponent == "/private/var/containers/Bundle/Application",
                   UUID(uuidString: (parent as NSString).lastPathComponent) != nil,
                   seen.insert(id).inserted else {
