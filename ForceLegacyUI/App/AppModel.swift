@@ -31,7 +31,11 @@ final class AppModel: ObservableObject {
         if inspection.appGroup?.state == .ambiguous {
             return "Several matching App Groups are accessible. Configure one dedicated group before cache inspection."
         }
-        return inspection.storeError ?? "iOS exposed no application records. Open Diagnostics to review each enumeration method and cache access."
+        if let error = inspection.storeError {
+            let reason = error.components(separatedBy: .newlines).first ?? "Cache discovery failed."
+            return reason + " Open Diagnostics for discovery results, or run Extended Store Discovery."
+        }
+        return "iOS exposed no application records. Open Diagnostics to review each enumeration method and cache access."
     }
     func copyDiagnostics() {
         UIPasteboard.general.string = inspection?.log ?? "Inspection has not completed."

@@ -88,6 +88,8 @@ actor ResearchEngine {
         }
         var output = Inspection(device: identity, applications: apps, layoutValidated: false,
                                 isDemo: demo, log: message as String? ?? "", status: .unsupported)
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "unknown"
+        output.log = "ForceLegacyUI \(version)\niOS \(output.device.osVersion) (\(output.device.osBuild)); \(output.device.model); \(output.device.architecture)\nInspection: \(demo ? "demo" : (extended ? "extended" : "standard"))\n\n" + output.log
         if !demo {
             let (group, source) = resolveAppGroup()
             output.appGroup = group; output.appGroupSource = source

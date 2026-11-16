@@ -3,6 +3,15 @@
 The app ships with an empty live-write profile allowlist. A JSON profile, plausible
 SDK byte pattern, matching record size or successful sandbox grant cannot change it.
 
+Read-only discovery may probe the exact legacy cache directory `/private/var/db/lsd`
+and UUID/lsd `Library/Caches` directories under two system-container roots. Extended
+search only lists root names and matching cache-file metadata; it does not inspect
+unrelated application data. It has directory/entry/time budgets and releases each
+extension before advancing. It refuses multiple discovered stores rather than
+selecting the newest. The legacy path is not added to live-write authorization.
+Time budgets are checked between synchronous system calls and cannot interrupt a
+blocked private API. A failed or bounded search does not establish that no store exists.
+
 | Stage | Required condition | Failure behavior |
 | --- | --- | --- |
 | Discovery | One unambiguous LS store in an allowed cache directory | Refuse; do not choose an arbitrary newest file |

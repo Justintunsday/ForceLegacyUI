@@ -6,12 +6,13 @@ and a guarded SDK-metadata experiment engine.
 
 [繁體中文安裝與「找不到 App」排查教程](docs/GUIDE.zh-Hant.md)
 
-[Download 0.1.1 IPA (re-signing required)](https://github.com/Justintunsday/ForceLegacyUI/releases/download/v0.1.1/ForceLegacyUI-unsigned.ipa)
+[Download 0.1.2 IPA (re-signing required)](https://github.com/Justintunsday/ForceLegacyUI/releases/download/v0.1.2/ForceLegacyUI-unsigned.ipa)
 
-Version 0.1.1 fixes missing App Group request metadata in the old sideloading
-artifact, detects matching signing-tool group renames, adds fallback enumeration,
-and shows the app-list failure reason directly. Updating permissions does not
-enable unverified live overrides.
+Version 0.1.2 adds missing cache-discovery fallbacks when LaunchServices and
+container metadata queries return nothing, records per-stage access failures,
+and fixes physical-device architecture reporting. It retains the 0.1.1 App Group
+signing/rename fixes. Physical-device cache access remains unverified; updating
+permissions does not enable unverified live overrides.
 
 **No legacy appearance override is currently verified on iOS 26.6.2.** The shipped
 live-write allowlist is empty. The app does not modify signed app bundles, install
@@ -41,7 +42,7 @@ device-installable main-app IPA when matching credentials and provisioning are
 configured. Unsigned IPAs require signing before installation.
 
 [Find the latest build artifacts](https://github.com/Justintunsday/ForceLegacyUI/actions/workflows/build.yml).
-Use a successful 0.1.1 build for sideloading; the old 0.1.0 package omitted App
+Use a successful 0.1.2 build for sideloading; the old 0.1.0 package omitted App
 Group signing metadata. See the [validation record](docs/VALIDATION.md) for test scope.
 The [0.1.1 build](https://github.com/Justintunsday/ForceLegacyUI/actions/runs/43775929275)
 passed 28 safety tests, requested-entitlement packaging checks, device/simulator

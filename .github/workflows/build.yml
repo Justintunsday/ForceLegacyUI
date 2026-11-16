@@ -25,6 +25,13 @@ jobs:
         run: python3 scripts/generate_project.py --check
       - name: Core safety tests
         run: swift test --package-path Packages/LegacyCore --parallel
+      - name: Discovery fallback regression tests
+        run: |
+          mkdir -p build dist
+          xcrun --sdk macosx clang -fobjc-arc -fblocks -Wall -Wextra -Werror -framework Foundation \
+            -I ForceLegacyUI/Bridge ForceLegacyUI/Bridge/FLStoreDiscovery.m ForceLegacyUI/Bridge/FLDeviceIdentity.m Tests/DiscoveryPolicyTests.m \
+            -o build/discovery-policy-tests
+          build/discovery-policy-tests dist/discovery-policy-tests.json
       - name: Build device apps
         run: |
           set -eo pipefail

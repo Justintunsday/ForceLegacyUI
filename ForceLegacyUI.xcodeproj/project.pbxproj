@@ -11,6 +11,7 @@
 	1173CF0F5FE33CD40FE1698E = { isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "ForceLegacyUI/Bridge/FLLSBridge.m"; sourceTree = SOURCE_ROOT; };
 	1601E715D313FABFBD81CA55 = { isa = XCConfigurationList; buildConfigurations = (46E189DDE62C62A5BBF5FB61,BF2639E261119C5B88438751); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
 	17DEE17FC5980710E718FAA5 = { isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+	1AFD55B53B98E2C86ACE9278 = { isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "ForceLegacyUI/Bridge/FLDeviceIdentity.m"; sourceTree = SOURCE_ROOT; };
 	23151E2546A2AC337C10C84D = { isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (9C54028AA3DFAAC86F211698); runOnlyForDeploymentPostprocessing = 0; };
 	241FE4F647F352807AC52861 = { isa = PBXBuildFile; fileRef = 71600A15AA05701E18E72799; };
 	244210E48437B6556980A702 = { isa = PBXProject; attributes = { LastUpgradeCheck = 2600; TargetAttributes = { A6F10959421F6760DBFCBE6D = { SystemCapabilities = { com.apple.ApplicationGroups.iOS = { enabled = 1; }; }; }; }; }; buildConfigurationList = B4E10CAA9C5E22150B71559C; compatibilityVersion = "Xcode 14.0"; developmentRegion = en; hasScannedForEncodings = 0; knownRegions = (en,Base); mainGroup = AD936FCBED631FA67E05C3EA; packageReferences = (BC4A71180870F7945155FBB0); productRefGroup = 0A3E27B8CA818264D75C8D81; projectDirPath = ""; projectRoot = ""; targets = (A6F10959421F6760DBFCBE6D,0B47E7DF98351156F8942999,82F27BF3E29467C3C7B4622A); };
@@ -20,11 +21,14 @@
 	2BCED4E1FF072B76D94EF6CE = { isa = PBXBuildFile; fileRef = 1173CF0F5FE33CD40FE1698E; };
 	35EF7742267F6F9A9609CE1F = { isa = PBXBuildFile; fileRef = 533ECEE7DD92872AB09B7510; };
 	3AA9118F2EA1269CDEBBD751 = { isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "ForceLegacyUI/Vendor/worse_query/worse_query.m"; sourceTree = SOURCE_ROOT; };
+	409ECE51E6C8D6C51EB3086B = { isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "ForceLegacyUI/Bridge/FLStoreDiscovery.m"; sourceTree = SOURCE_ROOT; };
+	441DBD21F0597AAA8C30744D = { isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "ForceLegacyUI/Bridge/FLDeviceIdentity.h"; sourceTree = SOURCE_ROOT; };
 	46E189DDE62C62A5BBF5FB61 = { isa = XCBuildConfiguration; baseConfigurationReference = EE1E752050BF380B88186C3D; buildSettings = { PRODUCT_NAME = "CompatibilityProbeModern"; PRODUCT_BUNDLE_IDENTIFIER = "$(FL_BUNDLE_ID).probe.modern"; INFOPLIST_FILE = "Probes/Modern-Info.plist"; SWIFT_OPTIMIZATION_LEVEL = "-Onone"; SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG"; ASSETCATALOG_COMPILER_APPICON_NAME = "AppIcon"; }; name = Debug; };
-	48C44173524288815DB93E8D = { isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (8BDD92873BAF3DBDB08E15CD,FC833D8CDD8706437FC7BEC3,634CAEA10FDFDD1E71E03948); runOnlyForDeploymentPostprocessing = 0; };
+	48C44173524288815DB93E8D = { isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (C3D32FEB7FFE28A37918F228,8BDD92873BAF3DBDB08E15CD,A5E53A3F10806131C03D49C2,FC833D8CDD8706437FC7BEC3,634CAEA10FDFDD1E71E03948); runOnlyForDeploymentPostprocessing = 0; };
 	48CAA5916183D013178211A6 = { isa = XCBuildConfiguration; baseConfigurationReference = EE1E752050BF380B88186C3D; buildSettings = { PRODUCT_NAME = "ForceLegacyUI"; PRODUCT_BUNDLE_IDENTIFIER = "$(FL_BUNDLE_ID)"; INFOPLIST_FILE = "ForceLegacyUI/Resources/Info.plist"; SWIFT_OPTIMIZATION_LEVEL = "-O"; SWIFT_ACTIVE_COMPILATION_CONDITIONS = ""; ASSETCATALOG_COMPILER_APPICON_NAME = "AppIcon"; CODE_SIGN_ENTITLEMENTS = "ForceLegacyUI/Resources/ForceLegacyUI.entitlements"; }; name = Release; };
 	4B836ACDFDFFAD92B5318D89 = { isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Probes/Modern-Info.plist"; sourceTree = SOURCE_ROOT; };
 	4C784185BB496BA1A11423C5 = { isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CompatibilityProbeLegacy.app; sourceTree = BUILT_PRODUCTS_DIR; };
+	5241509C20D273296208960D = { isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "ForceLegacyUI/Bridge/FLStoreDiscovery.h"; sourceTree = SOURCE_ROOT; };
 	52AE39CED787D1557169520C = { isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Probes/Legacy-Info.plist"; sourceTree = SOURCE_ROOT; };
 	533ECEE7DD92872AB09B7510 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ForceLegacyUI/Services/ResearchEngine.swift"; sourceTree = SOURCE_ROOT; };
 	55BB6F9A88B4E02CCFAFC669 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Packages/LegacyCore/Package.swift"; sourceTree = SOURCE_ROOT; };
@@ -37,6 +41,7 @@
 	71600A15AA05701E18E72799 = { isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "ForceLegacyUI/Resources/Assets.xcassets"; sourceTree = SOURCE_ROOT; };
 	788C73272BAE554671E7280A = { isa = PBXBuildFile; fileRef = 000F1777D192A79FD4372B16; };
 	805079278DE335943B1CA59A = { isa = PBXBuildFile; fileRef = 0F47C359C44FD8C2D5C3F064; };
+	80CDAA9E84639F8848BDD93E = { isa = PBXBuildFile; fileRef = 1AFD55B53B98E2C86ACE9278; };
 	81E86D2A0D765BD46F1D8BD1 = { isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CompatibilityProbeModern.app; sourceTree = BUILT_PRODUCTS_DIR; };
 	82F27BF3E29467C3C7B4622A = { isa = PBXNativeTarget; buildConfigurationList = CD00D30B4C6A87736D33C6CA; buildPhases = (48C44173524288815DB93E8D,B4EA7586EA3F0A47CB32821D,6A086A6A1BF4161F4866EF58); buildRules = (); dependencies = (); name = CompatibilityProbeLegacy; packageProductDependencies = (); productName = CompatibilityProbeLegacy; productReference = 4C784185BB496BA1A11423C5; productType = "com.apple.product-type.application"; };
 	832D60627AADCA36C1C65106 = { isa = PBXBuildFile; fileRef = 3AA9118F2EA1269CDEBBD751; };
@@ -46,17 +51,22 @@
 	9951939FA2045219BA968984 = { isa = XCBuildConfiguration; baseConfigurationReference = EE1E752050BF380B88186C3D; buildSettings = { PRODUCT_NAME = "CompatibilityProbeLegacy"; PRODUCT_BUNDLE_IDENTIFIER = "$(FL_BUNDLE_ID).probe.legacy"; INFOPLIST_FILE = "Probes/Legacy-Info.plist"; SWIFT_OPTIMIZATION_LEVEL = "-O"; SWIFT_ACTIVE_COMPILATION_CONDITIONS = ""; ASSETCATALOG_COMPILER_APPICON_NAME = "AppIcon"; }; name = Release; };
 	9C54028AA3DFAAC86F211698 = { isa = PBXBuildFile; productRef = ED3DC570B697046E1D6DC405; };
 	A173972BFC8ECF3D4ABD7840 = { isa = XCBuildConfiguration; baseConfigurationReference = EE1E752050BF380B88186C3D; buildSettings = { PRODUCT_NAME = "CompatibilityProbeLegacy"; PRODUCT_BUNDLE_IDENTIFIER = "$(FL_BUNDLE_ID).probe.legacy"; INFOPLIST_FILE = "Probes/Legacy-Info.plist"; SWIFT_OPTIMIZATION_LEVEL = "-Onone"; SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG"; ASSETCATALOG_COMPILER_APPICON_NAME = "AppIcon"; }; name = Debug; };
+	A5E53A3F10806131C03D49C2 = { isa = PBXBuildFile; fileRef = 409ECE51E6C8D6C51EB3086B; };
 	A6F10959421F6760DBFCBE6D = { isa = PBXNativeTarget; buildConfigurationList = 08A15989F7C17F73B32BE5DB; buildPhases = (D397DFFBCECD2EE1A63C509E,23151E2546A2AC337C10C84D,282C2B0F308DE66D7EE2BF9A); buildRules = (); dependencies = (); name = ForceLegacyUI; packageProductDependencies = (ED3DC570B697046E1D6DC405); productName = ForceLegacyUI; productReference = 588BE599342DDB110FF94FB9; productType = "com.apple.product-type.application"; };
-	AD936FCBED631FA67E05C3EA = { isa = PBXGroup; children = (2A524714FA0D7F239F47C1CD,000F1777D192A79FD4372B16,EC53B5F6A873AA29D653F683,1173CF0F5FE33CD40FE1698E,062190782929A17D6609011C,5A78135801EA1A4A33721A80,533ECEE7DD92872AB09B7510,D3BAE26B68D4614D18CC3930,3AA9118F2EA1269CDEBBD751,0F47C359C44FD8C2D5C3F064,6211F1169264B8FAE8D52308,8ACABDC7E08643F3E80EF000,EE1E752050BF380B88186C3D,4B836ACDFDFFAD92B5318D89,52AE39CED787D1557169520C,55BB6F9A88B4E02CCFAFC669,F5D2AC81ADC35428B3BE98BB,71600A15AA05701E18E72799,0A3E27B8CA818264D75C8D81); sourceTree = "<group>"; };
+	AD936FCBED631FA67E05C3EA = { isa = PBXGroup; children = (2A524714FA0D7F239F47C1CD,000F1777D192A79FD4372B16,441DBD21F0597AAA8C30744D,1AFD55B53B98E2C86ACE9278,EC53B5F6A873AA29D653F683,1173CF0F5FE33CD40FE1698E,5241509C20D273296208960D,409ECE51E6C8D6C51EB3086B,062190782929A17D6609011C,5A78135801EA1A4A33721A80,533ECEE7DD92872AB09B7510,D3BAE26B68D4614D18CC3930,3AA9118F2EA1269CDEBBD751,0F47C359C44FD8C2D5C3F064,6211F1169264B8FAE8D52308,8ACABDC7E08643F3E80EF000,EE1E752050BF380B88186C3D,4B836ACDFDFFAD92B5318D89,52AE39CED787D1557169520C,55BB6F9A88B4E02CCFAFC669,F5D2AC81ADC35428B3BE98BB,71600A15AA05701E18E72799,0A3E27B8CA818264D75C8D81); sourceTree = "<group>"; };
 	AE9D64906C8F5BA75573AED0 = { isa = PBXBuildFile; fileRef = 71600A15AA05701E18E72799; };
 	B4E10CAA9C5E22150B71559C = { isa = XCConfigurationList; buildConfigurations = (2B23A31EEC75B029432F2445,07CA1E69F6068DEA30A4DA6B); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
 	B4EA7586EA3F0A47CB32821D = { isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
 	BC4A71180870F7945155FBB0 = { isa = XCLocalSwiftPackageReference; relativePath = Packages/LegacyCore; };
 	BF2639E261119C5B88438751 = { isa = XCBuildConfiguration; baseConfigurationReference = EE1E752050BF380B88186C3D; buildSettings = { PRODUCT_NAME = "CompatibilityProbeModern"; PRODUCT_BUNDLE_IDENTIFIER = "$(FL_BUNDLE_ID).probe.modern"; INFOPLIST_FILE = "Probes/Modern-Info.plist"; SWIFT_OPTIMIZATION_LEVEL = "-O"; SWIFT_ACTIVE_COMPILATION_CONDITIONS = ""; ASSETCATALOG_COMPILER_APPICON_NAME = "AppIcon"; }; name = Release; };
 	C1928FB6EE62B12661603D6E = { isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (241FE4F647F352807AC52861); runOnlyForDeploymentPostprocessing = 0; };
+	C3D32FEB7FFE28A37918F228 = { isa = PBXBuildFile; fileRef = 1AFD55B53B98E2C86ACE9278; };
+	CAC7B6A16D0972DFC4B5E28F = { isa = PBXBuildFile; fileRef = 409ECE51E6C8D6C51EB3086B; };
 	CD00D30B4C6A87736D33C6CA = { isa = XCConfigurationList; buildConfigurations = (A173972BFC8ECF3D4ABD7840,9951939FA2045219BA968984); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
-	D397DFFBCECD2EE1A63C509E = { isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (E190D9EB7D91C32B87B070B2,788C73272BAE554671E7280A,2BCED4E1FF072B76D94EF6CE,EA61FCCCF802124F5BA87CEA,35EF7742267F6F9A9609CE1F,F956AF86AFADA8F5CF26CB23,805079278DE335943B1CA59A); runOnlyForDeploymentPostprocessing = 0; };
+	CF96830DEE516DBF1CB8C7FF = { isa = PBXBuildFile; fileRef = 409ECE51E6C8D6C51EB3086B; };
+	D397DFFBCECD2EE1A63C509E = { isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (E190D9EB7D91C32B87B070B2,788C73272BAE554671E7280A,DC3FD97311B823C3E0868C86,2BCED4E1FF072B76D94EF6CE,CAC7B6A16D0972DFC4B5E28F,EA61FCCCF802124F5BA87CEA,35EF7742267F6F9A9609CE1F,F956AF86AFADA8F5CF26CB23,805079278DE335943B1CA59A); runOnlyForDeploymentPostprocessing = 0; };
 	D3BAE26B68D4614D18CC3930 = { isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "ForceLegacyUI/Vendor/worse_query/worse_query.h"; sourceTree = SOURCE_ROOT; };
+	DC3FD97311B823C3E0868C86 = { isa = PBXBuildFile; fileRef = 1AFD55B53B98E2C86ACE9278; };
 	E190D9EB7D91C32B87B070B2 = { isa = PBXBuildFile; fileRef = 2A524714FA0D7F239F47C1CD; };
 	EA61FCCCF802124F5BA87CEA = { isa = PBXBuildFile; fileRef = 5A78135801EA1A4A33721A80; };
 	EC53B5F6A873AA29D653F683 = { isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "ForceLegacyUI/Bridge/FLLSBridge.h"; sourceTree = SOURCE_ROOT; };
@@ -66,5 +76,5 @@
 	F5D2AC81ADC35428B3BE98BB = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Probes/CompatibilityProbe.swift"; sourceTree = SOURCE_ROOT; };
 	F956AF86AFADA8F5CF26CB23 = { isa = PBXBuildFile; fileRef = 3AA9118F2EA1269CDEBBD751; };
 	FC833D8CDD8706437FC7BEC3 = { isa = PBXBuildFile; fileRef = 3AA9118F2EA1269CDEBBD751; };
-	FFBFEF1119784D6D633FBDEA = { isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (6A95E85C150BF764FA50F3C7,832D60627AADCA36C1C65106,0E6452E3B440035FD4D5CAE6); runOnlyForDeploymentPostprocessing = 0; };
+	FFBFEF1119784D6D633FBDEA = { isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (80CDAA9E84639F8848BDD93E,6A95E85C150BF764FA50F3C7,CF96830DEE516DBF1CB8C7FF,832D60627AADCA36C1C65106,0E6452E3B440035FD4D5CAE6); runOnlyForDeploymentPostprocessing = 0; };
 }; rootObject = 244210E48437B6556980A702; }

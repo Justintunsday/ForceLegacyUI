@@ -37,6 +37,7 @@ struct ContentView: View {
                                 Button("Open Diagnostics") { selectedTab = 1 }
                                 Button("Copy Diagnostic Log") { model.copyDiagnostics() }
                                 Button("Retry Read-Only Inspection") { Task { await model.scan() } }
+                                Button("Run Extended Store Discovery") { Task { await model.scan(extended: true) } }
                             }
                         }
                     }
@@ -151,7 +152,7 @@ private struct DiagnosticsView: View {
                     Button("Run Read-Only Inspection") { Task { await model.scan() } }
                     Button("Extended Store Discovery") { Task { await model.scan(extended: true) } }
                     Button("Import Layout for Copy Experiment") { importing = true }.disabled(model.demo)
-                } footer: { Text("Extended discovery scans inode paths for up to 8 seconds. Imported profiles never authorize live writes.") }
+                } footer: { Text("Extended discovery tries container cache directories with a 10-second budget, then inode paths for up to 8 seconds. System queries can take longer. Imported profiles never authorize live writes.") }
                 .disabled(model.busy)
                 Section("Export") {
                     Button("Save Diagnostic Report") { Task { await model.export(includeSnapshot: false) } }
