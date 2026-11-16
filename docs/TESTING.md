@@ -1,5 +1,16 @@
 # Device and simulator test protocol
 
+## Discovery regression checks on macOS
+
+The CI step **Discovery fallback regression tests** compiles the production
+Foundation discovery coordinator and Mach-O architecture reader against injected
+denied/empty/mapped/cache responses. It checks the fixed-path fallback, extension
+search limits, unrelated-path rejection, ambiguous-store refusal and arm64/arm64e
+subtype reporting. Its JSON report explicitly records that no physical-device
+sandbox access was tested. These checks supplement the Swift package's transaction
+tests and the native simulator catalog smoke test; they do not validate worse_query
+on a physical device.
+
 ## First run on iOS 26.6.2
 
 1. Sign and install ForceLegacyUI with a dedicated, provisioned App Group as

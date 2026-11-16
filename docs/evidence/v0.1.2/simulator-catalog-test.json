@@ -1,0 +1,1650 @@
+{
+  "appGroup": {
+    "configured": "group.org.forcelegacyui.app",
+    "reportedGroups": [],
+    "state": "missing"
+  },
+  "appGroupSource": "Running signature (SecTask)",
+  "applications": [
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.MediaRemoteUIService",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/MediaRemoteUIService.app",
+      "name": "\u200e",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.MediaRemoteUI",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/MediaRemoteUI.app",
+      "name": "\u200e",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.AAUIViewService",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/AAUIViewService.app",
+      "name": "AAUIViewService",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.AccessorySetupUI",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/AccessorySetupUI.app",
+      "name": "AccessorySetupUI",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.AccountAuthenticationDialog",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/AccountAuthenticationDialog.app",
+      "name": "AccountAuthenticationDialog",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.Sharing.AirDropUI",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/AirDropUI.app",
+      "name": "AirDrop",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.AdaptiveMusicApp",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/AdaptiveMusicApp.app",
+      "name": "Ambient Music",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.AMSUIAuthenticationViewService",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/AMSUIAuthenticationViewService.app",
+      "name": "AMSUIAuthenticationViewService",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.ClipViewService",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/ClipViewService.app",
+      "name": "App Clip",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.AppDistributionLaunchAngel",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/AppDistributionLaunchAngel.app",
+      "name": "AppDistributionLaunchAngel",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.AppleIDSetupUIService",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/AppleIDSetupUIService.app",
+      "name": "Apple ID Setup",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.AMSEngagementViewService",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/AMSEngagementViewService.app",
+      "name": "Apple Media Services",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.TVSetupUIService",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/TVSetupUIService.app",
+      "name": "Apple\u00a0TV Setup",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.AppleCashStickerPackHost",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/AppleCashStickerPackHost.app",
+      "name": "AppleCashStickerPackHost",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.AppProtectionUIHost",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/AppProtectionUIHost.app",
+      "name": "AppProtectionUIHost",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.AppSSOUIService",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/AppSSOUIService.app",
+      "name": "AppSSOUIService",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.AskToUIHost",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/AskToUIHost.app",
+      "name": "AskToUIHost",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.AuthenticationServicesUI",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/AuthenticationServicesUI.app",
+      "name": "AuthenticationServicesUI",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.AuthKitUIService",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/AuthKitUIService.app",
+      "name": "AuthKitUIService",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.avkit.AVKitRoutingService",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/AVKitRoutingService.app",
+      "name": "AVKitRoutingService",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.AXUIViewService",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/AXUIViewService.app",
+      "name": "AXUIViewService",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.ActivityProgress.ActivityProgressUI",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/ActivityProgressUI.app",
+      "name": "Background Activities",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.BacklinkIndicator",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/BacklinkIndicator.app",
+      "name": "BacklinkIndicator",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.Batteries",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/Batteries.app",
+      "name": "Batteries",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.BusinessChatViewService",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/BusinessChatViewService.app",
+      "name": "BusinessChatViewService",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.mobilecal",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/MobileCal.app",
+      "name": "Calendar",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.CameraOverlayAngel",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/CameraOverlayAngel.app",
+      "name": "CameraOverlayAngel",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.CarPlaySetupApp",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/CarPlaySetup.app",
+      "name": "CarPlaySetup",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.CarPlaySplashScreen",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/CarPlaySplashScreen.app",
+      "name": "CarPlaySplashScreen",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.CarPlayWallpaper",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/CarPlayWallpaper.app",
+      "name": "CarPlayWallpaper",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.SafetyMonitorApp",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/SafetyMonitorApp.app",
+      "name": "Check\u00a0In",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.ClockAngel",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/ClockAngel.app",
+      "name": "Clock",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.BarcodeScanner",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/BarcodeScanner.app",
+      "name": "Code Scanner",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.UIKit.ColorPickerUIService",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/ColorPickerUIService.app",
+      "name": "ColorPickerUIService",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.CompanionViewService",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/CompanionViewService.app",
+      "name": "CompanionViewService",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.ContactsUI.Carousel",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/ContactPhotoCarouselRemoteAlert.app",
+      "name": "ContactPhotoCarouselRemoteAlert",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.PeopleViewService",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/PeopleViewService.app",
+      "name": "Contacts",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.MobileAddressBook",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/Contacts.app",
+      "name": "Contacts",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.AXRemoteViewService",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/AXRemoteViewService.app",
+      "name": "Control Nearby Devices",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.coreidv.CoreIDVUIService",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/CoreIDVUIService.app",
+      "name": "CoreIDVUIService",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.ctkui",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/CTKUIService.app",
+      "name": "CTKUIService",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.CTNotifyUIService",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/CTNotifyUIService.app",
+      "name": "CTNotifyUIService",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.DocumentManager.DockFolderViewService",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/DockFolderViewService.app",
+      "name": "DockFolderViewService",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.ShazamEventsApp",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/ShazamEventsApp.app",
+      "name": "Events",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.EventViewService",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/EventViewService.app",
+      "name": "Events",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.FaceTimeLinkTrampoline",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/FaceTimeLinkTrampoline.app",
+      "name": "FaceTime",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.AskPermissionUI",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/AskPermissionUI.app",
+      "name": "Family",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.family",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/Family.app",
+      "name": "Family",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.PeopleMessageService",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/PeopleMessageService.app",
+      "name": "Family Request",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.FCAuthenticationUI",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/FamilyControlsAuthenticationUI.app",
+      "name": "FamilyControlsAuthenticationUI",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.FamilyExtensionHost",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/FamilyExtensionHost.app",
+      "name": "FamilyExtensionHost",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.feedback.remote",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/FeedbackRemoteView.app",
+      "name": "FeedbackRemoteView",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.DocumentsApp",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/Files.app",
+      "name": "Files",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.FinanceUIService",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/FinanceUIService.app",
+      "name": "FinanceUIService",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.findmy.remoteuiservice",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/FindMyRemoteUIService.app",
+      "name": "FindMyRemoteUIService",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.Fitness",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/Fitness.app",
+      "name": "Fitness",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.FontInstallViewService",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/FontInstallViewService.app",
+      "name": "FontInstallViewService",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.UIKit.FontPickerUIService",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/FontPickerUIService.app",
+      "name": "FontPickerUIService",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "User",
+      "bundleID": "org.forcelegacyui.app",
+      "bundlePath": "/Users/runner/Library/Developer/CoreSimulator/Devices/DA5C13CE-A5E8-4155-98B3-2854ECCED9EE/data/Containers/Bundle/Application/DD512A2E-262F-47D6-98E0-F9FA3C0C1919/ForceLegacyUI.app",
+      "name": "ForceLegacyUI",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.gamecenter.GameCenterUIService",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/GameCenterUIService.app",
+      "name": "Game Center UI Service",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.GameCenterRemoteAlert",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/GameCenterRemoteAlert.app",
+      "name": "GameCenterRemoteAlert",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.GameTrampoline",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/GameTrampoline.app",
+      "name": "Games",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.GuestUserHandoverSetup",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/GuestUserHandoverSetup.app",
+      "name": "GuestUserHandoverSetup",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.Health",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/Health.app",
+      "name": "Health",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.HealthPrivacyService",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/HealthPrivacyService.app",
+      "name": "HealthPrivacyService",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.HearingApp",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/HearingApp.app",
+      "name": "HearingApp",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.Home.HomeUIService",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/HomeUIService.app",
+      "name": "Home",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.Home.HomeControlService",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/HomeControlService.app",
+      "name": "Home",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.HomeCaptiveViewService",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/HomeCaptiveViewService.app",
+      "name": "HomeCaptiveViewService",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.CloudKit.ShareBear",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/iCloud.app",
+      "name": "iCloud",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.icq",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/iCloud+.app",
+      "name": "iCloud+",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.iMessageAppsViewService",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/iMessageAppsViewService.app",
+      "name": "iMessageAppsViewService",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.InputUI",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/InputUI.app",
+      "name": "Input UI",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.ios.StoreKitUIService",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/StoreKitUIService.app",
+      "name": "iTunes",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.Posters.KaleidoscopePosterApp",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/KaleidoscopePosterApp.app",
+      "name": "Kaleidoscope",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "User",
+      "bundleID": "org.forcelegacyui.app.probe.legacy",
+      "bundlePath": "/Users/runner/Library/Developer/CoreSimulator/Devices/DA5C13CE-A5E8-4155-98B3-2854ECCED9EE/data/Containers/Bundle/Application/75FE5F56-5A62-4181-8841-FACDD076E37C/CompatibilityProbeLegacy.app",
+      "name": "Legacy Probe",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.ContactsUI.LimitedAccessPromptView",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/LimitedAccessPromptView.app",
+      "name": "LimitedAccessPromptView",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.LoginUI",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/LoginUI.app",
+      "name": "Login Screen",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.datadetectors.DDActionsService",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/DDActionsService.app",
+      "name": "Look Up",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.Maps",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/Maps.app",
+      "name": "Maps",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.mobilesms.compose",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/MessagesViewService.app",
+      "name": "Messages",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.MobileSMS",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/MobileSMS.app",
+      "name": "Messages",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "User",
+      "bundleID": "org.forcelegacyui.app.probe.modern",
+      "bundlePath": "/Users/runner/Library/Developer/CoreSimulator/Devices/DA5C13CE-A5E8-4155-98B3-2854ECCED9EE/data/Containers/Bundle/Application/AB59963C-25EB-4A1E-A7E9-EFEB86702555/CompatibilityProbeModern.app",
+      "name": "Modern Probe",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.MTLReplayer",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/MTLReplayer.app",
+      "name": "MTLReplayer",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.musicrecognition",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/MusicRecognition.app",
+      "name": "Music Recognition",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.MusicUIService",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/MusicUIService.app",
+      "name": "MusicUIService",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.NetworkEndpointPickerUI",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/NetworkEndpointPickerUI.app",
+      "name": "NetworkEndpointPickerUI",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.news",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/News.app",
+      "name": "News",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.PassbookSecureUIService",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/PassbookSecureUIService.app",
+      "name": "PassbookSecureUIService",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.Passwords",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/Passwords.app",
+      "name": "Passwords",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.PASViewService",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/PASViewService.app",
+      "name": "PASViewService",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.mobileslideshow",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/Photos.app",
+      "name": "Photos",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.Photos.PhotosUIService",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/PhotosUIService.app",
+      "name": "PhotosUIService",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.PosterBoard",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/PosterBoard.app",
+      "name": "PosterBoard",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.Preview",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/Preview.app",
+      "name": "Preview",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.PridePoster",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/PridePosterApp.app",
+      "name": "Pride",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.ProximityReaderUIService",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/ProximityReaderUIService.app",
+      "name": "Proximity Reader UI Service",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.reminders",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/Reminders.app",
+      "name": "Reminders",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.TVRemoteUIService",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/TVRemoteUIService.app",
+      "name": "Remote",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.RemoteiCloudQuotaUI",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/RemoteiCloudQuotaUI.app",
+      "name": "RemoteiCloudQuotaUI",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.RemotePassUIService",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/RemotePaymentPassActionsService.app",
+      "name": "RemotePaymentPassActionsService",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.SafariViewService",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/SafariViewService.app",
+      "name": "Safari",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.mobilesafari",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/MobileSafari.app",
+      "name": "Safari",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.ScreenTimeWidgetApplication",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/Screen Time.app",
+      "name": "Screen Time",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.ScreenshotServicesService",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/ScreenshotServicesService.app",
+      "name": "Screenshots",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.ScreenTimeUnlock",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/ScreenTimeUnlock.app",
+      "name": "ScreenTimeUnlock",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.Preferences",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/Preferences.app",
+      "name": "Settings",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.CarPlaySettings",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/CarPlaySettings.app",
+      "name": "Settings",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.SharingViewService",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/SharingViewService.app",
+      "name": "Setup",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.SharedWebCredentialViewService",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/SharedWebCredentialViewService.app",
+      "name": "SharedWebCredentialViewService",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.SharingUIService",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/SharingUIService.app",
+      "name": "SharingUIService",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.shortcuts.runtime",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/ShortcutsViewService.app",
+      "name": "Shortcuts",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.shortcuts",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/Shortcuts.app",
+      "name": "Shortcuts",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.ShortcutsUI",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/ShortcutsUI.app",
+      "name": "Shortcuts",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.systemactions",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/SystemActions.app",
+      "name": "Shortcuts",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.siri",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/Siri.app",
+      "name": "Siri",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.Health.Sleep",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/SleepWidgetContainer.app",
+      "name": "Sleep",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.SleepLockScreen",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/SleepLockScreen.app",
+      "name": "SleepLockScreen",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.social.SLYahooAuth",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/SLYahooAuth.app",
+      "name": "SLYahooAuth",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.Spotlight",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/Spotlight.app",
+      "name": "Spotlight",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.SpringBoardEducation",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/SpringBoardEducation.app",
+      "name": "SpringBoardEducation",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.SupportFlow",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/SupportFlow.app",
+      "name": "Step-by-Step Help",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.StoreKitUISceneService",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/StoreKitUISceneService.app",
+      "name": "StoreKitUISceneService",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.SystemPaperViewService",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/SystemPaperViewService.app",
+      "name": "SystemPaperViewService",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.ProximityReaderSceneUI",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/ProximityReaderSceneUI.app",
+      "name": "Tap to Pay on iPhone",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.TDGSharingViewService",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/TDGSharingViewService.app",
+      "name": "TDGSharingViewService",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.VSViewService",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/VideoSubscriberAccountViewService.app",
+      "name": "TV Provider",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.TVAccessViewService",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/TVAccessViewService.app",
+      "name": "TVAccessViewService",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.Posters.UnityPosterApp",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/UnityPosterApp.app",
+      "name": "Unity",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.LocalAuthenticationUIService",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/LocalAuthenticationUIService.app",
+      "name": "User Authentication",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.CoreAuthUI",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/CoreAuthUI.app",
+      "name": "User Authentication",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.PassbookStub",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/PassbookStub.app",
+      "name": "Wallet",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.PassbookUIService",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/PassbookUIService.app",
+      "name": "Wallet",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.CredentialSharingService",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/CredentialSharingUIViewService.app",
+      "name": "Wallet",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.PassbookUISceneService",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/PassbookUISceneService.app",
+      "name": "Wallet",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.Passbook",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/Passbook.app",
+      "name": "Wallet",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.FinanceStub",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/FinanceStub.app",
+      "name": "Wallet",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.SubcredentialUIService",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/SubcredentialUIService.app",
+      "name": "Wallet",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.Bridge",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/Bridge.app",
+      "name": "Watch",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.webapp",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/Web.app",
+      "name": "Web",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.WebContentFilter.remoteUI.WebContentAnalysisUI",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/WebContentRestrictionsUI.app",
+      "name": "WebContentRestrictionsUI",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.WebSheet",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/WebSheet.app",
+      "name": "WebSheet",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.chrono.WidgetRenderer-Activities",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/WidgetRenderer_Activities.app",
+      "name": "WidgetRenderer_Activities",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.chrono.WidgetRenderer-CarPlay",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/WidgetRenderer_CarPlay.app",
+      "name": "WidgetRenderer_CarPlay",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.chrono.WidgetRenderer-Default",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/WidgetRenderer_Default.app",
+      "name": "WidgetRenderer_Default",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.chrono.WidgetRenderer-WatchFaces",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/WidgetRenderer_WatchFaces.app",
+      "name": "WidgetRenderer_WatchFaces",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.WorkoutRemoteViewService",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/WorkoutRemoteViewService.app",
+      "name": "WorkoutRemoteViewService",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    },
+    {
+      "applicationType": "System",
+      "bundleID": "com.apple.PreviewShell",
+      "bundlePath": "/Library/Developer/CoreSimulator/Volumes/iOS_23C54/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.2.simruntime/Contents/Resources/RuntimeRoot/Applications/PreviewShell.app",
+      "name": "Xcode Previews",
+      "reportedSDK": {
+        "major": 26,
+        "minor": 2,
+        "patch": 0
+      }
+    }
+  ],
+  "catalogSource": "LaunchServices",
+  "device": {
+    "architecture": "arm64",
+    "model": "arm64",
+    "osBuild": "simulator-host-kernel:24H232",
+    "osVersion": "26.2.0"
+  },
+  "isDemo": false,
+  "layoutValidated": false,
+  "log": "ForceLegacyUI 0.1.2\niOS 26.2.0 (simulator-host-kernel:24H232); arm64; arm64\nInspection: standard\n\nLSApplicationWorkspace.allInstalledApplications: 148 raw records, 148 visible apps.\nEnumeration may be restricted by iOS. Missing path/SDK fields remain unavailable; they are not guessed.\n\nBundle ID: org.forcelegacyui.app\nConfigured App Group: group.org.forcelegacyui.app\nGroup metadata: Running signature (SecTask)\nReported groups: \nGroup state: missing; selected: none\n\nApp Group unavailable. The configured group does not match a usable group in this app's signature. Re-sign ForceLegacyUI with its dedicated App Group; changing an Info.plist string alone does not grant access.\n",
+  "status": "Unsupported",
+  "storeError": "App Group unavailable. The configured group does not match a usable group in this app's signature. Re-sign ForceLegacyUI with its dedicated App Group; changing an Info.plist string alone does not grant access."
+}

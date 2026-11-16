@@ -70,6 +70,20 @@ interrupted symlink setup, and runs requests serially. It does not enumerate or
 modify arbitrary application data containers. Read-only inspection may change
 our dedicated App Group's temporary symlink; it does not write the LS store.
 
+Version 0.1.2 corrects an earlier omission when both mapped-store inspection and
+container metadata queries return no paths: it also tries the reference's fixed
+lsd cache locations. Explicit extended discovery can list candidate UUID/lsd cache
+directories under the two allowed system-container roots before a bounded inode
+scan. Only matching LS cache-file metadata is read during discovery. Every grant,
+directory-open failure and search limit is reported. Upstream's iOS 27 qualification
+for System containers still applies; adding a discovery attempt is not evidence of
+access on iOS 26.6.2. The legacy `/private/var/db/lsd` location is read-only and is
+not added to live-write authorization.
+
+Physical-device process architecture now comes from the running Mach-O header.
+The previous `uname.machine` value identifies a phone model such as `iPhone17,3`,
+not its arm64/arm64e process architecture. Hardware model remains a separate field.
+
 ## Approach A: LaunchServices Boolean override
 
 No field with established ownership, representation, checksum consequences and

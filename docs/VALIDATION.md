@@ -1,5 +1,37 @@
 # Validation evidence
 
+## 0.1.2 validation
+
+Application source commit [`a1a6602f`](https://github.com/Justintunsday/ForceLegacyUI/commit/a1a6602f1a803e0775156d691c8bd416f345decb)
+passed [GitHub Actions run 43855369259](https://github.com/Justintunsday/ForceLegacyUI/actions/runs/43855369259).
+
+* All 28 Swift core safety tests and 12 new native discovery/architecture regression
+  cases passed. The latter exercise the production coordinator with injected empty
+  metadata, denied/empty listings, fixed locations, mapped identities, ambiguous
+  stores, unrelated paths and search limits. They do not grant device sandbox access.
+* Device and simulator builds passed, along with requested-entitlement preparation,
+  native simulator app enumeration, probe exports and synthetic transaction recovery.
+  The iOS 26.2 simulator returned 148 native app records; its architecture was arm64.
+* Downloaded IPAs were independently checked for ZIP integrity, version 0.1.2,
+  arm64 Mach-O executables, SHA-256 sidecars and actual XML entitlement requests.
+  The main app requests `group.org.forcelegacyui.app`. Apple-provisioned re-signing
+  remains required.
+* Main IPA SHA-256: `40fdbddf2add31e838c41d1a6e802e7961a6c6cfc758f4b7054d2fd0fd7aaca9`.
+
+Artifact ID: `14220882951`; artifact ZIP digest:
+`857f437206a8c13ce1ed4e70a439469ea65e886a23ff75d64fab07abbaedf3e3`.
+Evidence: [0.1.2 records](evidence/v0.1.2/).
+
+The device feedback motivating this change reported iOS 26.6.2 (23G90), no records
+from any LS enumeration method, an accessible renamed App Group, and no mapped
+store paths. This established that group resolution had succeeded; it did not
+establish that worse_query or cache access worked. It also exposed the incorrect
+model-as-architecture field. No successful cache read or appearance override on
+that device is claimed. The fallback tests cannot substitute for that result.
+
+The subsequent simulator-runner change adds command timeouts and step logging;
+it changes no application, core, probe or packaging source in these artifacts.
+
 ## 0.1.1 validation
 
 Source commit [`9ccb514a`](https://github.com/Justintunsday/ForceLegacyUI/commit/9ccb514ada262fad09052af880d7d9a8a2a38528)

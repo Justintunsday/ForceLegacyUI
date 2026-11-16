@@ -44,9 +44,10 @@ configured. Unsigned IPAs require signing before installation.
 [Find the latest build artifacts](https://github.com/Justintunsday/ForceLegacyUI/actions/workflows/build.yml).
 Use a successful 0.1.2 build for sideloading; the old 0.1.0 package omitted App
 Group signing metadata. See the [validation record](docs/VALIDATION.md) for test scope.
-The [0.1.1 build](https://github.com/Justintunsday/ForceLegacyUI/actions/runs/43775929275)
-passed 28 safety tests, requested-entitlement packaging checks, device/simulator
-builds, synthetic transaction testing and native simulator app enumeration.
+The [0.1.2 build](https://github.com/Justintunsday/ForceLegacyUI/actions/runs/43855369259)
+passed 28 core safety tests and 12 native discovery/architecture regression cases,
+requested-entitlement packaging checks, device/simulator builds, synthetic
+transaction testing and native simulator app enumeration.
 
 ```sh
 swift test --package-path Packages/LegacyCore --parallel
