@@ -3,6 +3,7 @@
 #import "FLStoreDiscovery.h"
 #import "FLDeviceIdentity.h"
 #import "FLContainerAccess.h"
+#import "FLBundleEvidence.h"
 #import "worse_query.h"
 #import <objc/message.h>
 #import <objc/runtime.h>
@@ -38,6 +39,16 @@ static id FLValue(id object, NSString *key) {
 static NSString *FLString(id object) { return [object isKindOfClass:NSString.class] ? object : @""; }
 NSString *FLAccessMode(void) {
     return FLString([NSBundle.mainBundle objectForInfoDictionaryKey:@"FLAccessMode"]);
+}
+NSDictionary<NSString *, id> *FLInspectBundle(NSString *identifier, NSString *path, NSString *group, NSError **error) {
+    BOOL useGroup = group.length && FLCanReleaseDirectoryTokens() &&
+        [NSFileManager.defaultManager containerURLForSecurityApplicationGroupIdentifier:group] != nil;
+    int64_t (^request)(BOOL) = nil; void (^release)(int64_t) = nil;
+    if (useGroup) {
+        request = ^int64_t(BOOL alternate) { return worse_query(FLNormalizeStorePath(path), group, alternate, true); };
+        release = ^(int64_t token) { FLReleaseDirectoryToken(token); };
+    }
+    return FLReadBundleEvidence(identifier, path, request, release, error);
 }
 BOOL FLStoreIsDiagnosticOnly(NSString *path) { return FLIsDiagnosticLSStoreName(path.lastPathComponent); }
 void FLResetStoreDiscoveryProgress(void) {

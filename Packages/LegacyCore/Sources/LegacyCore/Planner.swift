@@ -87,7 +87,15 @@ public enum SDKPlanner {
 }
 
 public struct WriteAuthorization {
-    private enum Scope { case appOwned(URL), reviewedLive(String) }
+    private struct SingleAppScope {
+        let digest: String, before: String, after: String, bundleID: String, sourcePath: String
+        let device: DeviceIdentity
+        let observations: [BundleSDKObservation]
+    }
+    private enum Scope {
+        case appOwned(URL), reviewedLive(String)
+        case singleApp(SingleAppScope)
+    }
     private let scope: Scope
 
     public static func appOwned(directory: URL) -> WriteAuthorization { .init(scope: .appOwned(directory)) }
@@ -95,12 +103,77 @@ public struct WriteAuthorization {
     public static func reviewedLive(profile: LayoutProfile, device: DeviceIdentity) throws -> WriteAuthorization {
         try profile.validate(for: device)
         guard device.upstreamAccessCandidate, ReviewedLayouts.liveWriteDigests.contains(profile.digest) else {
-            throw LegacyError.unsupported("No source-reviewed layout authorizes live writes on this OS build. Imported profiles only permit copy experiments.")
+            throw LegacyError.unsupported("No compiled reviewed-live permission exists for this build. The separate single-app flow requires fresh independent SDK evidence.")
         }
         return .init(scope: .reviewedLive(profile.digest))
     }
 
+    /// Experimental authorization is bound to one checked plan, never a general write-enable switch.
+    public static func validatedSingleApp(plan: PreparedPlan, evidence: SDKSnapshotEvidence, source: URL) throws -> WriteAuthorization {
+        guard plan.changes.count == 1, let change = plan.changes.first,
+              evidence.verifiedIDs.contains(change.bundleID), plan.device == evidence.device,
+              plan.profile.digest == evidence.profileDigest, sha256(plan.original) == evidence.originalSHA256 else {
+            throw LegacyError.unsupported("Single-app authorization requires fresh, matching evidence for the selected app and snapshot.")
+        }
+        return try boundSingleApp(plan: plan, source: source, observations: evidence.observations)
+    }
+
+    var bundleEvidence: [BundleSDKObservation]? {
+        if case let .singleApp(proof) = scope { return proof.observations }; return nil
+    }
+
+    private static func boundSingleApp(plan: PreparedPlan, source: URL, observations: [BundleSDKObservation]) throws -> WriteAuthorization {
+        guard source.isFileURL, LiveStorePolicy.storePath(source.path), plan.changes.count == 1,
+              let id = plan.changes.first?.bundleID, let path = LiveStorePolicy.canonical(source.path) else {
+            throw LegacyError.unsupported("A single-app experiment requires an exact primary-name LS store target.")
+        }
+        return .init(scope: .singleApp(.init(digest: plan.profile.digest, before: sha256(plan.original), after: sha256(plan.candidate),
+                                           bundleID: id, sourcePath: path, device: plan.device, observations: observations)))
+    }
+
+    private static func checkedBackup(_ backup: BackupEntry, profile: LayoutProfile, device: DeviceIdentity,
+                                      observations: [BundleSDKObservation], source: URL, validator: StoreValidator) throws -> (BackupEntry, Data, SDKSnapshotEvidence) {
+        let checked = try BackupRepository.load(backup.directory), receipt = checked.receipt
+        guard [.applied, .prepared, .needsRecovery].contains(checked.status), receipt.changes.count == 1,
+              receipt.sourceName == source.lastPathComponent, receipt.profileDigest == profile.digest,
+              receipt.layout == profile, receipt.device == device, let old = receipt.bundleEvidence,
+              let target = receipt.changes.first?.bundleID,
+              let baseline = old.first(where: { $0.bundleID == target }),
+              observations.first(where: { $0.bundleID == target }) == baseline else {
+            throw LegacyError.conflict("The backup, source, device or selected bundle metadata changed; refusing experimental restoration.")
+        }
+        let original = try Data(contentsOf: checked.directory.appendingPathComponent("original.csstore"))
+        let evidence = try SDKSnapshotEvidence.validate(data: original, profile: profile, device: device,
+                                                       observations: observations, validator: validator)
+        return (checked, original, evidence)
+    }
+
+    public static func validatedRestoration(plan: PreparedPlan, backup: BackupEntry, observations: [BundleSDKObservation],
+                                            source: URL, validator: StoreValidator) throws -> WriteAuthorization {
+        let (checked, _, _) = try checkedBackup(backup, profile: plan.profile, device: plan.device,
+                                               observations: observations, source: source, validator: validator)
+        let reproduced = try TransactionEngine.restorationPlan(backup: checked, current: plan.original, profile: plan.profile,
+                                                               device: plan.device, validator: validator)
+        guard reproduced.candidate == plan.candidate, reproduced.changes == plan.changes else {
+            throw LegacyError.invalid("The restore plan does not reproduce the checked receipt.")
+        }
+        return try boundSingleApp(plan: plan, source: source, observations: observations)
+    }
+
+    public static func validatedRecovery(backup: BackupEntry, profile: LayoutProfile, device: DeviceIdentity,
+                                         observations: [BundleSDKObservation], source: URL, validator: StoreValidator) throws -> WriteAuthorization {
+        let (checked, original, evidence) = try checkedBackup(backup, profile: profile, device: device,
+                                                             observations: observations, source: source, validator: validator)
+        let targets = Dictionary(uniqueKeysWithValues: checked.receipt.changes.map { ($0.bundleID, $0.target) })
+        let plan = try SDKPlanner.prepare(data: original, profile: profile, device: device, targets: targets, validator: validator)
+        guard plan.changes == checked.receipt.changes, sha256(plan.candidate) == checked.receipt.candidateSHA256 else {
+            throw LegacyError.invalid("Recovery cannot reproduce the saved candidate.")
+        }
+        return try validatedSingleApp(plan: plan, evidence: evidence, source: source)
+    }
+
     func validate(url: URL, plan: PreparedPlan) throws {
+        guard url.isFileURL else { throw LegacyError.invalid("Write authorization requires a local file URL.") }
         switch scope {
         case let .appOwned(root):
             let directory = root.standardizedFileURL.resolvingSymlinksInPath().path + "/"
@@ -109,12 +182,16 @@ public struct WriteAuthorization {
                 throw LegacyError.unsupported("Copy experiments must stay inside their app-owned directory.")
             }
         case let .reviewedLive(digest):
-            let path = url.standardizedFileURL.path
-            let roots = ["/private/var/mobile/Containers/Data/InternalDaemon/", "/private/var/containers/Data/System/"]
             guard digest == plan.profile.digest, ReviewedLayouts.liveWriteDigests.contains(digest),
-                  roots.contains(where: path.hasPrefix), path.contains("/Library/Caches/"),
-                  url.lastPathComponent.hasPrefix("com.apple.LaunchServices-"), url.pathExtension == "csstore" else {
+                  plan.changes.count == 1, LiveStorePolicy.storePath(url.path) else {
                 throw LegacyError.unsupported("The live target is not an approved LaunchServices store.")
+            }
+        case let .singleApp(proof):
+            guard LiveStorePolicy.storePath(url.path), LiveStorePolicy.canonical(url.path) == proof.sourcePath,
+                  proof.digest == plan.profile.digest, proof.device == plan.device,
+                  plan.changes.count == 1, plan.changes.first?.bundleID == proof.bundleID,
+                  sha256(plan.original) == proof.before, sha256(plan.candidate) == proof.after else {
+                throw LegacyError.unsupported("The single-app proof does not authorize this target, snapshot or candidate.")
             }
         }
     }

@@ -14,14 +14,23 @@ final class AppModel: ObservableObject {
     @Published var failed = false
     @Published var backups: [BackupEntry] = []
     @Published var exportURL: URL?
+    @Published private(set) var singleAppExperiment = false
     private let engine = ResearchEngine()
 
     var apps: [InstalledApplication] { inspection?.applications ?? [] }
     var liveWriteAvailable: Bool {
         guard let inspection else { return false }
         if inspection.isDemo { return true }
-        guard inspection.layoutValidated, let profile = ReviewedLayouts.profile(for: inspection.device) else { return false }
-        return ReviewedLayouts.liveWriteDigests.contains(profile.digest)
+        return singleAppExperiment && inspection.singleAppWriteReady && selection.count == 1
+    }
+    var writeReadiness: String {
+        if singleAppExperiment && selection.count > 1 { return "Select exactly one app for a live SDK experiment. Batch writes are disabled." }
+        if !singleAppExperiment { return "Enable Single-app SDK experiment in Diagnostics after validating the layout." }
+        return inspection?.writeReadinessReason ?? "Run inspection first."
+    }
+    func setSingleAppExperiment(_ value: Bool) async {
+        guard !busy else { return }
+        busy = true; await engine.setSingleAppExperiment(value); singleAppExperiment = value; busy = false
     }
     var catalogIssue: String {
         guard let inspection else { return "Run read-only inspection to check app visibility and App Group access." }
@@ -91,14 +100,14 @@ final class AppModel: ObservableObject {
             let size = try url.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? Int.max
             guard size <= 64 * 1024 else { throw LegacyError.invalid("Profile exceeds 64 KiB.") }
             try await engine.importLayout(Data(contentsOf: url))
-            message = "Profile loaded for copy experiments. Live-write authorization is unchanged."; failed = false
+            message = "Profile loaded. Inspection will check its SDK fields against independent executable metadata before any single-app experiment."; failed = false
             await scan()
         } catch { message = error.localizedDescription; failed = true }
     }
     func export(includeSnapshot: Bool) async {
         do {
             exportURL = try await engine.exportReport(includeSnapshot: includeSnapshot)
-            message = includeSnapshot ? "Report and raw snapshot saved in Documents/Diagnostics. Raw stores can contain private metadata." : "Report saved locally. Review it before sharing."
+            message = includeSnapshot ? "Report, snapshot and SHA-256 were packaged in one ZIP. Share Report now shares that archive. Raw stores can contain private metadata." : "Report saved locally. Review it before sharing."
             failed = false
         } catch { message = error.localizedDescription; failed = true }
     }

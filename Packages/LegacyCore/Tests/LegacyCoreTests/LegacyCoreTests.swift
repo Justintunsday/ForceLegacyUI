@@ -49,7 +49,7 @@ final class LegacyCoreTests: XCTestCase {
             XCTAssertThrowsError(try profile.validate(for: wrong))
         }
     }
-    func testImportedProfileCannotAuthorizeLiveWrites() {
+    func testImportAloneCannotCreateReviewedAuthorization() {
         XCTAssertThrowsError(try WriteAuthorization.reviewedLive(profile: profile, device: device))
         XCTAssertTrue(ReviewedLayouts.profiles.isEmpty)
     }

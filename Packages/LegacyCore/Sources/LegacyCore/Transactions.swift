@@ -70,6 +70,8 @@ public struct BackupReceipt: Codable, Identifiable, Sendable {
     public let originalSHA256: String
     public let candidateSHA256: String
     public let changes: [SDKChange]
+    public let layout: LayoutProfile?
+    public let bundleEvidence: [BundleSDKObservation]?
 }
 
 public struct BackupEntry: Identifiable, Sendable {
@@ -94,11 +96,13 @@ public enum BackupRepository {
         }
     }
 
-    static func create(plan: PreparedPlan, source: URL, identity: FileIdentity, root: URL) throws -> BackupEntry {
+    static func create(plan: PreparedPlan, source: URL, identity: FileIdentity, root: URL,
+                       bundleEvidence: [BundleSDKObservation]?) throws -> BackupEntry {
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         let receipt = BackupReceipt(schema: 1, id: UUID(), created: Date(), sourceName: source.lastPathComponent,
             identity: identity, device: plan.device, profileDigest: plan.profile.digest,
-            originalSHA256: sha256(plan.original), candidateSHA256: sha256(plan.candidate), changes: plan.changes)
+            originalSHA256: sha256(plan.original), candidateSHA256: sha256(plan.candidate), changes: plan.changes,
+            layout: plan.profile, bundleEvidence: bundleEvidence)
         let directory = root.appendingPathComponent(receipt.id.uuidString, isDirectory: true)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: false)
         try durableWrite(plan.original, to: directory.appendingPathComponent("original.csstore"))
@@ -138,6 +142,13 @@ public enum BackupRepository {
 public enum TransactionEngine {
     public static func readSnapshot(_ url: URL) throws -> Data { try StableFile(url: url, writable: false).snapshot().0 }
 
+    /// Opens O_RDWR and reads a stable snapshot without issuing any write syscall.
+    public static func probeWritable(_ url: URL, expected: Data) throws {
+        guard try StableFile(url: url, writable: true).snapshot().0 == expected else {
+            throw LegacyError.conflict("Store changed while checking writable access.")
+        }
+    }
+
     @discardableResult
     public static func apply(_ plan: PreparedPlan, to url: URL, backups: URL,
                              authorization: WriteAuthorization, validator: StoreValidator) throws -> BackupEntry {
@@ -146,7 +157,8 @@ public enum TransactionEngine {
         let (original, identity) = try file.snapshot()
         guard original == plan.original else { throw LegacyError.conflict("Store changed after preview. Run a fresh dry run.") }
         try validator.validate(original)
-        let backup = try BackupRepository.create(plan: plan, source: url, identity: identity, root: backups)
+        let backup = try BackupRepository.create(plan: plan, source: url, identity: identity, root: backups,
+                                                bundleEvidence: authorization.bundleEvidence)
         // Recheck after durable backup creation; lsd may not honor our advisory lock.
         guard try file.snapshot().0 == original else {
             try BackupRepository.setStatus(.rolledBack, directory: backup.directory)

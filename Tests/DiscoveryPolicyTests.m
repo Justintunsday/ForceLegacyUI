@@ -5,6 +5,7 @@
 #import "FLContainerAccess.h"
 FOUNDATION_EXPORT NSArray<NSString *> *FLRunContainerLeaseTests(void);
 FOUNDATION_EXPORT NSArray<NSString *> *FLRunStoreScanTests(void);
+FOUNDATION_EXPORT NSArray<NSString *> *FLRunBundleEvidenceTests(void);
 
 @interface TestDiscoveryAccess : NSObject <FLStoreDiscoveryAccess>
 @property (nonatomic, copy) NSArray<NSString *> *mapped;
@@ -57,6 +58,7 @@ int main(int argc, const char *argv[]) {
         @try {
             [passed addObjectsFromArray:FLRunContainerLeaseTests()];
             [passed addObjectsFromArray:FLRunStoreScanTests()];
+            [passed addObjectsFromArray:FLRunBundleEvidenceTests()];
             test(@"A prefixed cache is classified and returned only as a diagnostic source", ^{
                 NSString *diagnostic = [legacy stringByAppendingPathComponent:[@"SystemDataOnly-" stringByAppendingString:store(legacy, @"1").lastPathComponent]];
                 require(FLIsDiagnosticLSStoreName(diagnostic.lastPathComponent) && !FLIsLaunchServicesStoreName(diagnostic.lastPathComponent), @"Prefixed cache became a primary store");

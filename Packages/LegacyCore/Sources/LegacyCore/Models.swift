@@ -88,7 +88,8 @@ public enum OverrideStatus: String, Codable, Sendable {
 }
 
 /// A profile describes a reviewed record layout, not an offset discovered by scanning for a number.
-/// Imported profiles only permit work on app-owned copies. Only source-reviewed digests permit live writes.
+/// Import alone is not write authorization. A single-app experiment additionally requires independent
+/// bundle SDK observations, an exact snapshot-bound proof and an explicitly enabled experiment.
 public struct LayoutProfile: Codable, Equatable, Sendable {
     public let id: String
     public let osVersion: String

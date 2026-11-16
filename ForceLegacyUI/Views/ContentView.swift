@@ -78,7 +78,7 @@ struct ContentView: View {
             .buttonStyle(.borderedProminent)
             .disabled(model.busy || model.selection.isEmpty || (!model.dryRun && !model.liveWriteAvailable))
             if !model.demo && !model.dryRun && !model.liveWriteAvailable {
-                Text("Live writes are unavailable on this OS build.").font(.caption).foregroundStyle(.secondary)
+                Text(model.writeReadiness).font(.caption).foregroundStyle(.secondary)
             }
         }.padding().background(Color(uiColor: .systemBackground))
     }
@@ -155,13 +155,21 @@ private struct DiagnosticsView: View {
                     Button("Run Read-Only Inspection") { Task { await model.scan() } }
                     Button("Extended Store Discovery") { Task { await model.scan(extended: true) } }
                     Button("Restart Inode Search") { Task { await model.restartInodeDiscovery() } }.disabled(model.demo)
-                    Button("Import Layout for Copy Experiment") { importing = true }.disabled(model.demo)
-                } footer: { Text("Extended discovery tries container cache directories, then searches recent inode paths first with a 20-second budget. Repeated scans revisit recent paths and resume older progress. System queries can take longer. Imported profiles never authorize live writes.") }
+                    Button("Import Exact-build Layout") { importing = true }.disabled(model.demo)
+                } footer: { Text("Extended discovery searches recent paths and resumes older progress. System queries can take longer. Importing a layout alone does not enable writing.") }
+                .disabled(model.busy)
+                Section("Single-app SDK experiment") {
+                    Toggle("Enable single-app experiment", isOn: Binding(get: { model.singleAppExperiment }, set: { value in
+                        Task { await model.setSingleAppExperiment(value) }
+                    })).disabled(model.demo)
+                    LabeledContent("Independent SDK observations", value: "\(model.inspection?.bundleFacts.count ?? 0)")
+                    Text(model.inspection?.writeReadinessReason ?? "Run an inspection first.").font(.caption).foregroundStyle(.secondary)
+                } footer: { Text("Requires an exact-build layout, independent SDK checks, writable-open access and a fresh one-app preview. Apply backs up and verifies the change. This experiments with SDK metadata; legacy appearance remains unverified.") }
                 .disabled(model.busy)
                 Section("Export") {
                     Button("Save Diagnostic Report") { Task { await model.export(includeSnapshot: false) } }
                     Button("Save Report and Raw Snapshot") { Task { await model.export(includeSnapshot: true) } }
-                    if let url = model.exportURL { ShareLink("Share Report", item: url) }
+                    if let url = model.exportURL { ShareLink(url.pathExtension == "zip" ? "Share Report and Snapshot" : "Share Report", item: url) }
                     Text("Exports stay on this device until shared. Reports contain application identifiers; raw stores can contain more private metadata.").font(.caption).foregroundStyle(.secondary)
                 }
                 Section("Technical log") {

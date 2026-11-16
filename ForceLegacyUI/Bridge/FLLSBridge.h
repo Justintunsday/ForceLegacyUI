@@ -5,6 +5,8 @@ NS_ASSUME_NONNULL_BEGIN
 FOUNDATION_EXPORT NSArray<NSDictionary<NSString *, id> *> *FLInstalledApps(NSString * _Nullable * _Nullable diagnostics);
 FOUNDATION_EXPORT NSDictionary<NSString *, NSString *> *FLDeviceInfo(void);
 FOUNDATION_EXPORT NSDictionary<NSString *, id> *FLProbeFacts(void);
+FOUNDATION_EXPORT NSDictionary<NSString *, id> * _Nullable FLInspectBundle(NSString *identifier, NSString *path, NSString *group,
+    NSError * _Nullable * _Nullable error) __attribute__((swift_error(none)));
 FOUNDATION_EXPORT NSDictionary<NSString *, id> *FLAppGroupContext(void);
 FOUNDATION_EXPORT NSString *FLAccessMode(void);
 FOUNDATION_EXPORT BOOL FLStoreIsDiagnosticOnly(NSString *path);

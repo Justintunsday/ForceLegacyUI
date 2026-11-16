@@ -29,7 +29,7 @@ jobs:
         run: |
           mkdir -p build dist
           xcrun --sdk macosx clang -DFL_CONTAINER_TESTING=1 -fobjc-arc -fblocks -Wall -Wextra -Werror -framework Foundation \
-            -I ForceLegacyUI/Bridge ForceLegacyUI/Bridge/FLStoreDiscovery.m ForceLegacyUI/Bridge/FLDeviceIdentity.m ForceLegacyUI/Bridge/FLContainerAccess.m Tests/ContainerLeaseTests.m Tests/StoreScanTests.m Tests/DiscoveryPolicyTests.m \
+            -I ForceLegacyUI/Bridge ForceLegacyUI/Bridge/FLStoreDiscovery.m ForceLegacyUI/Bridge/FLDeviceIdentity.m ForceLegacyUI/Bridge/FLContainerAccess.m ForceLegacyUI/Bridge/FLBundleEvidence.m Tests/BundleEvidenceTests.m Tests/ContainerLeaseTests.m Tests/StoreScanTests.m Tests/DiscoveryPolicyTests.m \
             -o build/discovery-policy-tests
           build/discovery-policy-tests dist/discovery-policy-tests.json
       - name: Build device apps

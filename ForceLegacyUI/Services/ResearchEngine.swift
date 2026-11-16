@@ -17,6 +17,10 @@ struct Inspection: Codable {
     var storeError: String?
     var accessBackend: String = "App Group / worse_query"
     var storeRole: String?
+    var bundleFacts: [BundleSDKObservation] = []
+    var singleAppWriteReady = false
+    var writeReadinessReason = "Import an exact-build layout and validate independent SDK observations first."
+    var writableOpen: Bool?
 }
 
 actor ResearchEngine {
@@ -25,7 +29,9 @@ actor ResearchEngine {
     private var importedProfile: LayoutProfile?
     private var lastInspection: Inspection?
     private var lastPreview: String?
+    private var previewFacts: [BundleSDKObservation]?
     private var demo = false
+    private var singleAppExperiment = false
 
     init() {
         let root = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
@@ -79,6 +85,17 @@ actor ResearchEngine {
     }
 
     func restartInodeDiscovery() { FLResetStoreDiscoveryProgress() }
+    func setSingleAppExperiment(_ value: Bool) { singleAppExperiment = value; lastPreview = nil }
+
+    private var evidenceGroup: String { FLAccessMode() == "house-arrest" ? "" : (resolveAppGroup().0.selected ?? "") }
+    private func observations(_ apps: [InstalledApplication], required: Set<String> = [], log: inout String) -> [BundleSDKObservation] {
+        #if targetEnvironment(simulator)
+        log += "Independent physical bundle observations are unavailable in the simulator.\n"
+        return []
+        #else
+        return BundleObservationCollector.collect(apps, group: evidenceGroup, required: required, log: &log)
+        #endif
+    }
 
     func inspect(demo requestedDemo: Bool, extended: Bool = false) -> Inspection {
         if requestedDemo != demo { lastPreview = nil }
@@ -96,7 +113,8 @@ actor ResearchEngine {
                                 isDemo: demo, log: message as String? ?? "", status: .unsupported)
         if let source = raw.first?["catalogSource"] as? String { output.catalogSource = source }
         let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "unknown"
-        output.log = "ForceLegacyUI \(version)\niOS \(output.device.osVersion) (\(output.device.osBuild)); \(output.device.model); \(output.device.architecture)\nInspection: \(demo ? "demo" : (extended ? "extended" : "standard"))\n\n" + output.log
+        let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "unknown"
+        output.log = "ForceLegacyUI \(version) (build \(build))\niOS \(output.device.osVersion) (\(output.device.osBuild)); \(output.device.model); \(output.device.architecture)\nInspection: \(demo ? "demo" : (extended ? "extended" : "standard"))\n\n" + output.log
         output.accessBackend = demo ? "Synthetic demo" : (FLAccessMode() == "house-arrest" ? "MobileHouseArrest" : "App Group / worse_query + traversal fallback")
         output.log += "\nAccess backend: \(output.accessBackend)\n"
         if !demo && FLAccessMode() == "house-arrest" {
@@ -130,6 +148,9 @@ actor ResearchEngine {
                     output.catalogSource = diagnosticOnly ? "Prefixed cache registrations (read-only)" : "Read-only cache registrations"
                     output.log += "Read-only cache fallback: \(registrations.count) unambiguous registrations. SDK offsets were not inferred; installation state and layout remain unverified.\n"
                 }
+                if !demo && !diagnosticOnly {
+                    output.bundleFacts = observations(output.applications, log: &output.log)
+                }
                 if diagnosticOnly {
                     output.log += "Diagnostic source only; continuing extended scans can search for a primary-name catalog.\n"
                 } else if let profile {
@@ -138,13 +159,37 @@ actor ResearchEngine {
                         apps = records.map { InstalledApplication(bundleID: $0.bundleID, name: $0.name, bundlePath: $0.bundlePath, reportedSDK: $0.sdk) }
                         output.applications = apps
                     } else {
-                        let count = try store.crossValidate(records, catalog: apps)
-                        output.log += "Cross-checked \(count) app identities, paths and SDK values against LaunchServices proxies.\n"
+                        do {
+                            for record in records {
+                                if let observed = apps.first(where: { $0.bundleID == record.bundleID }), let sdk = observed.reportedSDK {
+                                    guard sdk == record.sdk, LiveStorePolicy.canonical(observed.bundlePath) == LiveStorePolicy.canonical(record.bundlePath) else {
+                                        throw LegacyError.conflict("LaunchServices metadata disagrees with the loaded layout for \(record.bundleID).")
+                                    }
+                                }
+                            }
+                            _ = try SDKSnapshotEvidence.validate(data: data, profile: profile, device: identity,
+                                                                 observations: output.bundleFacts, validator: validator)
+                            output.applications = records.map { InstalledApplication(bundleID: $0.bundleID, name: $0.name,
+                                bundlePath: $0.bundlePath, reportedSDK: $0.sdk, applicationType: "Validated cache registration") }
+                            do {
+                                try TransactionEngine.probeWritable(url, expected: data)
+                                output.writableOpen = true; output.singleAppWriteReady = true
+                                output.writeReadinessReason = "Layout and independent SDKs agree; enable the single-app experiment and preview one app."
+                                output.log += "O_RDWR open and stable read succeeded; zero bytes were written.\n"
+                            } catch {
+                                output.writableOpen = false; output.writeReadinessReason = error.localizedDescription
+                                output.log += "Writable-open probe failed: \(error.localizedDescription)\n"
+                            }
+                        } catch {
+                            output.writeReadinessReason = error.localizedDescription
+                            output.log += "Single-app evidence refused: \(error.localizedDescription)\n"
+                            return
+                        }
                     }
                     output.layoutID = profile.id; output.layoutValidated = true; output.status = .experimental
                     output.log += "Profile \(profile.id). Appearance remains unverified.\n"
                 } else {
-                    output.log += "No reviewed layout for this OS build. Record sizes are diagnostic only; no offsets were guessed. Live writes are disabled.\n"
+                    output.log += "No exact-build layout is loaded. Record sizes and independent build SDKs are diagnostic evidence; no SDK offsets were guessed. Import and validate a layout before a single-app experiment.\n"
                 }
                 if store.summary.containsCompatibilityKeyString {
                     output.log += "The compatibility key string occurs in this snapshot. This does not establish a writable per-app field or an effective override.\n"
@@ -163,7 +208,7 @@ actor ResearchEngine {
         let value = try JSONDecoder().decode(LayoutProfile.self, from: data)
         try value.validate(for: identity)
         importedProfile = value; lastPreview = nil
-        // Imported fields are deliberately session-scoped and cannot change the live-write allowlist.
+        // Import is session-scoped. Live authorization additionally validates fresh native bundle evidence.
     }
 
     func apply(selected: Set<String>, dryRun: Bool) throws -> String {
@@ -178,10 +223,25 @@ actor ResearchEngine {
             guard let inspection = lastInspection, inspection.layoutValidated else {
                 throw LegacyError.unsupported("Run read-only inspection and validate this profile before planning changes.")
             }
-            if !demo { _ = try store.crossValidate(records, catalog: inspection.applications) }
+            var evidence: SDKSnapshotEvidence?
+            var freshFacts: [BundleSDKObservation] = []
+            if !demo {
+                var log = ""
+                let catalog = records.map { InstalledApplication(bundleID: $0.bundleID, name: $0.name,
+                    bundlePath: $0.bundlePath, reportedSDK: nil) }
+                let witnessIDs = Set((previewFacts ?? []).map(\.bundleID))
+                let witnesses = !dryRun && lastPreview != nil ? catalog.filter { witnessIDs.contains($0.bundleID) } : catalog
+                freshFacts = observations(witnesses, required: selected.count == 1 ? selected : [], log: &log)
+                evidence = try SDKSnapshotEvidence.validate(data: data, profile: profile, device: identity,
+                                                            observations: freshFacts, validator: validator)
+                if selected.count == 1, !freshFacts.contains(where: { selected.contains($0.bundleID) }) {
+                    throw LegacyError.unsupported("The selected app's executable SDK could not be independently observed.")
+                }
+            }
             let targets = Dictionary(uniqueKeysWithValues: selected.map { ($0, SDKVersion.legacy) })
             let plan = try SDKPlanner.prepare(data: data, profile: profile, device: identity, targets: targets, validator: validator)
-            let fingerprint = sha256(data) + profile.digest + selected.sorted().joined(separator: ",")
+            let encoder = JSONEncoder(); encoder.outputFormatting = [.sortedKeys]
+            let fingerprint = sha256(data) + sha256(plan.candidate) + profile.digest + selected.sorted().joined(separator: ",") + sha256(try encoder.encode(freshFacts))
             if dryRun {
                 let lab = documents.appendingPathComponent("CopyExperiments/\(UUID().uuidString)", isDirectory: true)
                 try files.createDirectory(at: lab, withIntermediateDirectories: true)
@@ -190,11 +250,17 @@ actor ResearchEngine {
                 let description = "DRY RUN: only app-owned copies were saved.\n\(plan.summary)\nOriginal SHA-256: \(sha256(data))\nCandidate SHA-256: \(sha256(plan.candidate))\nAppearance has not been tested.\nCopies: \(lab.lastPathComponent)"
                 try BackupRepository.durableWrite(Data(description.utf8), to: lab.appendingPathComponent("plan.txt"))
                 lastPreview = fingerprint
+                previewFacts = freshFacts
                 return description
             }
             guard lastPreview == fingerprint else { throw LegacyError.conflict("Run a fresh dry run with the same selection before applying.") }
             guard demo || selected.count == 1 else { throw LegacyError.unsupported("Live batch operations require reviewed single-app appearance evidence and are not enabled in this release.") }
-            let authorization = try demo ? WriteAuthorization.appOwned(directory: demoRoot) : WriteAuthorization.reviewedLive(profile: profile, device: identity)
+            let authorization: WriteAuthorization
+            if demo { authorization = .appOwned(directory: demoRoot) }
+            else {
+                guard singleAppExperiment, let evidence else { throw LegacyError.unsupported("Enable the single-app SDK experiment in Diagnostics after validation, then run a new dry run.") }
+                authorization = try .validatedSingleApp(plan: plan, evidence: evidence, source: url)
+            }
             let entry = try TransactionEngine.apply(plan, to: url, backups: backupRoot, authorization: authorization, validator: validator)
             lastPreview = nil
             return "\(demo ? "Demo copy" : "SDK metadata") written and verified.\n\(plan.summary)\nBackup: \(entry.id)\nThis does not verify legacy appearance."
@@ -227,7 +293,11 @@ actor ResearchEngine {
         }
         let restored = try restore(entry)
         guard try TransactionEngine.readSnapshot(demoStore) == before else { throw LegacyError.invalid("Restoration did not reproduce the baseline.") }
-        let evidence: [String: Any] = ["passed": true, "physicalDeviceTest": false, "syntheticData": true,
+        let archive = try exportReport(includeSnapshot: true)
+        guard archive.pathExtension == "zip", files.fileExists(atPath: archive.path) else {
+            throw LegacyError.invalid("Evidence ZIP export failed.")
+        }
+        let evidence: [String: Any] = ["passed": true, "physicalDeviceTest": false, "syntheticData": true, "evidenceZIPExported":true,
             "beforeSHA256": sha256(before), "appliedSHA256": sha256(applied), "restoredSHA256": sha256(before),
             "preview": preview, "apply": result, "restore": restored]
         let data = try JSONSerialization.data(withJSONObject: evidence, options: [.prettyPrinted, .sortedKeys])
@@ -236,22 +306,40 @@ actor ResearchEngine {
     #endif
 
     func restore(_ entry: BackupEntry) throws -> String {
-        guard let profile else { throw LegacyError.unsupported("Restoration needs the original reviewed layout; no raw whole-store overwrite is allowed.") }
+        guard let profile = demo ? DemoFixture.profile : (entry.receipt.layout ?? self.profile) else {
+            throw LegacyError.unsupported("Restoration needs the original layout stored in its receipt or loaded profile.")
+        }
         return try withStore { url, _ in
             guard !FLStoreIsDiagnosticOnly(url.path) else { throw LegacyError.unsupported("A prefixed diagnostic cache cannot be used as a restoration destination.") }
             guard entry.receipt.sourceName == url.lastPathComponent else { throw LegacyError.conflict("This backup belongs to a different store file.") }
             let current = try TransactionEngine.readSnapshot(url)
-            let authorization = try demo ? WriteAuthorization.appOwned(directory: demoRoot) : WriteAuthorization.reviewedLive(profile: profile, device: identity)
+            var facts: [BundleSDKObservation] = []
+            if !demo, let saved = entry.receipt.bundleEvidence {
+                var log = ""
+                let apps = saved.map { InstalledApplication(bundleID: $0.bundleID, name: $0.bundleID, bundlePath: $0.bundlePath, reportedSDK: nil) }
+                facts = observations(apps, required: Set(entry.receipt.changes.map(\.bundleID)), log: &log)
+            }
             let plan: PreparedPlan
             do {
                 plan = try TransactionEngine.restorationPlan(backup: entry, current: current, profile: profile, device: identity, validator: validator)
             } catch {
                 guard [.prepared, .needsRecovery].contains(entry.status) else { throw error }
+                let authorization: WriteAuthorization
+                if demo { authorization = .appOwned(directory: demoRoot) }
+                else if entry.receipt.bundleEvidence != nil {
+                    authorization = try .validatedRecovery(backup: entry, profile: profile, device: identity,
+                        observations: facts, source: url, validator: validator)
+                } else { authorization = try .reviewedLive(profile: profile, device: identity) }
                 try TransactionEngine.recoverInterrupted(backup: entry, at: url, profile: profile, device: identity,
                     authorization: authorization, validator: validator)
                 lastPreview = nil
                 return "Interrupted transaction recovered. Original bytes and checksum were verified."
             }
+            let authorization: WriteAuthorization
+            if demo { authorization = .appOwned(directory: demoRoot) }
+            else if entry.receipt.bundleEvidence != nil {
+                authorization = try .validatedRestoration(plan: plan, backup: entry, observations: facts, source: url, validator: validator)
+            } else { authorization = try .reviewedLive(profile: profile, device: identity) }
             let undo = try TransactionEngine.apply(plan, to: url, backups: backupRoot, authorization: authorization, validator: validator)
             try BackupRepository.setStatus(.restored, directory: entry.directory)
             try BackupRepository.setStatus(.restored, directory: undo.directory)
@@ -270,9 +358,16 @@ actor ResearchEngine {
         if includeSnapshot {
             try withStore { url, _ in
                 let data = try TransactionEngine.readSnapshot(url)
+                guard sha256(data) == inspection.storeSummary?.sha256 else {
+                    throw LegacyError.conflict("The cache changed since inspection. Run a fresh inspection before exporting its evidence.")
+                }
                 try BackupRepository.durableWrite(data, to: folder.appendingPathComponent("snapshot.csstore"))
                 try BackupRepository.durableWrite(Data(sha256(data).utf8), to: folder.appendingPathComponent("snapshot.sha256"))
+                let archive = try EvidenceArchive.make(files: ["report.json":encoder.encode(inspection),
+                    "snapshot.csstore":data, "snapshot.sha256":Data(sha256(data).utf8)])
+                try BackupRepository.durableWrite(archive, to: folder.appendingPathComponent("ForceLegacyUI-evidence.zip"))
             }
+            return folder.appendingPathComponent("ForceLegacyUI-evidence.zip")
         }
         return report
     }
