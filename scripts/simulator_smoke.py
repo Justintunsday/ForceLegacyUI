@@ -3,12 +3,20 @@
 from pathlib import Path
 import json
 import plistlib
+import shlex
 import subprocess
 import time
 
 root = Path(__file__).resolve().parents[1]
-def run(*args, **kwargs):
-    return subprocess.run(args, check=True, text=True, capture_output=True, **kwargs).stdout.strip()
+def run(*args, timeout=120, **kwargs):
+    print("Running: " + shlex.join(args), flush=True)
+    try:
+        return subprocess.run(args, check=True, text=True, capture_output=True, timeout=timeout, **kwargs).stdout.strip()
+    except (subprocess.TimeoutExpired, subprocess.CalledProcessError) as error:
+        for stream in (error.stdout, error.stderr):
+            if stream:
+                print(stream.decode(errors="replace") if isinstance(stream, bytes) else stream, flush=True)
+        raise
 
 devices = json.loads(run("xcrun", "simctl", "list", "devices", "available", "--json"))["devices"]
 candidates = [(runtime, d) for runtime, items in devices.items() if "iOS-26-" in runtime for d in items if "iPhone" in d["name"]]
@@ -16,7 +24,7 @@ if not candidates: raise SystemExit("No iOS 26 iPhone simulator runtime availabl
 runtime, device = sorted(candidates, key=lambda value: (value[0], value[1]["name"]))[-1]
 udid = device["udid"]
 if device["state"] != "Booted": run("xcrun", "simctl", "boot", udid)
-run("xcrun", "simctl", "bootstatus", udid, "-b")
+run("xcrun", "simctl", "bootstatus", udid, "-b", timeout=300)
 output = root / "dist"; output.mkdir(exist_ok=True)
 products = root / "build/simulator/Build/Products/Debug-iphonesimulator"
 evidence = {"runtime": runtime, "device": device["name"], "udid": udid, "deviceTest": False, "launches": []}

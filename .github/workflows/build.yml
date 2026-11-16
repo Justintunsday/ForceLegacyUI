@@ -42,6 +42,7 @@ jobs:
           python3 scripts/prepare_sideload_metadata.py build/device/Build/Products/Release-iphoneos --evidence dist/sideload-metadata.json
           python3 scripts/package_ipa.py build/device/Build/Products/Release-iphoneos dist --unsigned
       - name: Build and smoke test simulator
+        timeout-minutes: 12
         run: |
           set -eo pipefail
           xcodebuild -project ForceLegacyUI.xcodeproj -scheme ForceLegacyUI -configuration Debug \
