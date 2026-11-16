@@ -123,7 +123,9 @@ private struct DiagnosticsView: View {
                     if let info = model.inspection {
                         LabeledContent("iOS", value: info.device.osVersion)
                         LabeledContent("Build", value: info.device.osBuild)
+                        LabeledContent("Model", value: info.device.model)
                         LabeledContent("Architecture", value: info.device.architecture)
+                        LabeledContent("Access backend", value: info.accessBackend)
                         LabeledContent("Override", value: info.status.rawValue)
                         LabeledContent("Layout", value: info.layoutID ?? "Unknown")
                         LabeledContent("App list source", value: info.catalogSource)
@@ -151,8 +153,9 @@ private struct DiagnosticsView: View {
                 Section {
                     Button("Run Read-Only Inspection") { Task { await model.scan() } }
                     Button("Extended Store Discovery") { Task { await model.scan(extended: true) } }
+                    Button("Restart Inode Search") { Task { await model.restartInodeDiscovery() } }.disabled(model.demo)
                     Button("Import Layout for Copy Experiment") { importing = true }.disabled(model.demo)
-                } footer: { Text("Extended discovery tries container cache directories with a 10-second budget, then inode paths for up to 8 seconds. System queries can take longer. Imported profiles never authorize live writes.") }
+                } footer: { Text("Extended discovery tries container cache directories, then scans inode paths with a 20-second budget. Repeated scans resume from the saved cursor. System queries can take longer. Imported profiles never authorize live writes.") }
                 .disabled(model.busy)
                 Section("Export") {
                     Button("Save Diagnostic Report") { Task { await model.export(includeSnapshot: false) } }

@@ -2,6 +2,7 @@
 #import "FLLSBridge.h"
 #import "FLStoreDiscovery.h"
 #import "FLDeviceIdentity.h"
+#import "FLContainerAccess.h"
 #import "worse_query.h"
 #import <objc/message.h>
 #import <objc/runtime.h>
@@ -35,6 +36,10 @@ static id FLValue(id object, NSString *key) {
     @catch (NSException *exception) { return nil; }
 }
 static NSString *FLString(id object) { return [object isKindOfClass:NSString.class] ? object : @""; }
+NSString *FLAccessMode(void) {
+    return FLString([NSBundle.mainBundle objectForInfoDictionaryKey:@"FLAccessMode"]);
+}
+void FLResetStoreDiscoveryProgress(void) { [NSUserDefaults.standardUserDefaults removeObjectForKey:@"FLStoreInodeCheckpoint"]; }
 static NSString *FLNormalize(NSString *path) {
     return FLNormalizeStorePath(path);
 }
@@ -303,21 +308,37 @@ static NSArray<NSString *> *FLInodeDiscovery(NSTimeInterval deadline, NSMutableS
     if (statfs(NSHomeDirectory().fileSystemRepresentation, &volume) != 0) {
         [log appendFormat:@"Inode discovery statfs failed: errno %d.\n", errno]; return @[];
     }
-    NSMutableOrderedSet *paths = [NSMutableOrderedSet orderedSet];
+    NSMutableOrderedSet *directories = [NSMutableOrderedSet orderedSet];
+    NSString *context = [NSString stringWithFormat:@"v1:%d:%d:%@:%@:%@", volume.f_fsid.val[0], volume.f_fsid.val[1],
+        FLSysctl("kern.osversion"), FLSysctl("hw.machine"), FLSysctl("kern.bootsessionuuid")];
+    NSDictionary *checkpoint = [NSUserDefaults.standardUserDefaults dictionaryForKey:@"FLStoreInodeCheckpoint"];
+    uint64_t startInode = FLInodeStartForCheckpoint(checkpoint, context);
     NSTimeInterval start = NSProcessInfo.processInfo.systemUptime;
-    uint64_t inode = 16, resolved = 0;
+    uint64_t inode = startInode, resolved = 0, matchingNames = 0;
     for (; inode < 40000000; ++inode) {
         if ((inode & 1023) == 0 && NSProcessInfo.processInfo.systemUptime >= deadline) break;
         char buffer[PATH_MAX] = {0};
         if (fsgetpath(buffer, sizeof(buffer), &volume.f_fsid, inode) <= 0) continue;
         ++resolved;
-        if (!strstr(buffer, "LaunchServices-") || !strstr(buffer, "-v2.csstore")) continue;
+        BOOL looksLikeStore = strstr(buffer, "com.apple.LaunchServices-") && strstr(buffer, ".csstore");
+        // Limit decoded paths to system-container candidates or explicit LS filenames.
+        if (!looksLikeStore && !strstr(buffer, "/Containers/Data/InternalDaemon/") &&
+            !strstr(buffer, "/containers/Data/System/")) continue;
         NSString *path = FLNormalize([NSString stringWithUTF8String:buffer] ?: @"");
-        if (FLIsLaunchServicesStoreName(path.lastPathComponent) && FLIsAllowedStoreDirectory(path.stringByDeletingLastPathComponent)) [paths addObject:path];
+        if (looksLikeStore) {
+            if (++matchingNames <= 5) [log appendFormat:@"Inode LS filename observation: %@ (path/format still must be checked).\n", path];
+        }
+        NSString *directory = FLCacheDirectoryForResolvedPath(path);
+        if (directory) [directories addObject:directory];
+        if (directories.count >= 64) { ++inode; break; }
     }
-    [log appendFormat:@"Inode discovery: stopped at %llu, %llu paths resolved, %lu allowed stores, %.2f seconds; bounded search may be incomplete.\n",
-        inode, resolved, (unsigned long)paths.count, NSProcessInfo.processInfo.systemUptime - start];
-    return paths.array;
+    [NSUserDefaults.standardUserDefaults setObject:FLInodeCheckpoint(context, inode) forKey:@"FLStoreInodeCheckpoint"];
+    [log appendFormat:@"Inode discovery: range [%llu, %llu), %llu paths resolved, %llu LS filename observations, %lu candidate cache directories, %.2f seconds.\n",
+        startInode, inode, resolved, matchingNames, (unsigned long)directories.count, NSProcessInfo.processInfo.systemUptime - start];
+    [log appendFormat:@"Inode checkpoint: next %llu of 40000000; %@. Root, name and inode scans do not prove completeness.\n",
+        FLInodeStartForCheckpoint(FLInodeCheckpoint(context, inode), context),
+        inode >= 40000000 ? @"bounded range complete; next scan restarts" : @"next Extended Store Discovery resumes here"];
+    return directories.array;
 }
 
 static NSString *FLGrantOutcome(int64_t value) {
@@ -334,25 +355,41 @@ static NSString *FLGrantOutcome(int64_t value) {
 }
 static int64_t FLGrantDirectory(NSString *directory, NSString *group, NSMutableString *log) {
     // create_dir only skips the pre-grant lstat; worse_query never creates the target.
-    int64_t primary = worse_query(directory, group, false, true), alternate = -1;
-    if (primary < 0) alternate = worse_query(directory, group, true, true);
-    [log appendFormat:@"Grant %@: primary %lld (%@); alternate %@.\n", directory, primary, FLGrantOutcome(primary),
-        primary < 0 ? [NSString stringWithFormat:@"%lld (%@)", alternate, FLGrantOutcome(alternate)] : @"not needed"];
-    return primary >= 0 ? primary : alternate;
+    if (group.length) {
+        int64_t primary = worse_query(directory, group, false, true), alternate = -1;
+        if (primary < 0) alternate = worse_query(directory, group, true, true);
+        [log appendFormat:@"Grant %@: primary %lld (%@); alternate %@.\n", directory, primary, FLGrantOutcome(primary),
+            primary < 0 ? [NSString stringWithFormat:@"%lld (%@)", alternate, FLGrantOutcome(alternate)] : @"not needed"];
+        if (primary >= 0) return primary;
+        if (alternate >= 0) return alternate;
+    }
+    return FLTraversalTokenForCacheDirectory(directory, log);
 }
 @interface FLNativeStoreDiscoveryAccess : NSObject <FLStoreDiscoveryAccess>
+@property (nonatomic, strong) NSMutableArray<FLLSDContainerLease *> *leases;
 @end
 @implementation FLNativeStoreDiscoveryAccess
+- (instancetype)init { if ((self = [super init])) _leases = [NSMutableArray array]; return self; }
 - (NSArray<NSString *> *)mappedStorePathsWithLog:(NSMutableString *)log { return FLMappedStores(log); }
-- (NSString *)cacheDirectoryForContainerClass:(uint64_t)kind log:(NSMutableString *)log { return FLContainerDirectory(kind, log); }
-- (NSArray<NSString *> *)inodeStorePathsWithDeadline:(NSTimeInterval)deadline log:(NSMutableString *)log { return FLInodeDiscovery(deadline, log); }
+- (NSString *)cacheDirectoryForContainerClass:(uint64_t)kind log:(NSMutableString *)log {
+    if ([FLAccessMode() isEqualToString:@"house-arrest"]) {
+        FLLSDContainerLease *lease = [FLLSDContainerLease openForClass:kind log:log];
+        if (lease) { [self.leases addObject:lease]; return lease.cacheDirectory; }
+    }
+    return FLContainerDirectory(kind, log);
+}
+- (NSArray<NSString *> *)inodeCacheDirectoriesWithDeadline:(NSTimeInterval)deadline log:(NSMutableString *)log { return FLInodeDiscovery(deadline, log); }
 - (NSArray<NSString *> *)storePathsInDirectory:(NSString *)directory group:(NSString *)group log:(NSMutableString *)log {
-    int64_t token = FLGrantDirectory(directory, group, log);
-    if (token < 0) return @[];
+    int64_t token = -1;
     NSMutableArray *paths = [NSMutableArray array];
     DIR *stream = NULL;
     @try {
         int fd = open(directory.fileSystemRepresentation, O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC);
+        if (fd < 0) {
+            token = FLGrantDirectory(directory, group, log);
+            if (token < 0) return @[];
+            fd = open(directory.fileSystemRepresentation, O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC);
+        } else { [log appendFormat:@"Cache directory already readable under current access: %@.\n", directory]; }
         if (fd < 0) { [log appendFormat:@"Cache directory open failed: errno %d.\n", errno]; return @[]; }
         stream = fdopendir(fd);
         if (!stream) { int failure = errno; close(fd); [log appendFormat:@"Cache listing failed: errno %d.\n", failure]; return @[]; }
@@ -382,11 +419,15 @@ static int64_t FLGrantDirectory(NSString *directory, NSString *group, NSMutableS
 - (NSArray<NSString *> *)cacheDirectoriesInRoot:(NSString *)root group:(NSString *)group
                                       deadline:(NSTimeInterval)deadline log:(NSMutableString *)log {
     if (![FLStoreContainerRoots() containsObject:root]) return @[];
-    int64_t token = FLGrantDirectory(root, group, log);
-    if (token < 0) return @[];
+    int64_t token = -1;
     NSMutableArray *directories = [NSMutableArray array]; DIR *stream = NULL;
     @try {
         int fd = open(root.fileSystemRepresentation, O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC);
+        if (fd < 0) {
+            token = FLGrantDirectory(root, group, log);
+            if (token < 0) return @[];
+            fd = open(root.fileSystemRepresentation, O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC);
+        }
         if (fd < 0) { [log appendFormat:@"Container root open failed: errno %d.\n", errno]; return @[]; }
         stream = fdopendir(fd);
         if (!stream) { int failure = errno; close(fd); [log appendFormat:@"Container root listing failed: errno %d.\n", failure]; return @[]; }
@@ -410,10 +451,11 @@ static int64_t FLGrantDirectory(NSString *directory, NSString *group, NSMutableS
 @property (nonatomic, readwrite, copy) NSString *path;
 @property (nonatomic, readwrite, copy) NSString *diagnostics;
 @property (nonatomic) int64_t token;
+@property (nonatomic, strong) NSObject *accessOwner;
 @end
 @implementation FLStoreSession
 - (instancetype)init { if ((self = [super init])) _token = -1; return self; }
-- (void)endAccess { if (_token >= 0) { worse_query_release(_token); _token = -1; } }
+- (void)endAccess { if (_token >= 0) { worse_query_release(_token); _token = -1; } self.accessOwner = nil; }
 - (void)dealloc { [self endAccess]; }
 @end
 
@@ -427,20 +469,30 @@ FLStoreSession *FLOpenStore(NSString *group, NSString *cachedDirectory, BOOL ext
         if (error) *error = FLError(@"This OS is outside the upstream-reported iOS 26.0–26.7.2 access range. Read-only app listing is still available.");
         return nil;
     }
-    if (group.length == 0 || ![NSFileManager.defaultManager containerURLForSecurityApplicationGroupIdentifier:group]) {
+    BOOL houseArrest = [FLAccessMode() isEqualToString:@"house-arrest"];
+    if (houseArrest && !FLHouseArrestIdentityAllowed(NSBundle.mainBundle.bundleIdentifier ?: @"", FLAccessMode())) {
+        if (error) *error = FLError(@"The MHA build requires enterprise signing that preserves com.apple.mobile.MobileHouseArrest. Its bundle identifier was changed; no MHA query was attempted.");
+        return nil;
+    }
+    if (!houseArrest && (group.length == 0 || ![NSFileManager.defaultManager containerURLForSecurityApplicationGroupIdentifier:group])) {
         if (error) *error = FLError(@"A provisioned, dedicated App Group is required. Set FLAppGroupIdentifier and sign with matching application-groups entitlement.");
         return nil;
     }
     NSMutableString *log = [NSMutableString string];
-    NSString *path = [FLStoreDiscovery findStoreUsing:[FLNativeStoreDiscoveryAccess new] group:group
+    [log appendFormat:@"Access backend: %@.\n", houseArrest ? @"MHA lsd lease + scoped traversal fallback" : @"App Group / worse_query + scoped traversal fallback"];
+    FLNativeStoreDiscoveryAccess *access = [FLNativeStoreDiscoveryAccess new];
+    NSString *path = [FLStoreDiscovery findStoreUsing:access group:group
         cachedDirectory:cachedDirectory extended:extendedSearch log:log error:error];
     if (!path) return nil;
-    int64_t token = FLGrantDirectory(path.stringByDeletingLastPathComponent, group, log);
-    if (token < 0) {
+    int64_t token = -1;
+    int fd = open(path.fileSystemRepresentation, O_RDONLY | O_NOFOLLOW | O_CLOEXEC);
+    if (fd >= 0) close(fd);
+    else token = FLGrantDirectory(path.stringByDeletingLastPathComponent, group, log);
+    if (fd < 0 && token < 0) {
         if (error) *error = FLError([NSString stringWithFormat:@"Could not reacquire the selected directory extension.\n%@", log]);
         return nil;
     }
-    FLStoreSession *session = [FLStoreSession new]; session.path = path; session.token = token; session.diagnostics = log;
+    FLStoreSession *session = [FLStoreSession new]; session.path = path; session.token = token; session.diagnostics = log; session.accessOwner = access;
     return session;
 #endif
 }

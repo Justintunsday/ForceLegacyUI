@@ -23,7 +23,7 @@ def generate():
     refs = {}
     sources = sorted(str(p.relative_to(ROOT)).replace("\\", "/") for p in (ROOT / "ForceLegacyUI").rglob("*")
                      if p.suffix in (".swift", ".m", ".h"))
-    other = ["ForceLegacyUI/Resources/Info.plist", "ForceLegacyUI/Resources/ForceLegacyUI.entitlements", "Config/Project.xcconfig",
+    other = ["ForceLegacyUI/Resources/Info.plist", "ForceLegacyUI/Resources/ForceLegacyUI.entitlements", "ForceLegacyUI/Resources/HouseArrest.entitlements", "Config/Project.xcconfig",
              "Probes/Modern-Info.plist", "Probes/Legacy-Info.plist", "Packages/LegacyCore/Package.swift", "Probes/CompatibilityProbe.swift"]
     kinds = {".swift": "sourcecode.swift", ".m": "sourcecode.c.objc", ".h": "sourcecode.c.h", ".plist": "text.plist.xml",
              ".entitlements": "text.plist.entitlements", ".xcconfig": "text.xcconfig"}

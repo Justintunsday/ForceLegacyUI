@@ -11,6 +11,7 @@
 <key>LSRequiresIPhoneOS</key><true/>
 <key>UIDesignRequiresCompatibility</key><true/>
 <key>FLAppGroupIdentifier</key><string>$(APP_GROUP_IDENTIFIER)</string>
+<key>FLAccessMode</key><string>$(FL_ACCESS_MODE)</string>
 <key>UIFileSharingEnabled</key><true/>
 <key>LSSupportsOpeningDocumentsInPlace</key><true/>
 <key>UILaunchScreen</key><dict/>

@@ -6,6 +6,8 @@ FOUNDATION_EXPORT NSArray<NSDictionary<NSString *, id> *> *FLInstalledApps(NSStr
 FOUNDATION_EXPORT NSDictionary<NSString *, NSString *> *FLDeviceInfo(void);
 FOUNDATION_EXPORT NSDictionary<NSString *, id> *FLProbeFacts(void);
 FOUNDATION_EXPORT NSDictionary<NSString *, id> *FLAppGroupContext(void);
+FOUNDATION_EXPORT NSString *FLAccessMode(void);
+FOUNDATION_EXPORT void FLResetStoreDiscoveryProgress(void);
 FOUNDATION_EXPORT UIImage * _Nullable FLApplicationIcon(NSString *bundleID);
 FOUNDATION_EXPORT BOOL FLCSStoreValidate(NSString *path, NSNumber * _Nullable * _Nullable calculatedChecksum, NSError * _Nullable * _Nullable error) __attribute__((swift_error(none)));
 

@@ -15,6 +15,7 @@ from macho_entitlements import read_entitlements
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("products", type=Path)
 parser.add_argument("--evidence", type=Path, required=True)
+parser.add_argument("--house-arrest", action="store_true")
 args = parser.parse_args()
 if sys.platform != "darwin": raise SystemExit("Preparing ad-hoc signing metadata requires macOS codesign")
 apps = sorted(args.products.glob("*.app"))
@@ -22,6 +23,11 @@ if not apps: raise SystemExit("No built apps found")
 evidence = []
 for app in apps:
     info = plistlib.loads((app / "Info.plist").read_bytes())
+    if args.house_arrest:
+        if len(apps) != 1 or info.get("CFBundleIdentifier") != "com.apple.mobile.MobileHouseArrest" or info.get("FLAccessMode") != "house-arrest":
+            raise SystemExit("HouseArrest metadata requires the dedicated, unchanged enterprise identity build")
+        info.pop("FLAppGroupIdentifier", None)
+        (app / "Info.plist").write_bytes(plistlib.dumps(info))
     group = info.get("FLAppGroupIdentifier")
     entitlements = {"com.apple.security.application-groups": [group]} if group else {}
     with tempfile.TemporaryDirectory(prefix="forcelegacyui-entitlements-") as temporary:
@@ -33,6 +39,7 @@ for app in apps:
     if group and embedded.get("com.apple.security.application-groups") != [group]:
         raise SystemExit("Requested App Group was not embedded in the re-signing metadata")
     evidence.append({"bundleID": info["CFBundleIdentifier"], "version": info["CFBundleShortVersionString"],
+                     "accessMode": info.get("FLAccessMode", "probe"),
                      "requestedEntitlements": embedded, "signatureKind": "ad-hoc metadata only",
                      "requiresAppleProvisionedResigning": True})
 args.evidence.parent.mkdir(parents=True, exist_ok=True)

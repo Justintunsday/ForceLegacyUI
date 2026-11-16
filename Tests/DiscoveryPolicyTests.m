@@ -2,6 +2,7 @@
 #import <Foundation/Foundation.h>
 #import "FLStoreDiscovery.h"
 #import "FLDeviceIdentity.h"
+#import "FLContainerAccess.h"
 
 @interface TestDiscoveryAccess : NSObject <FLStoreDiscoveryAccess>
 @property (nonatomic, copy) NSArray<NSString *> *mapped;
@@ -30,7 +31,7 @@
 - (NSArray<NSString *> *)cacheDirectoriesInRoot:(NSString *)root group:(NSString *)group deadline:(NSTimeInterval)deadline log:(NSMutableString *)log {
     (void)group; (void)deadline; (void)log; ++_rootCalls; return self.roots[root] ?: @[];
 }
-- (NSArray<NSString *> *)inodeStorePathsWithDeadline:(NSTimeInterval)deadline log:(NSMutableString *)log {
+- (NSArray<NSString *> *)inodeCacheDirectoriesWithDeadline:(NSTimeInterval)deadline log:(NSMutableString *)log {
     (void)deadline; (void)log; ++_inodeCalls; return self.inodes;
 }
 @end
@@ -52,6 +53,41 @@ int main(int argc, const char *argv[]) {
         NSString *cache = [[root stringByAppendingPathComponent:uuid] stringByAppendingPathComponent:@"Library/Caches"];
         void (^test)(NSString *, void (^)(void)) = ^(NSString *name, void (^body)(void)) { body(); [passed addObject:name]; };
         @try {
+            test(@"Path normalization stays lexical, stable and rejects traversal", ^{
+                for (NSString *path in @[@"/var/db/lsd", @"/private/var/db/lsd", @"//var/./db/lsd/"]) {
+                    NSString *normalized = FLNormalizeStorePath(path);
+                    require([normalized isEqual:legacy] && [FLNormalizeStorePath(normalized) isEqual:legacy], @"Filesystem alias changed discovery identity");
+                }
+                require(!FLNormalizeStorePath(@"/var/db/../db/lsd").length && !FLNormalizeStorePath(@"var/db/lsd").length, @"Traversal or relative path accepted");
+            });
+            test(@"A container descendant yields a candidate without finding the store inode", ^{
+                NSString *container = [root stringByAppendingPathComponent:uuid];
+                require([FLCacheDirectoryForResolvedPath([container stringByAppendingPathComponent:@"Library/Preferences/service.plist"]) isEqual:cache], @"Container path was discarded without a store filename");
+                require([FLCacheDirectoryForResolvedPath(container) isEqual:cache], @"Container directory itself was discarded");
+                require(!FLCacheDirectoryForResolvedPath(@"/private/var/mobile/Containers/Data/Application/04BA7A11-12F4-4567-89AB-0123456789AB/Library/a"), @"Application data entered LS discovery");
+            });
+            test(@"Inode progress resumes only on the same volume and build", ^{
+                NSDictionary *checkpoint = FLInodeCheckpoint(@"volume:build", 4319232);
+                require(FLInodeStartForCheckpoint(checkpoint, @"volume:build") == 4319232, @"Search restarted instead of resuming");
+                require(FLInodeStartForCheckpoint(checkpoint, @"other-volume:build") == 16, @"Stale volume checkpoint reused");
+                require(FLInodeStartForCheckpoint(FLInodeCheckpoint(@"volume:build", 40000000), @"volume:build") == 16, @"Completed range did not restart");
+                require(FLInodeStartForCheckpoint(@{@"context":@"volume:build", @"next":@4319232.5}, @"volume:build") == 16 &&
+                    FLInodeStartForCheckpoint(@{@"context":@"volume:build", @"next":@(-1)}, @"volume:build") == 16, @"Malformed cursor accepted");
+            });
+            test(@"MHA identity requires explicit mode and unchanged bundle identifier", ^{
+                require(FLHouseArrestIdentityAllowed(@"com.apple.mobile.MobileHouseArrest", @"house-arrest"), @"Dedicated identity refused");
+                require(!FLHouseArrestIdentityAllowed(@"com.apple.mobile.MobileHouseArrest.TEAM", @"house-arrest") &&
+                    !FLHouseArrestIdentityAllowed(@"org.forcelegacyui.app", @"house-arrest") &&
+                    !FLHouseArrestIdentityAllowed(@"com.apple.mobile.MobileHouseArrest", @"app-group"), @"Rewritten or incidental identity enabled MHA");
+                require(![FLLSDContainerLease openForClass:2 log:[NSMutableString string]], @"General application-data lease enabled");
+            });
+            test(@"Traversal backend cannot request unrelated file paths", ^{
+                NSString *unrelated = @"/private/var/mobile/Containers/Data/Application/04BA7A11-12F4-4567-89AB-0123456789AB";
+                require(!FLTraversalDomainForCacheDirectory(unrelated) &&
+                    FLTraversalTokenForCacheDirectory(unrelated, [NSMutableString string]) == -100, @"Unrelated traversal reached private APIs");
+                require([FLTraversalDomainForCacheDirectory(cache) hasSuffix:cache] &&
+                    FLTraversalDomainForCacheDirectory(root) != nil, @"Allowed LS discovery target refused");
+            });
             test(@"Architecture uses Mach-O CPU type and strips capability flags", ^{
                 struct mach_header header = {0}; header.magic = MH_MAGIC_64; header.cputype = CPU_TYPE_ARM64;
                 header.cpusubtype = CPU_SUBTYPE_ARM64_ALL;
@@ -104,7 +140,7 @@ int main(int argc, const char *argv[]) {
                 require(![a.attempted containsObject:unrelated] && ![a.attempted containsObject:nested], @"Probed unrelated application data");
             });
             test(@"Bounded inode fallback is attempted after empty roots", ^{
-                TestDiscoveryAccess *a = [TestDiscoveryAccess new]; a.inodes = @[store(cache, @"1")]; a.stores = @{cache:@[store(cache, @"1")]};
+                TestDiscoveryAccess *a = [TestDiscoveryAccess new]; a.inodes = @[cache]; a.stores = @{cache:@[store(cache, @"1")]};
                 require([find(a, nil, YES, [NSMutableString string], NULL) isEqual:store(cache, @"1")] && a.inodeCalls == 1, @"Inode fallback skipped");
             });
             test(@"Cached aliases and duplicate file results collapse safely", ^{
@@ -124,7 +160,7 @@ int main(int argc, const char *argv[]) {
                     [directories addObject:[[root stringByAppendingPathComponent:identifier] stringByAppendingPathComponent:@"Library/Caches"]];
                 }
                 a.roots = @{root:directories}; require(!find(a, nil, YES, [NSMutableString string], NULL), @"Empty bounded search selected a store");
-                require(a.attempted.count == 258, @"Container search exceeded its directory bound");
+                require(a.attempted.count == 259, @"Container search exceeded its directory bound");
             });
         } @catch (NSException *exception) { fprintf(stderr, "%s\n", exception.reason.UTF8String); return 1; }
         NSDictionary *result = @{@"passed":@YES, @"cases":passed, @"physicalDeviceAccessTested":@NO,

@@ -2,9 +2,17 @@
 #import "FLStoreDiscovery.h"
 
 NSString *FLNormalizeStorePath(NSString *path) {
-    if (![path isKindOfClass:NSString.class]) return @"";
+    if (![path isKindOfClass:NSString.class] || ![path hasPrefix:@"/"]) return @"";
+    // NSString standardizingPath can remove /private based on the live filesystem.
+    // Keep allowlist comparison lexical and idempotent even for inaccessible paths.
+    NSMutableArray *components = [NSMutableArray array];
+    for (NSString *component in [path componentsSeparatedByString:@"/"]) {
+        if ([component isEqualToString:@".."]) return @"";
+        if (component.length && ![component isEqualToString:@"."]) [components addObject:component];
+    }
+    path = [@"/" stringByAppendingString:[components componentsJoinedByString:@"/"]];
     if ([path hasPrefix:@"/var/"]) path = [@"/private" stringByAppendingString:path];
-    return path.stringByStandardizingPath;
+    return path;
 }
 NSArray<NSString *> *FLStoreContainerRoots(void) {
     return @[@"/private/var/mobile/Containers/Data/InternalDaemon", @"/private/var/containers/Data/System"];
@@ -15,12 +23,35 @@ BOOL FLIsLaunchServicesStoreName(NSString *name) {
 }
 BOOL FLIsAllowedStoreDirectory(NSString *path) {
     path = FLNormalizeStorePath(path);
-    if ([path isEqualToString:@"/private/var/db/lsd"]) return YES;
+    if ([@[@"/private/var/db/lsd", @"/private/var/mobile/Library/Caches"] containsObject:path]) return YES;
     if (![path hasSuffix:@"/Library/Caches"]) return NO;
     NSString *container = [[path stringByDeletingLastPathComponent] stringByDeletingLastPathComponent];
     if (![FLStoreContainerRoots() containsObject:container.stringByDeletingLastPathComponent]) return NO;
     return [[NSUUID alloc] initWithUUIDString:container.lastPathComponent] != nil ||
         [container.lastPathComponent isEqualToString:@"com.apple.lsd"];
+}
+NSString *FLCacheDirectoryForResolvedPath(NSString *path) {
+    path = FLNormalizeStorePath(path);
+    for (NSString *legacy in @[@"/private/var/db/lsd", @"/private/var/mobile/Library/Caches"]) {
+        if ([path isEqualToString:legacy] || [path hasPrefix:[legacy stringByAppendingString:@"/"]]) return legacy;
+    }
+    for (NSString *root in FLStoreContainerRoots()) {
+        NSString *prefix = [root stringByAppendingString:@"/"];
+        if (![path hasPrefix:prefix]) continue;
+        NSString *name = [[path substringFromIndex:prefix.length] componentsSeparatedByString:@"/"].firstObject;
+        if (![[NSUUID alloc] initWithUUIDString:name] && ![name isEqualToString:@"com.apple.lsd"]) return nil;
+        return [[root stringByAppendingPathComponent:name] stringByAppendingPathComponent:@"Library/Caches"];
+    }
+    return nil;
+}
+uint64_t FLInodeStartForCheckpoint(NSDictionary *checkpoint, NSString *context) {
+    if (![checkpoint isKindOfClass:NSDictionary.class] || ![checkpoint[@"context"] isEqual:context]) return 16;
+    NSNumber *value = [checkpoint[@"next"] isKindOfClass:NSNumber.class] ? checkpoint[@"next"] : nil;
+    uint64_t next = value.unsignedLongLongValue;
+    return next >= 16 && next < 40000000 && value.doubleValue == (double)next ? next : 16;
+}
+NSDictionary *FLInodeCheckpoint(NSString *context, uint64_t nextInode) {
+    return @{@"context":context, @"next":@(nextInode >= 16 && nextInode < 40000000 ? nextInode : 16)};
 }
 static NSString *FLAllowedStore(NSString *path) {
     path = FLNormalizeStorePath(path);
@@ -44,7 +75,8 @@ static NSString *FLAllowedStore(NSString *path) {
     NSMutableSet<NSString *> *visited = [NSMutableSet set];
     void (^probe)(NSString *) = ^(NSString *directory) {
         directory = FLNormalizeStorePath(directory);
-        if (!FLIsAllowedStoreDirectory(directory) || [visited containsObject:directory]) return;
+        if (!FLIsAllowedStoreDirectory(directory)) { [log appendFormat:@"Cache directory rejected by path policy: %@.\n", directory]; return; }
+        if ([visited containsObject:directory]) return;
         [visited addObject:directory];
         for (NSString *path in [access storePathsInDirectory:directory group:group log:log]) {
             NSString *allowed = FLAllowedStore(path);
@@ -63,7 +95,7 @@ static NSString *FLAllowedStore(NSString *path) {
             if (FLIsAllowedStoreDirectory(cached)) [directories addObject:FLNormalizeStorePath(cached)];
             // Metadata queries can return nothing in a sandbox. Still try the documented upstream locations.
             [directories addObjectsFromArray:@[@"/private/var/containers/Data/System/com.apple.lsd/Library/Caches",
-                                               @"/private/var/db/lsd"]];
+                                               @"/private/var/db/lsd", @"/private/var/mobile/Library/Caches"]];
         }
         [log appendFormat:@"Initial cache directories: %lu.\n", (unsigned long)directories.count];
         for (NSString *directory in directories) probe(directory);
@@ -82,9 +114,8 @@ static NSString *FLAllowedStore(NSString *path) {
             }
             [log appendFormat:@"Extended container search: %lu cache directories attempted (limit 256; time budget 10 seconds).\n", (unsigned long)count];
             if (!candidates.count) {
-                for (NSString *path in [access inodeStorePathsWithDeadline:NSProcessInfo.processInfo.systemUptime + 8 log:log]) {
-                    NSString *allowed = FLAllowedStore(path);
-                    if (allowed) probe(allowed.stringByDeletingLastPathComponent);
+                for (NSString *directory in [access inodeCacheDirectoriesWithDeadline:NSProcessInfo.processInfo.systemUptime + 20 log:log]) {
+                    if (FLIsAllowedStoreDirectory(directory)) probe(directory);
                 }
             }
         } else if (!extended && !candidates.count) {

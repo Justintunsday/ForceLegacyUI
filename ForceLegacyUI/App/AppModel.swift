@@ -66,6 +66,11 @@ final class AppModel: ObservableObject {
         do { backups = try await engine.backups() }
         catch { failed = true; message = error.localizedDescription }
     }
+    func restartInodeDiscovery() async {
+        guard !busy else { return }
+        busy = true; await engine.restartInodeDiscovery(); busy = false
+        await scan(extended: true)
+    }
     func apply() async {
         guard !busy else { return }; busy = true
         do { message = try await engine.apply(selected: selection, dryRun: dryRun); failed = false }

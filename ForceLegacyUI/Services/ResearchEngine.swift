@@ -15,6 +15,7 @@ struct Inspection: Codable {
     var appGroupSource: String?
     var catalogSource: String = "LaunchServices"
     var storeError: String?
+    var accessBackend: String = "App Group / worse_query"
 }
 
 actor ResearchEngine {
@@ -26,7 +27,8 @@ actor ResearchEngine {
     private var demo = false
 
     init() {
-        documents = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let root = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        documents = FLAccessMode() == "house-arrest" ? root.appendingPathComponent("ForceLegacyUI", isDirectory: true) : root
     }
     private var demoRoot: URL { documents.appendingPathComponent("DemoLaboratory", isDirectory: true) }
     private var demoStore: URL { demoRoot.appendingPathComponent("synthetic.csstore") }
@@ -58,7 +60,8 @@ actor ResearchEngine {
             return try body(demoStore, "Synthetic app-owned store. No installed application is changed.")
         }
         let (resolution, _) = resolveAppGroup()
-        guard let group = resolution.selected else {
+        let group = FLAccessMode() == "house-arrest" ? "" : resolution.selected
+        guard let group else {
             throw LegacyError.unsupported(resolution.state == .ambiguous
                 ? "More than one rewritten ForceLegacyUI App Group is usable. Configure the dedicated group explicitly; no group was selected."
                 : "App Group unavailable. The configured group does not match a usable group in this app's signature. Re-sign ForceLegacyUI with its dedicated App Group; changing an Info.plist string alone does not grant access.")
@@ -73,6 +76,8 @@ actor ResearchEngine {
         UserDefaults.standard.set(url.deletingLastPathComponent().path, forKey: "LastLSCacheDirectory")
         return try body(url, session.diagnostics)
     }
+
+    func restartInodeDiscovery() { FLResetStoreDiscoveryProgress() }
 
     func inspect(demo requestedDemo: Bool, extended: Bool = false) -> Inspection {
         if requestedDemo != demo { lastPreview = nil }
@@ -90,18 +95,23 @@ actor ResearchEngine {
                                 isDemo: demo, log: message as String? ?? "", status: .unsupported)
         let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "unknown"
         output.log = "ForceLegacyUI \(version)\niOS \(output.device.osVersion) (\(output.device.osBuild)); \(output.device.model); \(output.device.architecture)\nInspection: \(demo ? "demo" : (extended ? "extended" : "standard"))\n\n" + output.log
-        if !demo {
+        output.accessBackend = demo ? "Synthetic demo" : (FLAccessMode() == "house-arrest" ? "MobileHouseArrest" : "App Group / worse_query + traversal fallback")
+        output.log += "\nAccess backend: \(output.accessBackend)\n"
+        if !demo && FLAccessMode() == "house-arrest" {
+            output.log += "Bundle ID: \(Bundle.main.bundleIdentifier ?? "unknown")\nMHA mode requires an unchanged com.apple.mobile.MobileHouseArrest identity. App Group is not required for this mode.\n"
+        } else if !demo {
             let (group, source) = resolveAppGroup()
             output.appGroup = group; output.appGroupSource = source
             output.log += "\nBundle ID: \(Bundle.main.bundleIdentifier ?? "unknown")\nConfigured App Group: \(group.configured)\nGroup metadata: \(source)\nReported groups: \(group.reportedGroups.joined(separator: ", "))\nGroup state: \(group.state.rawValue); selected: \(group.selected ?? "none")\n"
         } else { output.catalogSource = "Synthetic demo" }
         do {
             try withStore(extended: extended) { url, accessLog in
+                output.log += "\n\(accessLog)\n"
                 let data = try TransactionEngine.readSnapshot(url)
                 output.storePath = url.path
                 let store = try CSStore(data: data)
                 output.storeSummary = store.summary
-                output.log += "\n\(accessLog)\nBounded v2 catalog parsed. SHA-256: \(sha256(data))\n"
+                output.log += "Bounded v2 catalog parsed. SHA-256: \(sha256(data))\n"
                 do {
                     try validator.validate(data)
                     output.log += "Store copy passed \(demo ? "synthetic" : "system CoreServicesStore") validation.\n"
