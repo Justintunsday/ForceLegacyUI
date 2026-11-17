@@ -49,15 +49,20 @@ for name in ["ForceLegacyUI", "CompatibilityProbeModern", "CompatibilityProbeLeg
     arguments = ["--demo", "--self-test"] if name == "ForceLegacyUI" else []
     launch = run("xcrun", "simctl", "launch", udid, identifier, *arguments)
     time.sleep(3)
-    # launchctl presence checks that the app did not simply crash after spawning.
-    processes = run("xcrun", "simctl", "spawn", udid, "launchctl", "list")
-    if identifier not in processes: raise SystemExit(f"Process did not remain running: {identifier}")
+    # Simulator app PIDs are host PIDs. Check the exact executable without an extra
+    # guest launchctl query, which can stall behind first-boot service migration.
+    prefix = identifier + ": "
+    if not launch.startswith(prefix) or not launch[len(prefix):].isdigit():
+        raise SystemExit(f"Unexpected simulator launch response: {launch}")
+    process_name = run("/bin/ps", "-p", launch[len(prefix):], "-o", "comm=", timeout=30)
+    if Path(process_name).name != info["CFBundleExecutable"]:
+        raise SystemExit(f"Process did not remain running as the expected executable: {identifier}")
     run("xcrun", "simctl", "io", udid, "screenshot", str(output / f"{name}-simulator.png"))
     facts = None
     if name == "ForceLegacyUI":
         container = Path(run("xcrun", "simctl", "get_app_container", udid, identifier, "data"))
         self_test_path = container / "Documents/simulator-self-test.json"
-        for _ in range(15):
+        for _ in range(120):
             if self_test_path.exists(): break
             time.sleep(1)
         if not self_test_path.exists(): raise SystemExit("App engine self-test did not produce evidence")

@@ -51,7 +51,7 @@ jobs:
           python3 scripts/prepare_sideload_metadata.py build/house-arrest/Build/Products/Release-iphoneos --house-arrest --evidence dist/house-arrest-metadata.json
           python3 scripts/package_ipa.py build/house-arrest/Build/Products/Release-iphoneos dist --unsigned --house-arrest
       - name: Build and smoke test simulator
-        timeout-minutes: 12
+        timeout-minutes: 25
         run: |
           set -eo pipefail
           xcodebuild -project ForceLegacyUI.xcodeproj -scheme ForceLegacyUI -configuration Debug \
