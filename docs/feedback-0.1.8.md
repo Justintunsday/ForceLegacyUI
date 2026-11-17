@@ -40,3 +40,26 @@ Installing that variant can replace 3105 because it shares the bundle identifier
 No program changes or new binary release are justified by this feedback alone.
 The 0.1.8 candidate fix is functioning; the alternate traversal flags did not
 improve other-bundle access in the reported regular-build session.
+
+## Third capture and end of MHA distribution
+
+The third matching ZIP identifies the unchanged MobileHouseArrest backend and
+0.1.8 build 10. The primary-name snapshot passed the phone validator and still
+contained 437 records of 572 bytes. However, native/MCM enumeration supplied
+**one** visible record, and the engine only used cache inventory when native
+enumeration was completely empty. Consequently the bundle collector logged
+**one attempt**, reading only the running app's SDK 26.2.0. This capture does not
+test other-bundle access under that identity. The read-only candidate parsed
+156 records, but only one was mapped to the displayed inventory.
+
+The user then ended the MHA route. Version 0.1.9 fixes the general partial-catalog
+bug in the regular build: unambiguous cache registrations can supplement a partial
+native catalog, empty native paths may use explicitly labelled observed cache
+paths, and UUID/identity conflicts or duplicate identities are excluded. Cache
+SDKs are cleared in supplemented entries and do not become native witnesses.
+SDK collection retains its existing budgets and actual-file requirements.
+
+The primary UUID cache's no-write O_RDWR/stable-read probe now runs separately
+from SDK layout proof and reports its own result. It creates no write authorization.
+MHA CI packaging and new MHA releases have been discontinued; historical evidence
+remains archived. The private third capture is not committed or sent to CI.

@@ -1,0 +1,25 @@
+{
+  "device": "iPhone 17 Pro",
+  "deviceTest": false,
+  "freshDevice": true,
+  "launches": [
+    {
+      "bundleID": "org.forcelegacyui.app",
+      "factsExported": false,
+      "launchResult": "org.forcelegacyui.app: 9433"
+    },
+    {
+      "bundleID": "org.forcelegacyui.app.probe.modern",
+      "factsExported": true,
+      "launchResult": "org.forcelegacyui.app.probe.modern: 11940"
+    },
+    {
+      "bundleID": "org.forcelegacyui.app.probe.legacy",
+      "factsExported": true,
+      "launchResult": "org.forcelegacyui.app.probe.legacy: 14558"
+    }
+  ],
+  "runtime": "com.apple.CoreSimulator.SimRuntime.iOS-26-2",
+  "toolchainSDK": "26.2",
+  "udid": "1646245D-308A-428C-BF93-CA11210DAC99"
+}

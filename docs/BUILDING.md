@@ -96,22 +96,12 @@ No signing credentials were supplied for the initial development run, so the
 delivered build artifacts are labeled unsigned. Do not upload signing secrets as
 source files or issue attachments.
 
-## Enterprise identity variant
+## Archived MHA experiment
 
-CI also builds `ForceLegacyUIHouseArrest-unsigned.ipa` using the device-only scheme
-and these overrides: `FL_BUNDLE_ID=com.apple.mobile.MobileHouseArrest`,
-`FL_ACCESS_MODE=house-arrest`, `APP_GROUP_IDENTIFIER=` and
-`CODE_SIGN_ENTITLEMENTS=ForceLegacyUI/Resources/HouseArrest.entitlements`.
-The metadata/packaging scripts require `--house-arrest`, check that exact identity
-and mode, remove the unused custom group key and seal it with empty requested
-entitlements. They do not provide an enterprise certificate.
-
-Use the enterprise signing setup that preserves this identity. It shares the
-bundle identifier of 3105, so installation replaces that app. Do not re-sign this
-variant with a tool that adds a team suffix. New local files live under
-`Documents/ForceLegacyUI`; existing contents are not automatically cleaned up.
-The normal optional GitHub signing job remains an App Group build, not an
-enterprise-profile signing service. See the [Chinese instructions](ENTERPRISE-MHA.zh-Hant.md).
+MHA distribution ended after 0.1.8 at the user's request. Current CI builds the
+regular App Group app and two control probes; no enterprise-identity IPA is
+produced or included in new releases. Earlier evidence remains in the versioned
+validation records for reproducibility.
 
 ## Reproducibility
 

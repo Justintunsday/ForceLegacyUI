@@ -1,0 +1,52 @@
+{
+  "ipas": [
+    {
+      "accessMode": "probe",
+      "appleProvisionedSigningVerified": false,
+      "build": "11",
+      "bundleID": "org.forcelegacyui.app.probe.legacy",
+      "cpuSubtype": 0,
+      "cpuType": 16777228,
+      "displayName": "Legacy Probe",
+      "file": "CompatibilityProbeLegacy-unsigned.ipa",
+      "requestedEntitlements": {},
+      "sha256": "5635384cf733083e11dc277826bfa7d06cfd0d4ceeb0230190cf6b9510a67181",
+      "size": 88921,
+      "version": "0.1.9"
+    },
+    {
+      "accessMode": "probe",
+      "appleProvisionedSigningVerified": false,
+      "build": "11",
+      "bundleID": "org.forcelegacyui.app.probe.modern",
+      "cpuSubtype": 0,
+      "cpuType": 16777228,
+      "displayName": "Modern Probe",
+      "file": "CompatibilityProbeModern-unsigned.ipa",
+      "requestedEntitlements": {},
+      "sha256": "a699b4d9214a4baa722d1f3053bb3424d388fb26803e3293d4a221ab02204b6c",
+      "size": 88920,
+      "version": "0.1.9"
+    },
+    {
+      "accessMode": "app-group",
+      "appleProvisionedSigningVerified": false,
+      "build": "11",
+      "bundleID": "org.forcelegacyui.app",
+      "cpuSubtype": 0,
+      "cpuType": 16777228,
+      "displayName": "ForceLegacyUI",
+      "file": "ForceLegacyUI-unsigned.ipa",
+      "requestedEntitlements": {
+        "com.apple.security.application-groups": [
+          "group.org.forcelegacyui.app"
+        ]
+      },
+      "sha256": "5ed764173b925783205295b014557789749a8e6574a22ac3b086e8521efc0e16",
+      "size": 487374,
+      "version": "0.1.9"
+    }
+  ],
+  "passed": true,
+  "scope": "Downloaded IPA ZIP, executable, version, architecture, requested entitlements and SHA sidecars"
+}

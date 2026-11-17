@@ -1,26 +1,25 @@
-# ForceLegacyUI 0.1.8 安裝與「找不到 App」排查
+# ForceLegacyUI 0.1.9 安裝與「找不到 App」排查
 
 已讀到 App、準備測試修改時，先看 [單 App 實驗教程](SINGLE-APP.zh-Hant.md)。
 你的 0.1.4 一般版已成功讀取快取，可沿用目前的 App Group 簽名方式。
 
-若你已在 iOS 26.6.2 上用企業簽名 3105 成功存取資料，請先看
-[MHA 企業測試版教程](ENTERPRISE-MHA.zh-Hant.md)。該版本與 3105 使用相同 Bundle ID，安裝會替換 3105。
+0.1.9 起只發佈一般 App Group 版與對照 Probe；MHA 版本已停止後續打包。
 
 目前這是研究版。可以列出可見的 App、讀取診斷，以及測試備份與還原；
 **尚未驗證能把其他已安裝 App 的外觀恢復成 iOS 18。真實快取寫入仍預設禁用。**
 
 ## 先更新 IPA
 
-一般版直接下載：[ForceLegacyUI 0.1.8 IPA](https://github.com/Justintunsday/ForceLegacyUI/releases/download/v0.1.8/ForceLegacyUI-unsigned.ipa)。
+一般版直接下載：[ForceLegacyUI 0.1.9 IPA](https://github.com/Justintunsday/ForceLegacyUI/releases/download/v0.1.9/ForceLegacyUI-unsigned.ipa)。
 下載後仍須用你的側載工具重新簽名。
 
 也可以從建置紀錄取得：
 
-1. 打開 [0.1.8（build 10）的成功建置](https://github.com/Justintunsday/ForceLegacyUI/actions/runs/44079799734)。
+1. 打開 [0.1.9（build 11）的建置](https://github.com/Justintunsday/ForceLegacyUI/actions/runs/44091064076)。
 2. 登入 GitHub，在該次執行頁面的 **Artifacts** 下載壓縮檔。
 3. 解壓縮後，使用 `dist/ForceLegacyUI-unsigned.ipa`。另外兩個 `CompatibilityProbe` 是對照測試 App。
 4. 用原本的側載工具更新 ForceLegacyUI。保留 App Groups 權限，讓工具用你的帳戶重新簽名並配置描述檔。
-5. 打開 **Diagnostics**，確認 **App version** 顯示 `0.1.8`；Technical log 另列 build 10。
+5. 打開 **Diagnostics**，確認 **App version** 顯示 `0.1.9`；Technical log 另列 build 11。
 
 檔名中的 `unsigned` 表示沒有 Apple 核發的安裝簽名，仍須由側載工具簽名。
 0.1.1 起先以 ad-hoc 簽名攜帶請求的 App Group 資訊，供重新簽名工具讀取；
@@ -126,7 +125,7 @@ Mach-O CPU 架構。這項修正避免後續架構比對錯誤，但不會自行
 
 0.1.5 的 **Share Report and Snapshot** 會分享包含上述三檔的 ZIP，可直接使用。
 0.1.4 的 **Share Report** 仍只分享 `report.json`，需從「檔案」附上原始快取。
-MHA 版的相同資料夾多一層 `ForceLegacyUI`。原始快取可包含 App 登記等私人 metadata，
+原始快取可包含 App 登記等私人 metadata，
 可先自行檢查再提供。
 
 分析後仍須核對真實 SDK 欄位、產生只改指定欄位的 dry run，才可接通單一 App 的

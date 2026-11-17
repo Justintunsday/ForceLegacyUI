@@ -57,6 +57,14 @@ both remain failures. These tests do not measure device filesystem performance.
 
 ## First run on iOS 26.6.2
 
+The 0.1.9 reconciliation cases reproduce a one-record native catalog alongside
+other cache registrations, missing native paths with an SDK that must be cleared,
+contradictory UUIDs, duplicate identities, folded spelling, out-of-scope cache
+paths and record-budget refusal. They preserve matching native facts and exclude
+conflicts instead of choosing one. The existing no-write writable-open test still
+requires byte-for-byte equality before and after the probe. CI now packages only
+the regular App Group app and two probes.
+
 The 0.1.8 core cases use synthetic 572-byte payloads to check exact build/architecture
 binding, one-witness read-only decoding without a write proof, wrong/ambiguous SDK
 rejection, null-placeholder scope, malformed non-null path refusal and one-field

@@ -50,6 +50,16 @@ query using 0x8000000000; it does not retry missing APIs or consume an absent to
 Each query is disposed before retry, and a consumed token retains one owner.
 Kernel grant success and effectiveness remain device-test questions.
 
+From 0.1.9, partial native catalogs are reconciled with unambiguous observed cache
+registrations. Empty native paths can use a cache path, explicitly labelled as a
+cache registration with its SDK cleared. Duplicate identities and contradictory
+UUID/name pairs are excluded. Neither supplemented paths nor candidate SDKs
+establish installation or independent executable evidence. The exact primary UUID
+cache can be probed with O_RDWR and a stable read after system validation even
+when SDK proof is incomplete; this probe issues no writes and grants no Apply
+permission. Selection also requires a validated layout. Current distribution uses
+only the regular App Group build; MHA distribution ended after 0.1.8.
+
 Read-only discovery may probe exact legacy LS cache directories and UUID/lsd
 `Library/Caches` directories under the three listed system-container roots. Extended
 search only lists root names and matching cache-file metadata; it does not inspect

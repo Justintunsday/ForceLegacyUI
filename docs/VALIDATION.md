@@ -1,5 +1,48 @@
 # Validation evidence
 
+## 0.1.9 validation
+
+Version **0.1.9, build 11**, application source
+[`66649c4f`](https://github.com/Justintunsday/ForceLegacyUI/commit/66649c4f8967be354836b695d5eb2d59cd3f42d4),
+passed [run 44091064076](https://github.com/Justintunsday/ForceLegacyUI/actions/runs/44091064076)
+on `macos-15-intel` with Xcode 26.2.
+
+* **51 core XCTest cases, 60 native regression cases and 5 offline analysis tests passed.**
+  Reconciliation tests reproduce a one-record native list with other cache entries,
+  preserve matching native facts, clear SDKs when filling empty native paths from
+  cache, and exclude duplicate/conflicting identities and out-of-scope cache paths.
+  The no-write writable-open regression still verifies unchanged file contents.
+* The regular app and two probes built for arm64. The iOS 26.2 x86_64 simulator
+  launched all three apps, exported both probe reports, returned **148 native
+  registrations** with `isDemo: false`, and passed synthetic preview/apply/backup/
+  restore/ZIP export. Restored SHA-256 matched the original
+  `036b8a8fea6b258779071264cbde428629d4a588fd6800365fec8bbf7ea10e36`.
+* All three downloaded IPAs passed independent ZIP, SHA sidecar, version/build,
+  arm64 and requested-entitlement checks. The main app requests its dedicated
+  App Group. Apple-provisioned signing was skipped; re-signing is required.
+* **MHA packaging and new MHA releases are discontinued.** The successful artifact
+  contains no MHA IPA or MHA packaging metadata. Historical local MHA outputs were
+  verified against the old release and moved into an ignored archive folder.
+
+Main IPA SHA-256: `5ed764173b925783205295b014557789749a8e6574a22ac3b086e8521efc0e16`.
+Artifact ID `14332601483`; GitHub-reported ZIP digest
+`ec90284a0c336560f3f686cf86cc9f7d09474b6a52514a8f8a02a6be451a577f`.
+Evidence: [0.1.9 records](evidence/v0.1.9/).
+
+The earlier [run 44088118178](https://github.com/Justintunsday/ForceLegacyUI/actions/runs/44088118178)
+on the same source passed unit/native checks and device/simulator compilation,
+but interrupted during the first `simctl launch`, before producing app smoke
+evidence. A new manually dispatched environment completed the full flow without
+application or workflow changes. Only artifacts from the successful run are used.
+
+[Third-capture review](feedback-0.1.8.md#third-capture-and-end-of-mha-distribution)
+identified the partial-inventory bug. Private captures remain local. The separate
+primary-UUID-cache O_RDWR/stable-read probe writes no bytes and does not create
+SDK evidence or write authorization. Three fresh native app observations across
+two SDK versions, selected-app evidence and a fresh one-app preview remain
+required. **No improved phone access, live SDK write or legacy appearance is claimed.**
+
+
 ## 0.1.8 validation
 
 Version **0.1.8, build 10**, application source

@@ -6,11 +6,18 @@ and a guarded SDK-metadata experiment engine.
 
 [繁體中文安裝與「找不到 App」排查教程](docs/GUIDE.zh-Hant.md)
 
-[Download 0.1.8 IPA (re-signing required)](https://github.com/Justintunsday/ForceLegacyUI/releases/download/v0.1.8/ForceLegacyUI-unsigned.ipa)
+[Download 0.1.9 IPA (re-signing required)](https://github.com/Justintunsday/ForceLegacyUI/releases/download/v0.1.9/ForceLegacyUI-unsigned.ipa)
 
 [單 App 寫入、預覽與還原教程](docs/SINGLE-APP.zh-Hant.md)
 
-[Enterprise MHA variant and installation instructions](docs/ENTERPRISE-MHA.zh-Hant.md)
+Version **0.1.9 (build 11)** is distributed only as the regular App Group app
+and its two control probes. MHA distribution ended at the user's request.
+Partial native enumeration is reconciled with unambiguous cache registrations,
+so one visible native app no longer suppresses other observed cache entries.
+Cache-sourced paths retain their provenance, conflicting identities are excluded,
+and cached SDKs are not promoted into independent evidence. A separate no-write
+O_RDWR/stable-read probe reports cache access even when SDK layout proof is
+incomplete. It does not enable Apply. See [the reported catalog gap](docs/feedback-0.1.8.md).
 
 Version **0.1.8 (build 10)** includes a [572-byte candidate](docs/LAYOUT-572.md)
 restricted to iOS 26.6.2 / 23G90 / arm64, reviewed against a matching private
@@ -50,11 +57,10 @@ probe, fresh dry run, snapshot/path/hash-bound authorization, durable backup and
 post-write verification are required. Receipts retain the layout and metadata
 evidence for restoration after relaunch. Raw diagnostic export now shares one ZIP.
 
-The enterprise variant is named **ForceLegacyUI MHA**. It shares 3105's bundle ID
-and replaces that app when installed. A prefixed `SystemDataOnly` cache can be
-inspected only as a diagnostic source of unverified role. The user reports that
-the regular 0.1.4 build read 134 registrations on 26.6.2; the new write experiment,
-MHA access, app-list completeness and appearance still need device verification.
+The historical MHA experiment is archived after 0.1.8. Current CI and releases
+produce the regular App Group app and two probes. A prefixed `SystemDataOnly`
+cache remains diagnostic only. App-list completeness, live SDK experiments and
+legacy appearance still need device verification.
 
 The regular build resolves matching signing-tool App Group renames, records
 per-stage discovery failures and reports process architecture separately from
@@ -91,10 +97,10 @@ device-installable main-app IPA when matching credentials and provisioning are
 configured. Unsigned IPAs require signing before installation.
 
 [Find the latest build artifacts](https://github.com/Justintunsday/ForceLegacyUI/actions/workflows/build.yml).
-Use the 0.1.8 build 10 release for sideloading; the old 0.1.0 package omitted App
+Use the 0.1.9 build 11 release for sideloading; the old 0.1.0 package omitted App
 Group signing metadata. See the [validation record](docs/VALIDATION.md) for test scope.
-The [0.1.8 build](https://github.com/Justintunsday/ForceLegacyUI/actions/runs/44079799734)
-passed 46 core tests, 60 native cases and 5 offline analysis tests. Its iOS 26.2
+The [0.1.9 build](https://github.com/Justintunsday/ForceLegacyUI/actions/runs/44091064076)
+passed 51 core tests, 60 native cases and 5 offline analysis tests. Its iOS 26.2
 simulator completed the synthetic transaction/ZIP flow, launched both probes and
 returned 148 native registrations. Build details and scope are recorded in
 [validation evidence](docs/VALIDATION.md).
