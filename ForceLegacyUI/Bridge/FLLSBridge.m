@@ -41,6 +41,25 @@ NSString *FLAccessMode(void) {
     return FLString([NSBundle.mainBundle objectForInfoDictionaryKey:@"FLAccessMode"]);
 }
 NSDictionary<NSString *, id> *FLInspectBundle(NSString *identifier, NSString *path, NSString *group, NSError **error) {
+    if (!FLIsApplicationBundlePath(path)) return FLReadBundleEvidence(identifier, path, nil, nil, error);
+    NSString *readPath = FLNormalizeStorePath(path);
+    // Bulk enumeration can be empty while an individual proxy still provides the on-disk spelling.
+    // It is only a hint: keep the same UUID/name and require the native Info/Mach-O read below.
+    FLLoadServices();
+    Class proxyClass = NSClassFromString(@"LSApplicationProxy"); SEL lookup = NSSelectorFromString(@"applicationProxyForIdentifier:");
+    if ([proxyClass respondsToSelector:lookup]) {
+        @try {
+            id proxy = ((id (*)(id, SEL, NSString *))objc_msgSend)(proxyClass, lookup, identifier);
+            NSString *returnedID = FLString(FLValue(proxy, @"applicationIdentifier"));
+            if (!returnedID.length) returnedID = FLString(FLValue(proxy, @"bundleIdentifier"));
+            id url = FLValue(proxy, @"bundleURL");
+            NSString *candidate = [url isKindOfClass:NSURL.class] && [url isFileURL] ? FLNormalizeStorePath([url path]) : @"";
+            NSUUID *expected = [[NSUUID alloc] initWithUUIDString:readPath.stringByDeletingLastPathComponent.lastPathComponent];
+            NSUUID *reported = [[NSUUID alloc] initWithUUIDString:candidate.stringByDeletingLastPathComponent.lastPathComponent];
+            if ([returnedID isEqual:identifier] && FLIsApplicationBundlePath(candidate) && [expected isEqual:reported] &&
+                [readPath.lastPathComponent caseInsensitiveCompare:candidate.lastPathComponent] == NSOrderedSame) readPath = candidate;
+        } @catch (NSException *exception) { (void)exception; }
+    }
     BOOL useGroup = group.length && FLCanReleaseDirectoryTokens() &&
         [NSFileManager.defaultManager containerURLForSecurityApplicationGroupIdentifier:group] != nil;
     int64_t (^request)(NSString *, BOOL) = nil; void (^release)(int64_t) = nil;
@@ -52,7 +71,7 @@ NSDictionary<NSString *, id> *FLInspectBundle(NSString *identifier, NSString *pa
         };
         release = ^(int64_t token) { FLReleaseDirectoryToken(token); };
     }
-    return FLReadBundleEvidence(identifier, path, request, release, error);
+    return FLReadBundleEvidence(identifier, readPath, request, release, error);
 }
 BOOL FLStoreIsDiagnosticOnly(NSString *path) { return FLIsDiagnosticLSStoreName(path.lastPathComponent); }
 void FLResetStoreDiscoveryProgress(void) {
