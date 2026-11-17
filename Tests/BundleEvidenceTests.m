@@ -134,7 +134,7 @@ NSArray<NSString *> *FLRunBundleEvidenceTests(void) {
             int64_t (^request)(NSString *, FLBundleGrantMethod) = ^int64_t(NSString *container, FLBundleGrantMethod method) { (void)container; (void)method; ++requests; return -6; };
             NSError *error = nil;
             check(!FLTestResolveBundle(@"org.example.sdk", fixture[@"root"], @"Example.app", request, ^(int64_t token) { (void)token; check(NO, @"Denied grant was released as a token"); }, &error), @"Denied grants produced evidence");
-            check(requests == 3 && [error.localizedDescription containsString:@"Info.plist open failed"] && [error.localizedDescription containsString:@"Traversal UUID-container grant: -6"], @"Per-stage diagnostics or traversal attempt missing");
+            check(requests == 4 && [error.localizedDescription containsString:@"Info.plist open failed"] && [error.localizedDescription containsString:@"Bundle-root traversal UUID-container grant: -6"], @"Per-stage diagnostics or traversal attempt missing");
             requests = 0;
             check(!FLTestResolveBundle(@"org.example.sdk", fixture[@"root"], @"Example.app", request, nil, NULL) && !requests, @"Consumed an unpaired token");
         } @finally { [NSFileManager.defaultManager removeItemAtPath:fixture[@"root"] error:NULL]; }
@@ -172,6 +172,19 @@ NSArray<NSString *> *FLRunBundleEvidenceTests(void) {
                 return 0;
             }, ^(int64_t token) { check(token == 0, @"Wrong traversal token released"); ++releases; }, NULL);
             check([result[@"sdk"] isEqual:@"26.2.0"] && requests == 3 && releases == 1, @"Unavailable primary backend blocked traversal");
+        } @finally { [NSFileManager.defaultManager removeItemAtPath:fixture[@"root"] error:NULL]; }
+    });
+    test(@"Fixed-root grant fallback keeps metadata reads bound to the requested UUID", ^{
+        NSDictionary *fixture = bundleFixture(NO); NSMutableArray *methods = [NSMutableArray array], *released = [NSMutableArray array];
+        @try {
+            NSDictionary *result = FLTestResolveBundle(@"org.example.sdk", fixture[@"root"], @"Example.app", ^int64_t(NSString *container, FLBundleGrantMethod method) {
+                check([container.lastPathComponent isEqual:[fixture[@"root"] lastPathComponent]], @"Root capability changed the actual read target");
+                [methods addObject:@(method)];
+                if (method != FLBundleGrantRootTraversal) return -6;
+                check([fixture[@"info"] writeToFile:[fixture[@"app"] stringByAppendingPathComponent:@"Info.plist"] atomically:YES], @"Injected root-grant response failed");
+                return 73;
+            }, ^(int64_t token) { [released addObject:@(token)]; }, NULL);
+            check([result[@"sdk"] isEqual:@"26.2.0"] && [methods isEqual:@[@0, @1, @2, @3]] && [released isEqual:@[@73]], @"Root fallback read or release failed");
         } @finally { [NSFileManager.defaultManager removeItemAtPath:fixture[@"root"] error:NULL]; }
     });
     return passed;

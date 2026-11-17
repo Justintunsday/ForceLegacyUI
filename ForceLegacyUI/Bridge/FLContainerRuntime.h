@@ -39,5 +39,6 @@ FOUNDATION_EXPORT FLContainerRuntime FLTestResolveContainerRuntime(FLContainerSy
 FOUNDATION_EXPORT FLLSDContainerLease * _Nullable FLTestOpenLSDLease(uint64_t kind, const FLContainerRuntime * _Nonnull runtime, NSMutableString * _Nonnull log);
 FOUNDATION_EXPORT NSArray<NSDictionary<NSString *, id> *> *FLTestMHAAppDataCatalog(const FLContainerRuntime *runtime, NSUInteger limit, NSMutableString *log);
 FOUNDATION_EXPORT int64_t FLTestBundleTraversalToken(NSString *directory, const FLContainerRuntime *runtime, NSMutableString *log);
+FOUNDATION_EXPORT int64_t FLTestBundleRootTraversalToken(const FLContainerRuntime *runtime, NSMutableString *log);
 #endif
 NS_ASSUME_NONNULL_END

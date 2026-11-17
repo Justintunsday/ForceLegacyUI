@@ -214,6 +214,19 @@ static int64_t FLBundleTraversalToken(NSString *directory, FLContainerRuntime *a
 int64_t FLTraversalTokenForBundleContainer(NSString *directory, NSMutableString *log) {
     return FLBundleTraversalToken(directory, FLContainerFunctions(), log);
 }
+static int64_t FLBundleRootTraversalToken(FLContainerRuntime *api, NSMutableString *log) {
+    NSString *root = @"/private/var/containers/Bundle/Application";
+    int failure = 0;
+    if (!(api->existingDirectory ?: FLExistingDirectory)(root.fileSystemRepresentation, &failure)) {
+        [log appendFormat:@"Bundle-root traversal skipped: fixed existing directory could not be verified, errno %d.\n", failure];
+        return -105;
+    }
+    [log appendString:@"Bundle-root traversal scope: fixed Bundle/Application; caller reads only the validated UUID target.\n"];
+    return FLTraversalToken(root, FLTraversalDomain(root), api, log);
+}
+int64_t FLTraversalTokenForApplicationBundleRoot(NSMutableString *log) {
+    return FLBundleRootTraversalToken(FLContainerFunctions(), log);
+}
 
 @interface FLLSDContainerLease () {
     void *_query;
@@ -289,5 +302,9 @@ NSArray<NSDictionary<NSString *, id> *> *FLTestMHAAppDataCatalog(const FLContain
 int64_t FLTestBundleTraversalToken(NSString *directory, const FLContainerRuntime *runtime, NSMutableString *log) {
     FLContainerRuntime api = *runtime;
     return FLBundleTraversalToken(directory, &api, log);
+}
+int64_t FLTestBundleRootTraversalToken(const FLContainerRuntime *runtime, NSMutableString *log) {
+    FLContainerRuntime api = *runtime;
+    return FLBundleRootTraversalToken(&api, log);
 }
 #endif

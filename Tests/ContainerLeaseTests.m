@@ -114,6 +114,18 @@ NSArray<NSString *> *FLRunContainerLeaseTests(void) {
         api = bundleTraversalRuntime(); api.token = copyNoToken;
         check(FLTestBundleTraversalToken(root, &api, [NSMutableString string]) == -104 && state.disposed == 1 && !state.consumes, @"Absent token was consumed or query leaked");
     });
+    test(@"Bundle-root traversal has one fixed scope and still requires existence and paired release", ^{
+        FLContainerRuntime api = bundleTraversalRuntime(); state.root = "/private/var/containers/Bundle/Application";
+        check(FLTestBundleRootTraversalToken(&api, [NSMutableString string]) == 73, @"Fixed-root traversal token unavailable");
+        check(state.kind == 13 && strcmp(state.identifier, "systemgroup.com.apple.mobilegestaltcache") == 0 &&
+            strcmp(state.domain, "../../../../../../../../private/var/containers/Bundle/Application") == 0 &&
+            state.disposed == 1 && !state.releases, @"Root query escaped fixed scope or lost token ownership");
+        api.release(73);
+        api = bundleTraversalRuntime(); state.root = "/private/var/containers/Bundle/Application"; state.exists = NO;
+        check(FLTestBundleRootTraversalToken(&api, [NSMutableString string]) == -105 && !state.queries, @"Unverifiable root reached query");
+        api = bundleTraversalRuntime(); state.root = "/private/var/containers/Bundle/Application"; api.release = NULL;
+        check(FLTestBundleRootTraversalToken(&api, [NSMutableString string]) == -101 && !state.queries && !state.consumes, @"Root token consumed without release API");
+    });
     test(@"MCM catalog reads metadata without token or object activation APIs", ^{
         FLContainerRuntime api = runtime(); api.iterate = iterateMetadata; api.identifier = getIdentifier;
         NSArray<NSDictionary<NSString *, id> *> *records = FLTestMHAAppDataCatalog(&api, 4096, [NSMutableString string]);

@@ -2,7 +2,7 @@
 #import <Foundation/Foundation.h>
 NS_ASSUME_NONNULL_BEGIN
 typedef NS_ENUM(NSUInteger, FLBundleGrantMethod) {
-    FLBundleGrantStandard, FLBundleGrantAlternate, FLBundleGrantTraversal
+    FLBundleGrantStandard, FLBundleGrantAlternate, FLBundleGrantTraversal, FLBundleGrantRootTraversal
 };
 FOUNDATION_EXPORT BOOL FLIsApplicationBundlePath(NSString *path);
 FOUNDATION_EXPORT NSDictionary<NSString *, id> * _Nullable FLReadBundleEvidence(NSString *identifier, NSString *path,

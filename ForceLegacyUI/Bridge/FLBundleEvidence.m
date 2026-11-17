@@ -233,7 +233,7 @@ static NSDictionary *FLResolveBundle(NSString *identifier, NSString *path, NSArr
     }
     if (requestToken && releaseToken) {
         for (NSString *parent in parents) {
-            NSArray *methods = @[@"Standard", @"Alternate", @"Traversal"];
+            NSArray *methods = @[@"Standard", @"Alternate", @"Traversal", @"Bundle-root traversal"];
             for (NSUInteger attempt = 0; attempt < methods.count; ++attempt) {
                 int64_t token = requestToken(parent, (FLBundleGrantMethod)attempt);
                 [details addObject:[NSString stringWithFormat:@"%@ UUID-container grant: %lld", methods[attempt], (long long)token]];

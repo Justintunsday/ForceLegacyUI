@@ -69,6 +69,7 @@ NSDictionary<NSString *, id> *FLInspectBundle(NSString *identifier, NSString *pa
             // The reader supplies only the requested bundle's UUID parent, never the bundle root.
             if (!FLIsApplicationBundlePath([container stringByAppendingPathComponent:@"Scope.app"])) return -100;
             if (method == FLBundleGrantTraversal) return FLTraversalTokenForBundleContainer(container, grantLog);
+            if (method == FLBundleGrantRootTraversal) return FLTraversalTokenForApplicationBundleRoot(grantLog);
             if (!useGroup) return -101;
             return worse_query(container, group, method == FLBundleGrantAlternate, true);
         };

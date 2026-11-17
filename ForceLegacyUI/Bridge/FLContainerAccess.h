@@ -7,6 +7,8 @@ FOUNDATION_EXPORT int64_t FLTraversalTokenForCacheDirectory(NSString *directory,
 FOUNDATION_EXPORT NSString * _Nullable FLTraversalDomainForBundleContainer(NSString *directory);
 /// Requires an existing, nonsymlink UUID bundle container; only its metadata reader consumes this token.
 FOUNDATION_EXPORT int64_t FLTraversalTokenForBundleContainer(NSString *directory, NSMutableString *log);
+/// Fixed Bundle/Application scope, retained only while the caller reads its already-validated UUID target.
+FOUNDATION_EXPORT int64_t FLTraversalTokenForApplicationBundleRoot(NSMutableString *log);
 FOUNDATION_EXPORT NSString *FLContainerRuntimeDiagnostics(void);
 FOUNDATION_EXPORT void FLReleaseDirectoryToken(int64_t token);
 FOUNDATION_EXPORT BOOL FLCanReleaseDirectoryTokens(void);
