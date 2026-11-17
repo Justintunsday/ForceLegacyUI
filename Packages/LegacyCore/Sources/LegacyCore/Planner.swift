@@ -139,7 +139,10 @@ public struct WriteAuthorization {
               receipt.layout == profile, receipt.device == device, let old = receipt.bundleEvidence,
               let target = receipt.changes.first?.bundleID,
               let baseline = old.first(where: { $0.bundleID == target }),
-              observations.first(where: { $0.bundleID == target }) == baseline else {
+              let fresh = observations.first(where: { $0.bundleID == target }),
+              LiveStorePolicy.sameBundleRegistration(fresh.bundlePath, baseline.bundlePath),
+              fresh.sdk == baseline.sdk, fresh.infoSHA256 == baseline.infoSHA256,
+              fresh.loadCommandsSHA256 == baseline.loadCommandsSHA256 else {
             throw LegacyError.conflict("The backup, source, device or selected bundle metadata changed; refusing experimental restoration.")
         }
         let original = try Data(contentsOf: checked.directory.appendingPathComponent("original.csstore"))

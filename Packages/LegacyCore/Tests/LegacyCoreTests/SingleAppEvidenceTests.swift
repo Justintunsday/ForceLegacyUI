@@ -178,6 +178,9 @@ final class SingleAppEvidenceTests: XCTestCase {
         try BackupRepository.setStatus(.applied, directory: entry.directory)
         XCTAssertEqual(try WriteAuthorization.activeChangeLayout(backup: BackupRepository.load(entry.directory), current: plan.candidate,
             device: DemoFixture.device, observations: folded, source: source, validator: validator), DemoFixture.profile)
+        // New readers can return resolved filename casing for an older receipt; fingerprints must still agree.
+        XCTAssertEqual(try WriteAuthorization.activeChangeLayout(backup: BackupRepository.load(entry.directory), current: plan.candidate,
+            device: DemoFixture.device, observations: facts, source: source, validator: validator), DemoFixture.profile)
     }
     func testAbsentReferenceSizesAreReportedWithoutInferringAColumn() throws {
         var log = ""
