@@ -15,19 +15,29 @@ Bundle evidence opens only validated UUID application-bundle paths, Info.plist a
 the named executable with read-only/no-follow descriptors. It reads bounded Mach-O
 headers/load commands, checks CFBundleIdentifier and stable file identities, and
 releases any temporary token. It never opens signed bundles for writing. Queries
-use only our resolved dedicated App Group; MHA without group access may have fewer
+for worse_query use only our resolved dedicated App Group; MHA without group access may have fewer
 readable bundles and cannot bypass the three-observation requirement.
 
-Version 0.1.6 can enumerate at most 64 names in the requested bundle's UUID parent
+Bundle reading can enumerate at most 64 names in the requested bundle's UUID parent
 to resolve folded registration spelling. It opens only one matching `.app` name;
 ambiguous names, symlinks, changed directory identities and Info.plist ID conflicts
 are refused. UUID/name case equivalence is limited to bundle observation comparison;
 live store write paths stay exact. Individual LS URLs can supply spelling only for
 the same UUID/name and never replace the native metadata read. Scoped parent grants
 are paired and tested through Info.plist/executable reads, including when opening
-the directory alone succeeded. No request targets the overall Bundle/Application
-root, application data or unrelated UUIDs. The current app uses its own bundle path
+the directory alone succeeded. The current app uses its own bundle path
 as an independent observation when its registration is present.
+
+Version 0.1.7 tries traversal after both worse_query methods fail. It first requests
+the exact UUID parent; the last fallback requests the single fixed
+`/private/var/containers/Bundle/Application` root used by the reference metadata
+reader. This root capability is broader than the consumer's read target: the
+consumer still resolves and reads only its original validated UUID/.app and
+Info.plist/executable, does not enumerate other UUIDs, uses read-only descriptors
+and releases the token after that attempt. Both traversal scopes require lstat
+confirmation of an existing nonsymlink directory before querying. The root API
+accepts no caller-supplied path; application-data and arbitrary filesystem roots
+are excluded. Kernel grant success and effectiveness remain device-test questions.
 
 Read-only discovery may probe exact legacy LS cache directories and UUID/lsd
 `Library/Caches` directories under the three listed system-container roots. Extended

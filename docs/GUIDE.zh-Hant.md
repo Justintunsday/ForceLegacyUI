@@ -1,4 +1,4 @@
-# ForceLegacyUI 0.1.6 安裝與「找不到 App」排查
+# ForceLegacyUI 0.1.7 安裝與「找不到 App」排查
 
 已讀到 App、準備測試修改時，先看 [單 App 實驗教程](SINGLE-APP.zh-Hant.md)。
 你的 0.1.4 一般版已成功讀取快取，可沿用目前的 App Group 簽名方式。
@@ -11,16 +11,16 @@
 
 ## 先更新 IPA
 
-一般版直接下載：[ForceLegacyUI 0.1.6 IPA](https://github.com/Justintunsday/ForceLegacyUI/releases/download/v0.1.6/ForceLegacyUI-unsigned.ipa)。
+一般版直接下載：[ForceLegacyUI 0.1.7 IPA](https://github.com/Justintunsday/ForceLegacyUI/releases/download/v0.1.7/ForceLegacyUI-unsigned.ipa)。
 下載後仍須用你的側載工具重新簽名。
 
 也可以從建置紀錄取得：
 
-1. 打開 [0.1.6（build 8）的成功建置](https://github.com/Justintunsday/ForceLegacyUI/actions/runs/44064110113)。
+1. 打開 [0.1.7（build 9）的成功建置](https://github.com/Justintunsday/ForceLegacyUI/actions/runs/44072817445)。
 2. 登入 GitHub，在該次執行頁面的 **Artifacts** 下載壓縮檔。
 3. 解壓縮後，使用 `dist/ForceLegacyUI-unsigned.ipa`。另外兩個 `CompatibilityProbe` 是對照測試 App。
 4. 用原本的側載工具更新 ForceLegacyUI。保留 App Groups 權限，讓工具用你的帳戶重新簽名並配置描述檔。
-5. 打開 **Diagnostics**，確認 **App version** 顯示 `0.1.6`；Technical log 另列 build 8。
+5. 打開 **Diagnostics**，確認 **App version** 顯示 `0.1.7`；Technical log 另列 build 9。
 
 檔名中的 `unsigned` 表示沒有 Apple 核發的安裝簽名，仍須由側載工具簽名。
 0.1.1 起先以 ad-hoc 簽名攜帶請求的 App Group 資訊，供重新簽名工具讀取；
@@ -109,6 +109,10 @@ Mach-O CPU 架構。這項修正避免後續架構比對錯誤，但不會自行
 0.1.6 補上同 UUID 容器的實際名稱解析、Info.plist／執行檔讀取失敗後的授權重試，以及
 完整路徑、grant 和候選尺寸日誌。執行檔 SDK 與快取欄位狀態會分開顯示。
 這些修正尚待真機檢驗；[單 App 教程](SINGLE-APP.zh-Hant.md#有-app-清單但-sdk-仍是-unavailable) 說明各行日誌的意義。
+
+0.1.6 後續回報已讀到自身 SDK，其他 Bundle 仍被 `EPERM` 和兩組 `-6` 擋住。
+0.1.7 在 Bundle 讀取也接上 traversal 後備，包括同 UUID 及固定 Bundle 根目錄的授權嘗試。
+它沒有加入 572-byte 配置，也沒有真機成功讀取其他 SDK 或寫入的宣稱。
 
 若 0.1.5 的候選格式仍未通過，要進一步核對這個 build 的欄位，需要實際快取內容；
 只有 Technical log 的 hash 與登記數不足以決定欄位：

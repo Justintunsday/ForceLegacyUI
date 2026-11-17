@@ -39,6 +39,14 @@ simulate access changes; they do not exercise an actual sandbox grant. Missing
 candidate sizes must be reported without inferring a replacement layout. Offline
 analysis retains candidate field references when bundle filename/UUID spelling differs.
 
+The 0.1.7 native cases exercise the complete denied-standard/denied-alternate/
+scoped-traversal/fixed-root sequence, independent fallback when worse_query is
+unavailable, metadata-read enforcement and release. Injected transport checks
+bind class 13, the fixed system group, part, flags and exact domain; unsafe targets,
+unverifiable directories, absent paired APIs, rejected queries and missing tokens
+must stop. The root capability changes no read target. These tests do not establish
+kernel approval of a Bundle/Application extension on a phone.
+
 The symbol-lookup test exercises the production resolver using the exported
 operation-part/part-domain names. New scan tests inject inode paths and time to
 check descending anchors above forty million, overflow fallback, primary filename

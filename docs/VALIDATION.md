@@ -1,5 +1,47 @@
 # Validation evidence
 
+## 0.1.7 validation
+
+Version **0.1.7, build 9**, source
+[`ee56658b`](https://github.com/Justintunsday/ForceLegacyUI/commit/ee56658b6c8fbbdb6717a666c6d63ed765b9283c),
+passed [run 44072817445](https://github.com/Justintunsday/ForceLegacyUI/actions/runs/44072817445)
+on `macos-15-intel` with Xcode 26.2.
+
+* **41 core XCTest cases, 58 native regression cases and 5 offline analysis tests passed.**
+  Added cases verify fallback after denied or unavailable worse_query methods,
+  exact UUID/root query domains, the fixed class/group/part/flags contract,
+  preflight directory checks, refused unsafe paths, missing paired APIs, denied
+  queries, absent tokens, read-target binding and per-attempt token release.
+  Transport and access responses are injected; this does not exercise a real
+  phone sandbox extension.
+* Normal and separate MHA device apps built. The iOS 26.2 x86_64 iPhone 17 Pro
+  simulator launched all three normal apps, exported both probe reports and
+  returned 148 native registrations with `isDemo: false`. The synthetic app-engine
+  preview/apply/backup/restore/ZIP cycle passed and restored SHA-256
+  `036b8a8fea6b258779071264cbde428629d4a588fd6800365fec8bbf7ea10e36`.
+* All four downloaded IPAs passed independent ZIP, SHA sidecar, version/build,
+  arm64 and requested-entitlement checks. No Apple provisioning credentials were
+  supplied, and optional signing was skipped. Every IPA requires re-signing.
+
+Main IPA SHA-256: `94972ea398173767e19098c2fca5185e66d284e140002b57b9c77673e9bae615`.
+MHA IPA SHA-256: `44ae96d3d33b05fefe4674e4e661c055af2fa0903ad162ab3fde492b46ac1357`.
+Artifact ID `14323319420`; GitHub-reported ZIP digest
+`7b055c15e56d8767e00cedc35512d43b70143fbfa89a4a2822e4ad63db989ed5`.
+Evidence: [0.1.7 records](evidence/v0.1.7/).
+
+The bundle reader now tries traversal for its UUID and then the one fixed
+Bundle/Application root used by the reference metadata reader. The latter
+capability is broader than the read target, which remains the original validated
+UUID/name, Info.plist and bounded executable headers. It performs no root-wide
+enumeration or signed-bundle write, checks a pre-existing nonsymlink directory
+before querying, and releases each token after that metadata attempt. Cache/write
+path policy is not broadened. See [SAFETY.md](SAFETY.md).
+
+**No improved phone access, live SDK write or legacy appearance is claimed.**
+The reported 572-byte layout still has no included profile; one self-SDK witness
+from the user's 0.1.6 log is insufficient to authorize it. A matching report/raw
+snapshot and independent SDK observations remain required for field review.
+
 ## 0.1.6 validation
 
 Version **0.1.6, build 8**, source
@@ -45,6 +87,26 @@ their exact spelling; unknown record layouts and batch writes remain blocked.
 change is claimed.** A readable executable SDK does not by itself verify a cache
 SDK column. [The guide](SINGLE-APP.zh-Hant.md) explains the new per-stage logs and
 the matching report/snapshot ZIP needed if verification remains incomplete.
+
+### Additional user-provided 0.1.6 device feedback
+
+The next user log on the same reported OS/build/model/architecture showed a valid
+primary-name store with **437 Bundle units of 572 bytes** and 134 read-only
+registrations. The regular group's renamed identity resolved. The current app's
+real Info.plist and executable yielded independent SDK **26.2.0**, and the log
+confirmed folded registration spelling versus its real bundle filename.
+
+All eleven other attempted bundle containers failed to open with EPERM and both
+worse_query methods returned -6. Only one independent SDK witness was available;
+592/604 candidates were explicitly skipped. This confirms self-bundle reading and
+the current method's permission failure, not access to other signed bundles,
+writable cache access or a 572-byte SDK layout. The actual snapshot was not
+provided, and private UUIDs/team identifiers are omitted here.
+
+Inspection of the reference metadata reader showed that traversal is attempted
+for Bundle/Application too, while ForceLegacyUI 0.1.6 had wired its traversal
+helper only to LS cache discovery. Version 0.1.7 adds bounded bundle-reader
+fallbacks and records their real results. No improved phone outcome is claimed.
 
 ## 0.1.5 validation
 

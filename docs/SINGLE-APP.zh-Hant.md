@@ -1,24 +1,24 @@
-# 0.1.6：單一 App SDK 實驗
+# 0.1.7：單一 App SDK 實驗
 
 0.1.5（build 7）加入真正的單 App SDK 寫入路徑。它修改 LaunchServices 的 SDK metadata，
 **尚未驗證能把 UIKit／SwiftUI 恢復成 iOS 18 外觀**。找到快取、欄位驗證、取得寫入存取、
 寫入後核對，以及畫面是否改變，會分別檢查。
 
-目前版本為 **0.1.6（build 8）**，補上 SDK 讀取的路徑名稱解析、子檔案授權重試與詳細錯誤。
+目前版本為 **0.1.7（build 9）**。0.1.6 補上 SDK 讀取的路徑名稱解析、子檔案授權重試與詳細錯誤。
 它會在同一個 UUID 容器內核對實際 `.app` 名稱，再讀 Info.plist 與執行檔；
 未在真機確認修正效果，未知快取格式仍須獨立驗證。
 
 **你回報的 Bundle record size 是 572；目前沒有內建的 572-byte 配置。**
-0.1.6 先補 SDK 擷取與診斷，仍需要 matching ZIP 的實際欄位與獨立 SDK 來核對配置，
+0.1.7 先補 SDK 擷取的授權後備，仍需要 matching ZIP 的實際欄位與獨立 SDK 來核對配置，
 不會只因尺寸是 572 就啟用寫入。
 
 你的 0.1.4 日誌已顯示一般 App Group 版成功讀取 134 筆登記。可沿用目前側載方式，
-更新 [一般版 IPA](https://github.com/Justintunsday/ForceLegacyUI/releases/download/v0.1.6/ForceLegacyUI-unsigned.ipa)，
+更新 [一般版 IPA](https://github.com/Justintunsday/ForceLegacyUI/releases/download/v0.1.7/ForceLegacyUI-unsigned.ipa)，
 保留 App Groups，讓工具重新簽名。無須因這個結果改換 MHA 版。
 
 ## 先看驗證結果
 
-1. 關閉 **Demo laboratory**，確認版本為 `0.1.6`（build 8）。
+1. 關閉 **Demo laboratory**，確認版本為 `0.1.7`（build 9）。
 2. 執行 **Run Read-Only Inspection**；需要重新找位置時用 **Extended Store Discovery**。
 3. 看 **Independent SDK observations** 與 Technical log。程式最多嘗試 12 個 App Bundle，
    從只讀的 Info.plist 與執行檔 load commands 取得獨立的 build SDK，並核對 Bundle ID。
@@ -46,6 +46,16 @@
 * 清單的 `Executable SDK ...; cache field unverified` 只顯示執行檔 SDK；選擇開關仍等待快取欄位驗證。
 
 若仍失敗，使用本頁末尾的 ZIP 匯出流程。保持目前已能讀取快取的 App Group 簽名方式即可。
+
+0.1.6 的後續日誌已確認：自身 SDK `26.2.0` 可讀；其他 UUID 容器回報 `EPERM`，
+兩組 worse_query 都未提供 token。0.1.7 因此加入兩個 traversal 後備：先嘗試同一 UUID，
+再嘗試固定的 `Bundle/Application` 根目錄授權。後者對照 3105 的 metadata 讀取方式；
+實際讀檔仍限於已驗證的目標 UUID、唯一匹配 `.app`、Info.plist 與 Mach-O headers，
+每次讀取結束即釋放 handle。尚未驗證能在這台手機取得其他 App 的 SDK。
+
+新日誌中的 `Traversal UUID-container grant`、`Bundle-root traversal` 會顯示後備結果。
+`-105` 表示無法先確認既有 nonsymlink 目錄；`-103` 表示查詢無結果；`-104` 表示沒有 token。
+非負 handle 仍要成功讀出 native SDK 才算有效；取得 SDK 後，572-byte 格式也仍需核對。
 
 ## 一個 App 的預覽與寫入
 

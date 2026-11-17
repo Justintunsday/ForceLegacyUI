@@ -30,7 +30,7 @@
       "commit": "a72617ed4c764a65d8aac1e91aca95231e72a2cb",
       "license": "GPL-3.0 for original material; separate third-party terms",
       "sourceRedistributed": false,
-      "use": "MHA identity and retained access, mobile System LS cache location, container discovery techniques"
+      "use": "MHA identity and retained access, mobile System LS cache location, container discovery, and Bundle/Application traversal capability with bounded read-only metadata consumers"
     },
     {
       "name": "bad_query",

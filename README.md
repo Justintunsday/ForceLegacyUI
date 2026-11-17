@@ -6,13 +6,21 @@ and a guarded SDK-metadata experiment engine.
 
 [繁體中文安裝與「找不到 App」排查教程](docs/GUIDE.zh-Hant.md)
 
-[Download 0.1.6 IPA (re-signing required)](https://github.com/Justintunsday/ForceLegacyUI/releases/download/v0.1.6/ForceLegacyUI-unsigned.ipa)
+[Download 0.1.7 IPA (re-signing required)](https://github.com/Justintunsday/ForceLegacyUI/releases/download/v0.1.7/ForceLegacyUI-unsigned.ipa)
 
 [單 App 寫入、預覽與還原教程](docs/SINGLE-APP.zh-Hant.md)
 
 [Enterprise MHA variant and installation instructions](docs/ENTERPRISE-MHA.zh-Hant.md)
 
-Version 0.1.6 (build 8) addresses bundle SDK read failures reported with 0.1.5.
+Version 0.1.7 (build 9) adds traversal fallbacks to bundle SDK reading after the
+regular and alternate worse_query attempts. It first tries the requested UUID,
+then the fixed Bundle/Application root used by the reference metadata reader.
+The consumer still opens only the requested UUID/name and its Info.plist/executable
+read-only, and releases each token after that attempt. Both traversal scopes
+require a preflight existing-directory check. This is an unverified device access
+attempt, not a newly supported 572-byte layout.
+
+Version 0.1.6 addresses bundle SDK read failures reported with 0.1.5.
 It resolves registration spelling against bounded entries in the same UUID
 container, checks Info.plist identity and retries scoped grants through the actual
 metadata read. Individual LS URLs are spelling hints only for the same container
@@ -73,10 +81,10 @@ device-installable main-app IPA when matching credentials and provisioning are
 configured. Unsigned IPAs require signing before installation.
 
 [Find the latest build artifacts](https://github.com/Justintunsday/ForceLegacyUI/actions/workflows/build.yml).
-Use the 0.1.6 build 8 release for sideloading; the old 0.1.0 package omitted App
+Use the 0.1.7 build 9 release for sideloading; the old 0.1.0 package omitted App
 Group signing metadata. See the [validation record](docs/VALIDATION.md) for test scope.
-The [0.1.6 build](https://github.com/Justintunsday/ForceLegacyUI/actions/runs/44064110113)
-passed 41 core tests, 51 native cases and 5 offline analysis tests. Its iOS 26.2
+The [0.1.7 build](https://github.com/Justintunsday/ForceLegacyUI/actions/runs/44072817445)
+passed 41 core tests, 58 native cases and 5 offline analysis tests. Its iOS 26.2
 simulator completed the synthetic transaction/ZIP flow, launched both probes and
 returned 148 native registrations. Build details and scope are recorded in
 [validation evidence](docs/VALIDATION.md).
