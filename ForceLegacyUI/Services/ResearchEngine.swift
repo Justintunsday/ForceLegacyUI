@@ -21,6 +21,8 @@ struct Inspection: Codable {
     var singleAppWriteReady = false
     var writeReadinessReason = "Import an exact-build layout and validate independent SDK observations first."
     var writableOpen: Bool?
+    var candidateLayoutID: String?
+    var candidateSDKs: [String: SDKVersion] = [:]
 }
 
 actor ResearchEngine {
@@ -96,6 +98,16 @@ actor ResearchEngine {
         #else
         return BundleObservationCollector.collect(apps, group: evidenceGroup, required: required, log: &log)
         #endif
+    }
+
+    private func explainCandidate(_ evidence: ReadOnlyLayoutEvidence, output: inout Inspection) {
+        output.candidateLayoutID = evidence.profile.id
+        let registrations = Dictionary(grouping: output.applications, by: \.bundleID)
+        output.candidateSDKs = Dictionary(uniqueKeysWithValues: evidence.records.compactMap { record -> (String, SDKVersion)? in
+            guard let entries = registrations[record.bundleID], entries.count == 1,
+                  LiveStorePolicy.sameBundleRegistration(entries[0].bundlePath, record.bundlePath) else { return nil }
+            return (record.bundleID, record.sdk)
+        })
     }
 
     func inspect(demo requestedDemo: Bool, extended: Bool = false) -> Inspection {
@@ -181,6 +193,10 @@ actor ResearchEngine {
                             output.writeReadinessReason = output.bundleFacts.count < 3
                                 ? "Only \(output.bundleFacts.count) independent SDK observations were readable; at least three apps and two SDK versions are required. See Bundle SDK details in Technical log."
                                 : "No candidate layout matches this snapshot. Export Report and Raw Snapshot for field review; see candidate sizes and refusal reasons in Technical log."
+                            if let candidate = try RuntimeLayoutCandidates.inspectReadOnly(data: data, device: identity,
+                                observations: output.bundleFacts, validator: validator, log: &output.log) {
+                                explainCandidate(candidate, output: &output)
+                            }
                         }
                     }
                 }
@@ -193,6 +209,9 @@ actor ResearchEngine {
                         output.applications = apps
                     } else {
                         do {
+                            let candidate = try ReadOnlyLayoutEvidence.validate(data: data, profile: profile, device: identity,
+                                observations: output.bundleFacts, validator: validator)
+                            explainCandidate(candidate, output: &output)
                             for record in records {
                                 if let observed = apps.first(where: { $0.bundleID == record.bundleID }), let sdk = observed.reportedSDK {
                                     guard sdk == record.sdk, LiveStorePolicy.sameBundleRegistration(observed.bundlePath, record.bundlePath) else {
@@ -223,7 +242,7 @@ actor ResearchEngine {
                     output.layoutID = profile.id; output.layoutValidated = true; output.status = .experimental
                     output.log += "Profile \(profile.id). Appearance remains unverified.\n"
                 } else {
-                    output.log += "No exact-build layout is loaded. Record sizes and independent build SDKs are diagnostic evidence; no SDK offsets were guessed. Import and validate a layout before a single-app experiment.\n"
+                    output.log += "No independently validated exact-build layout is loaded. Candidate cache SDKs, when available, are read-only evidence. Three independent apps and two SDK versions are still required before a single-app experiment.\n"
                 }
                 if store.summary.containsCompatibilityKeyString {
                     output.log += "The compatibility key string occurs in this snapshot. This does not establish a writable per-app field or an effective override.\n"

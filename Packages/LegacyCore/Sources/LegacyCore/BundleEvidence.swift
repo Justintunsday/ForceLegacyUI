@@ -56,29 +56,25 @@ public enum LiveStorePolicy {
     }
 }
 
-/// A checked snapshot is separate from appearance evidence. Construction performs all checks.
-public struct SDKSnapshotEvidence {
-    let originalSHA256: String
-    let device: DeviceIdentity
-    let profileDigest: String
-    let observations: [BundleSDKObservation]
+/// Candidate decoding with one or more witnesses. It cannot be passed to WriteAuthorization.
+public struct ReadOnlyLayoutEvidence {
+    public let profile: LayoutProfile
+    public let records: [StoreApplication]
     let verifiedIDs: Set<String>
-
-    private init(originalSHA256: String, device: DeviceIdentity, profileDigest: String,
-                 observations: [BundleSDKObservation], verifiedIDs: Set<String>) {
-        self.originalSHA256 = originalSHA256; self.device = device; self.profileDigest = profileDigest
-        self.observations = observations; self.verifiedIDs = verifiedIDs
+    let versions: Set<SDKVersion>
+    private init(profile: LayoutProfile, records: [StoreApplication], verifiedIDs: Set<String>, versions: Set<SDKVersion>) {
+        self.profile = profile; self.records = records; self.verifiedIDs = verifiedIDs; self.versions = versions
     }
-
     public static func validate(data: Data, profile: LayoutProfile, device: DeviceIdentity,
-                                observations: [BundleSDKObservation], validator: StoreValidator) throws -> SDKSnapshotEvidence {
+                                observations: [BundleSDKObservation], validator: StoreValidator) throws -> ReadOnlyLayoutEvidence {
         try profile.validate(for: device)
-        guard device.upstreamAccessCandidate, (3...32).contains(observations.count) else {
-            throw LegacyError.unsupported("Single-app experiments need three to thirty-two independent bundle SDK observations on a supported device.")
+        guard device.upstreamAccessCandidate, (1...32).contains(observations.count) else {
+            throw LegacyError.unsupported("Candidate inspection needs one to thirty-two independent bundle SDK observations on a supported device.")
         }
         try validator.validate(data)
         let store = try CSStore(data: data)
-        let records = Dictionary(uniqueKeysWithValues: try store.applications(profile: profile, device: device).map { ($0.bundleID, $0) })
+        let applications = try store.applications(profile: profile, device: device)
+        let records = Dictionary(uniqueKeysWithValues: applications.map { ($0.bundleID, $0) })
         var seen = Set<String>(), versions = Set<SDKVersion>()
         func hash(_ value: String) -> Bool {
             value.count == 64 && value.allSatisfy { "0123456789abcdef".contains($0) }
@@ -99,8 +95,33 @@ public struct SDKSnapshotEvidence {
             }
             versions.insert(fact.sdk)
         }
-        guard versions.count >= 2 else { throw LegacyError.unsupported("Layout evidence needs at least two distinct executable SDK versions.") }
+        return .init(profile: profile, records: applications, verifiedIDs: seen, versions: versions)
+    }
+}
+
+/// A checked snapshot is separate from appearance evidence. Construction performs all checks.
+public struct SDKSnapshotEvidence {
+    let originalSHA256: String
+    let device: DeviceIdentity
+    let profileDigest: String
+    let observations: [BundleSDKObservation]
+    let verifiedIDs: Set<String>
+
+    private init(originalSHA256: String, device: DeviceIdentity, profileDigest: String,
+                 observations: [BundleSDKObservation], verifiedIDs: Set<String>) {
+        self.originalSHA256 = originalSHA256; self.device = device; self.profileDigest = profileDigest
+        self.observations = observations; self.verifiedIDs = verifiedIDs
+    }
+
+    public static func validate(data: Data, profile: LayoutProfile, device: DeviceIdentity,
+                                observations: [BundleSDKObservation], validator: StoreValidator) throws -> SDKSnapshotEvidence {
+        guard device.upstreamAccessCandidate, (3...32).contains(observations.count) else {
+            throw LegacyError.unsupported("Single-app experiments need three to thirty-two independent bundle SDK observations on a supported device.")
+        }
+        let checked = try ReadOnlyLayoutEvidence.validate(data: data, profile: profile, device: device,
+                                                         observations: observations, validator: validator)
+        guard checked.versions.count >= 2 else { throw LegacyError.unsupported("Layout evidence needs at least two distinct executable SDK versions.") }
         return .init(originalSHA256: sha256(data), device: device, profileDigest: profile.digest,
-                     observations: observations, verifiedIDs: seen)
+                     observations: observations, verifiedIDs: checked.verifiedIDs)
     }
 }

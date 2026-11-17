@@ -173,7 +173,7 @@ NSArray<NSDictionary<NSString *, id> *> *FLMHAAppDataCatalog(NSMutableString *lo
     }
     return FLReadMHAAppDataCatalog(FLContainerFunctions(), 4096, log);
 }
-static int64_t FLTraversalToken(NSString *directory, NSString *domain, FLContainerRuntime *api, NSMutableString *log) {
+static int64_t FLTraversalToken(NSString *directory, NSString *domain, FLContainerRuntime *api, BOOL alternateFlags, NSMutableString *log) {
     NSArray *missing = [FLMissingQuery(api, YES) arrayByAddingObjectsFromArray:FLMissingManual(api)];
     if (missing.count) {
         if (![log containsString:@"Traversal fallback missing symbols:"])
@@ -185,7 +185,7 @@ static int64_t FLTraversalToken(NSString *directory, NSString *domain, FLContain
         api->kind(query, 13);
         xpc_object_t group = xpc_string_create("systemgroup.com.apple.mobilegestaltcache");
         api->groups(query, group); api->part(query, 3); api->domain(query, domain.UTF8String);
-        api->flags(query, 0x8000000000ULL);
+        api->flags(query, alternateFlags ? 0x800000000ULL : 0x8000000000ULL);
         void *object = api->result(query);
         if (!object) { [log appendString:@"Traversal fallback returned no result.\n"]; FLLogQueryFailure(api, query, log); return -103; }
         char *token = api->token(object);
@@ -198,7 +198,15 @@ static int64_t FLTraversalToken(NSString *directory, NSString *domain, FLContain
 int64_t FLTraversalTokenForCacheDirectory(NSString *directory, NSMutableString *log) {
     NSString *domain = FLTraversalDomainForCacheDirectory(directory);
     if (!domain) { [log appendString:@"Traversal fallback refused a path outside LS discovery policy.\n"]; return -100; }
-    return FLTraversalToken(directory, domain, FLContainerFunctions(), log);
+    return FLTraversalToken(directory, domain, FLContainerFunctions(), NO, log);
+}
+static int64_t FLBundleTraversalQuery(NSString *directory, NSString *domain, FLContainerRuntime *api, NSMutableString *log) {
+    int64_t handle = FLTraversalToken(directory, domain, api, NO, log);
+    if (handle == -103 || handle == -104) {
+        [log appendFormat:@"Bundle traversal standard flags returned %lld; retrying upstream alternate flags 0x800000000.\n", (long long)handle];
+        handle = FLTraversalToken(directory, domain, api, YES, log);
+    }
+    return handle;
 }
 static int64_t FLBundleTraversalToken(NSString *directory, FLContainerRuntime *api, NSMutableString *log) {
     NSString *domain = FLTraversalDomainForBundleContainer(directory);
@@ -209,7 +217,7 @@ static int64_t FLBundleTraversalToken(NSString *directory, FLContainerRuntime *a
         [log appendFormat:@"Bundle traversal skipped: existing nonsymlink UUID directory could not be verified, errno %d.\n", failure];
         return -105;
     }
-    return FLTraversalToken(directory, domain, api, log);
+    return FLBundleTraversalQuery(directory, domain, api, log);
 }
 int64_t FLTraversalTokenForBundleContainer(NSString *directory, NSMutableString *log) {
     return FLBundleTraversalToken(directory, FLContainerFunctions(), log);
@@ -222,7 +230,7 @@ static int64_t FLBundleRootTraversalToken(FLContainerRuntime *api, NSMutableStri
         return -105;
     }
     [log appendString:@"Bundle-root traversal scope: fixed Bundle/Application; caller reads only the validated UUID target.\n"];
-    return FLTraversalToken(root, FLTraversalDomain(root), api, log);
+    return FLBundleTraversalQuery(root, FLTraversalDomain(root), api, log);
 }
 int64_t FLTraversalTokenForApplicationBundleRoot(NSMutableString *log) {
     return FLBundleRootTraversalToken(FLContainerFunctions(), log);

@@ -105,8 +105,12 @@ private struct ApplicationRow: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(application.name).font(.body.weight(.medium))
                 Text(application.bundleID).font(.caption).foregroundStyle(.secondary).lineLimit(2).textSelection(.enabled)
-                Text("Reported SDK \(application.reportedSDK?.description ?? "unavailable")")
-                    .font(.caption).foregroundStyle(.secondary)
+                if application.reportedSDK == nil, let sdk = model.inspection?.candidateSDKs[application.bundleID] {
+                    Text("Cache SDK \(sdk.description) · candidate").font(.caption).foregroundStyle(.secondary)
+                } else {
+                    Text("Reported SDK \(application.reportedSDK?.description ?? "unavailable")")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
                 if application.reportedSDK == nil, let fact = model.inspection?.bundleFacts.first(where: { $0.bundleID == application.bundleID }) {
                     Text("Executable SDK \(fact.sdk.description); cache field unverified").font(.caption).foregroundStyle(.secondary)
                 }
@@ -140,6 +144,9 @@ private struct DiagnosticsView: View {
                         LabeledContent("Access backend", value: info.accessBackend)
                         LabeledContent("Override", value: info.status.rawValue)
                         LabeledContent("Layout", value: info.layoutID ?? "Unknown")
+                        if let candidate = info.candidateLayoutID, !info.layoutValidated {
+                            LabeledContent("Read-only candidate", value: candidate)
+                        }
                         LabeledContent("App list source", value: info.catalogSource)
                         if let role = info.storeRole { LabeledContent("Cache source", value: role) }
                         if let summary = info.storeSummary {

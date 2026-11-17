@@ -31,6 +31,9 @@ static bool activate(void *object, bool ignored) { (void)object; (void)ignored; 
 static void freeObject(void *object) { ++state.freedObjects; free(object); }
 static char *copyToken(void *object) { (void)object; ++state.tokens; return strdup("injected-test-token"); }
 static char *copyNoToken(void *object) { (void)object; ++state.tokens; return NULL; }
+static char *copyAlternateToken(void *object) {
+    return state.flags == 0x800000000ULL ? copyToken(object) : copyNoToken(object);
+}
 static int64_t consume(const char *token) { (void)token; ++state.consumes; return 73; }
 static int releaseToken(int64_t token) { check(token == 73, @"Wrong manual token released"); ++state.releases; return 0; }
 static BOOL readable(const char *path, int *error) {
@@ -110,9 +113,27 @@ NSArray<NSString *> *FLRunContainerLeaseTests(void) {
         api = bundleTraversalRuntime(); api.release = NULL;
         check(FLTestBundleTraversalToken(root, &api, [NSMutableString string]) == -101 && !state.queries && !state.consumes, @"Unpaired traversal token was consumed");
         api = bundleTraversalRuntime(); state.result = NO;
-        check(FLTestBundleTraversalToken(root, &api, [NSMutableString string]) == -103 && state.disposed == 1 && !state.tokens, @"Denied query leaked or copied a token");
+        check(FLTestBundleTraversalToken(root, &api, [NSMutableString string]) == -103 && state.disposed == 2 && !state.tokens, @"Denied queries leaked or copied a token");
         api = bundleTraversalRuntime(); api.token = copyNoToken;
-        check(FLTestBundleTraversalToken(root, &api, [NSMutableString string]) == -104 && state.disposed == 1 && !state.consumes, @"Absent token was consumed or query leaked");
+        check(FLTestBundleTraversalToken(root, &api, [NSMutableString string]) == -104 && state.disposed == 2 && !state.consumes, @"Absent token was consumed or query leaked");
+    });
+    test(@"Bundle UUID traversal retries alternate flags only after a denied or tokenless query", ^{
+        FLContainerRuntime api = bundleTraversalRuntime(); api.token = copyAlternateToken;
+        NSString *root = [NSString stringWithUTF8String:state.root]; NSMutableString *log = [NSMutableString string];
+        check(FLTestBundleTraversalToken(root, &api, log) == 73, @"Alternate flag token not returned");
+        check(state.queries == 2 && state.disposed == 2 && state.existenceChecks == 1 && state.tokens == 2 &&
+            state.consumes == 1 && !state.releases && state.flags == 0x800000000ULL &&
+            [log containsString:@"standard flags returned -104"], @"Alternate retry changed scope, leaked a query or consumed an absent token");
+        api.release(73); check(state.releases == 1, @"Alternate token could not be released");
+    });
+    test(@"Fixed bundle root uses the same alternate flags without changing its domain", ^{
+        FLContainerRuntime api = bundleTraversalRuntime(); api.token = copyAlternateToken;
+        state.root = "/private/var/containers/Bundle/Application";
+        check(FLTestBundleRootTraversalToken(&api, [NSMutableString string]) == 73 && state.queries == 2 &&
+            state.kind == 13 && state.part == 3 && state.flags == 0x800000000ULL &&
+            strcmp(state.domain, "../../../../../../../../private/var/containers/Bundle/Application") == 0,
+            @"Alternate root query changed the fixed scope");
+        api.release(73); check(state.releases == 1 && state.disposed == 2, @"Alternate root resources leaked");
     });
     test(@"Bundle-root traversal has one fixed scope and still requires existence and paired release", ^{
         FLContainerRuntime api = bundleTraversalRuntime(); state.root = "/private/var/containers/Bundle/Application";

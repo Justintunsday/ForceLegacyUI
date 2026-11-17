@@ -208,8 +208,14 @@ public struct CSStore {
             let identifier = try bytes.u32(b + profile.identifier)
             guard try bytes.u32(b + profile.duplicateIdentifier) == identifier,
                   try bytes.u32(b + profile.kind) == 2 else { continue }
-            guard let id = try text(at: b + profile.identifier), id.contains("."),
-                  !id.contains("/"), let bundleName = try text(at: b + profile.bundleName),
+            // System registrations can share this size/kind with UUID-installed applications.
+            // A null placeholder is outside our supported mutation scope; a malformed non-null one is an error.
+            guard try bytes.u32(b + profile.placeholder) != 0 else { continue }
+            guard let id = try text(at: b + profile.identifier), !id.isEmpty, !id.contains("/") else {
+                throw LegacyError.invalid("An application record failed identity validation.")
+            }
+            guard id.contains(".") else { continue }
+            guard let bundleName = try text(at: b + profile.bundleName),
                   bundleName.hasSuffix(".app"), (bundleName as NSString).lastPathComponent == bundleName,
                   let placeholder = try text(at: b + profile.placeholder),
                   (placeholder as NSString).lastPathComponent == "SerializedPlaceholder.ipa" else {

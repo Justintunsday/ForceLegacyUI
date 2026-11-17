@@ -1,0 +1,21 @@
+{
+  "id": "candidate-572-23G90-arm64",
+  "osVersion": "26.6.2",
+  "osBuild": "23G90",
+  "architectures": ["arm64"],
+  "recordSize": 572,
+  "identifier": 12,
+  "duplicateIdentifier": 20,
+  "kind": 24,
+  "sdk": 64,
+  "name": 112,
+  "fallbackName": 8,
+  "bundleName": 320,
+  "placeholder": 564,
+  "signer": 128,
+  "evidence": [
+    "Read-only field review of a user-supplied 23G90 arm64 snapshot with 437 572-byte records.",
+    "One independently read executable SDK matched uniquely at byte 64; insufficient for live authorization.",
+    "Fresh three-app/two-SDK correlation remains required; appearance is unverified."
+  ]
+}
