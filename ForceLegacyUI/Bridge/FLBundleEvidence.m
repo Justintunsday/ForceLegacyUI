@@ -3,6 +3,7 @@
 #import "FLStoreDiscovery.h"
 #include <errno.h>
 #include <fcntl.h>
+#include <dirent.h>
 #include <limits.h>
 #include <mach-o/loader.h>
 #include <mach-o/fat.h>
@@ -15,6 +16,14 @@ static NSError *FLBundleError(NSString *message) {
     return [NSError errorWithDomain:@"ForceLegacyUI.BundleEvidence" code:1 userInfo:@{NSLocalizedDescriptionKey:message}];
 }
 static BOOL FLFail(NSError **error, NSString *message) { if (error) *error = FLBundleError(message); return NO; }
+static void FLAccessFailure(NSError **error, NSString *stage, NSString *path, int failure) {
+    if (error) *error = [NSError errorWithDomain:NSPOSIXErrorDomain code:failure userInfo:@{
+        NSLocalizedDescriptionKey:[NSString stringWithFormat:@"%@: %@ (errno %d: %s)", stage, path, failure, strerror(failure)]}];
+}
+static BOOL FLRetryableAccess(NSError *error) {
+    return [error.domain isEqual:NSPOSIXErrorDomain] &&
+        (error.code == ENOENT || error.code == EACCES || error.code == EPERM);
+}
 BOOL FLIsApplicationBundlePath(NSString *path) {
     NSData *encoded = [path dataUsingEncoding:NSUTF8StringEncoding];
     if (!encoded || memchr(encoded.bytes, 0, encoded.length)) return NO;
@@ -119,7 +128,8 @@ static NSDictionary *FLReadBundleAtFD(int directory, NSString *identifier, NSErr
     @try {
         struct stat infoStat, executableStat;
         infoFD = openat(directory, "Info.plist", O_RDONLY | O_NOFOLLOW | O_CLOEXEC);
-        if (infoFD < 0 || fstat(infoFD, &infoStat) != 0 || !S_ISREG(infoStat.st_mode) || infoStat.st_nlink != 1 ||
+        if (infoFD < 0) { FLAccessFailure(error, @"Info.plist open failed", @"Info.plist", errno); return nil; }
+        if (fstat(infoFD, &infoStat) != 0 || !S_ISREG(infoStat.st_mode) || infoStat.st_nlink != 1 ||
             infoStat.st_size <= 0 || infoStat.st_size > 1024*1024) { FLFail(error, @"Bundle Info.plist is unreadable or outside the size/type policy."); return nil; }
         NSData *infoData = FLReadFD(infoFD, (uint64_t)infoStat.st_size, 0, (NSUInteger)infoStat.st_size);
         id info = infoData ? [NSPropertyListSerialization propertyListWithData:infoData options:NSPropertyListImmutable format:NULL error:NULL] : nil;
@@ -131,7 +141,8 @@ static NSDictionary *FLReadBundleAtFD(int directory, NSString *identifier, NSErr
         NSData *nameBytes = [executable dataUsingEncoding:NSUTF8StringEncoding];
         if (!nameBytes || memchr(nameBytes.bytes, 0, nameBytes.length)) { FLFail(error, @"Invalid executable filename encoding."); return nil; }
         executableFD = openat(directory, executable.fileSystemRepresentation, O_RDONLY | O_NOFOLLOW | O_CLOEXEC);
-        if (executableFD < 0 || fstat(executableFD, &executableStat) != 0 || !S_ISREG(executableStat.st_mode) ||
+        if (executableFD < 0) { FLAccessFailure(error, @"Executable open failed", executable, errno); return nil; }
+        if (fstat(executableFD, &executableStat) != 0 || !S_ISREG(executableStat.st_mode) ||
             executableStat.st_nlink != 1 || executableStat.st_size <= 0) { FLFail(error, @"Bundle executable is not a readable regular file."); return nil; }
         NSDictionary *observed = FLMachOObservation((uint64_t)executableStat.st_size, ^NSData *(uint64_t offset, NSUInteger length) {
             return FLReadFD(executableFD, (uint64_t)executableStat.st_size, offset, length);
@@ -143,32 +154,117 @@ static NSDictionary *FLReadBundleAtFD(int directory, NSString *identifier, NSErr
         return @{@"sdk":observed[@"sdk"], @"infoData":infoData, @"loadCommands":observed[@"loadCommands"]};
     } @finally { if (infoFD >= 0) close(infoFD); if (executableFD >= 0) close(executableFD); }
 }
-NSDictionary<NSString *, id> *FLReadBundleEvidence(NSString *identifier, NSString *path,
-    int64_t (^requestToken)(BOOL), void (^releaseToken)(int64_t), NSError **error) {
-    if (!identifier.length || identifier.length > 255 || !FLIsApplicationBundlePath(path)) { FLFail(error, @"Bundle metadata request is outside the application-bundle policy."); return nil; }
-    path = FLNormalizeStorePath(path); int directory = -1; int64_t token = -1;
+static BOOL FLCheckDirectoryPath(NSString *path, int descriptor, NSError **error) {
+    char resolved[PATH_MAX]; struct stat descriptorStat, pathStat;
+    if (!realpath(path.fileSystemRepresentation, resolved)) { FLAccessFailure(error, @"Directory realpath failed", path, errno); return NO; }
+    NSString *canonical = FLNormalizeStorePath([NSString stringWithUTF8String:resolved]);
+    if (![canonical isEqual:path]) {
+        if ([canonical caseInsensitiveCompare:path] == NSOrderedSame) FLAccessFailure(error, @"Directory spelling needs resolution", path, ENOENT);
+        else FLFail(error, @"Application bundle contains a path alias outside the requested directory.");
+        return NO;
+    }
+    if (fstat(descriptor, &descriptorStat) != 0 || lstat(path.fileSystemRepresentation, &pathStat) != 0 ||
+        !S_ISDIR(descriptorStat.st_mode) || !S_ISDIR(pathStat.st_mode) ||
+        descriptorStat.st_dev != pathStat.st_dev || descriptorStat.st_ino != pathStat.st_ino) {
+        return FLFail(error, @"Application bundle directory identity changed or is a symlink.");
+    }
+    return YES;
+}
+static NSDictionary *FLReadBundlePath(NSString *identifier, NSString *path, NSError **error) {
+    int directory = open(path.fileSystemRepresentation, O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC);
+    if (directory < 0) { FLAccessFailure(error, @"Bundle directory open failed", path, errno); return nil; }
     @try {
-        directory = open(path.fileSystemRepresentation, O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC);
-        if (directory < 0 && requestToken && releaseToken) {
+        if (!FLCheckDirectoryPath(path, directory, error)) return nil;
+        NSDictionary *result = FLReadBundleAtFD(directory, identifier, error);
+        if (!result || !FLCheckDirectoryPath(path, directory, error)) return nil;
+        NSMutableDictionary *observed = [result mutableCopy]; observed[@"bundlePath"] = path;
+        return observed;
+    } @finally { close(directory); }
+}
+static NSString *FLMatchBundleName(NSArray<NSString *> *names, NSString *requested, NSError **error) {
+    if (names.count > 64) { FLFail(error, @"Bundle container listing exceeds 64 entries."); return nil; }
+    NSMutableArray *matches = [NSMutableArray array];
+    for (NSString *name in names) {
+        if ([name.pathExtension isEqual:@"app"] && [name.lastPathComponent isEqual:name] &&
+            [name caseInsensitiveCompare:requested] == NSOrderedSame) [matches addObject:name];
+    }
+    if (matches.count > 1) { FLFail(error, @"Several bundle names match the registration spelling; refusing an ambiguous directory."); return nil; }
+    if (!matches.count) { FLAccessFailure(error, @"No matching .app name in UUID container", requested, ENOENT); return nil; }
+    return matches.firstObject;
+}
+static NSDictionary *FLReadFromContainer(NSString *identifier, NSString *container, NSString *requested, NSError **error) {
+    int directory = open(container.fileSystemRepresentation, O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC);
+    if (directory < 0) { FLAccessFailure(error, @"UUID container open failed", container, errno); return nil; }
+    @try {
+        if (!FLCheckDirectoryPath(container, directory, error)) return nil;
+        int copy = dup(directory);
+        DIR *stream = copy >= 0 ? fdopendir(copy) : NULL;
+        if (!stream) { int failure = errno; if (copy >= 0) close(copy); FLAccessFailure(error, @"UUID container listing failed", container, failure); return nil; }
+        NSMutableArray *names = [NSMutableArray array]; int listingFailure = 0;
+        @try {
+            for (;;) {
+                errno = 0; struct dirent *entry = readdir(stream);
+                if (!entry) { listingFailure = errno; break; }
+                NSString *name = [NSString stringWithUTF8String:entry->d_name];
+                if (!name) { FLFail(error, @"Invalid bundle-directory filename encoding."); return nil; }
+                if ([name isEqual:@"."] || [name isEqual:@".."]) continue;
+                [names addObject:name];
+                if (names.count > 64) { FLFail(error, @"Bundle container listing exceeds 64 entries."); return nil; }
+            }
+        } @finally { closedir(stream); }
+        if (listingFailure) { FLAccessFailure(error, @"UUID container listing failed", container, listingFailure); return nil; }
+        NSString *name = FLMatchBundleName(names, requested, error);
+        if (!name || !FLCheckDirectoryPath(container, directory, error)) return nil;
+        return FLReadBundlePath(identifier, [container stringByAppendingPathComponent:name], error);
+    } @finally { close(directory); }
+}
+static NSDictionary *FLResolveBundle(NSString *identifier, NSString *path, NSArray<NSString *> *parents,
+    int64_t (^requestToken)(NSString *, BOOL), void (^releaseToken)(int64_t), NSError **error) {
+    NSError *failure = nil; NSMutableArray *details = [NSMutableArray array];
+    NSDictionary *observed = FLReadBundlePath(identifier, path, &failure);
+    if (observed) return observed;
+    [details addObject:failure.localizedDescription ?: @"Direct bundle read failed."];
+    if (!FLRetryableAccess(failure)) { if (error) *error = failure; return nil; }
+    for (NSString *parent in parents) {
+        observed = FLReadFromContainer(identifier, parent, path.lastPathComponent, &failure);
+        if (observed) return observed;
+        [details addObject:failure.localizedDescription ?: @"UUID container read failed."];
+        if (!FLRetryableAccess(failure)) { if (error) *error = failure; return nil; }
+    }
+    if (requestToken && releaseToken) {
+        for (NSString *parent in parents) {
             for (unsigned attempt = 0; attempt < 2; ++attempt) {
-                token = requestToken(attempt == 1);
-                if (token >= 0) {
-                    directory = open(path.fileSystemRepresentation, O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC);
-                    if (directory >= 0) break;
-                    releaseToken(token); token = -1;
-                } else if (token == -2) break;
+                int64_t token = requestToken(parent, attempt == 1);
+                [details addObject:[NSString stringWithFormat:@"%@ UUID-container grant: %lld", attempt ? @"Alternate" : @"Standard", (long long)token]];
+                if (token == -2) break;
+                if (token < 0) continue;
+                @try { observed = FLReadFromContainer(identifier, parent, path.lastPathComponent, &failure); }
+                @finally { releaseToken(token); }
+                if (observed) return observed;
+                [details addObject:failure.localizedDescription ?: @"Granted bundle read failed."];
+                if (!FLRetryableAccess(failure)) { if (error) *error = failure; return nil; }
             }
         }
-        if (directory < 0) { FLFail(error, [NSString stringWithFormat:@"Application bundle could not be opened read-only (errno %d).", errno]); return nil; }
-        char resolved[PATH_MAX];
-        if (!realpath(path.fileSystemRepresentation, resolved) || ![FLNormalizeStorePath([NSString stringWithUTF8String:resolved]) isEqualToString:path]) {
-            FLFail(error, @"Application bundle contains a path alias or could not be resolved."); return nil;
-        }
-        return FLReadBundleAtFD(directory, identifier, error);
-    } @finally { if (directory >= 0) close(directory); if (token >= 0 && releaseToken) releaseToken(token); }
+    }
+    FLFail(error, [details componentsJoinedByString:@"; "]); return nil;
+}
+NSDictionary<NSString *, id> *FLReadBundleEvidence(NSString *identifier, NSString *path,
+    int64_t (^requestToken)(NSString *, BOOL), void (^releaseToken)(int64_t), NSError **error) {
+    if (!identifier.length || identifier.length > 255 || !FLIsApplicationBundlePath(path)) { FLFail(error, @"Bundle metadata request is outside the application-bundle policy."); return nil; }
+    path = FLNormalizeStorePath(path);
+    NSString *parent = path.stringByDeletingLastPathComponent;
+    NSString *canonicalParent = [parent.stringByDeletingLastPathComponent stringByAppendingPathComponent:[[NSUUID alloc] initWithUUIDString:parent.lastPathComponent].UUIDString];
+    NSArray *parents = [parent isEqual:canonicalParent] ? @[parent] : @[canonicalParent, parent];
+    return FLResolveBundle(identifier, path, parents, requestToken, releaseToken, error);
 }
 #if defined(FL_CONTAINER_TESTING)
 NSDictionary<NSString *, id> *FLTestBundleAtFD(int directory, NSString *identifier, NSError **error) { return FLReadBundleAtFD(directory, identifier, error); }
+NSString *FLTestMatchBundleName(NSArray<NSString *> *names, NSString *requested, NSError **error) { return FLMatchBundleName(names, requested, error); }
+NSDictionary<NSString *, id> *FLTestResolveBundle(NSString *identifier, NSString *containerPath, NSString *requested,
+    int64_t (^requestToken)(NSString *, BOOL), void (^releaseToken)(int64_t), NSError **error) {
+    containerPath = FLNormalizeStorePath(containerPath);
+    return FLResolveBundle(identifier, [containerPath stringByAppendingPathComponent:requested], @[containerPath], requestToken, releaseToken, error);
+}
 NSDictionary<NSString *, id> *FLTestMachOObservation(NSData *data, NSError **error) {
     return FLMachOObservation(data.length, ^NSData *(uint64_t offset, NSUInteger count) {
         if (offset > data.length || count > data.length-offset) return nil;

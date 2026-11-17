@@ -21,7 +21,13 @@ public enum RuntimeLayoutCandidates {
                                   validator: StoreValidator, log: inout String) throws -> LayoutProfile? {
         let store = try CSStore(data: data)
         var matched: [LayoutProfile] = []
-        for candidate in candidates(for: device) where store.summary.bundleRecordSizes[candidate.recordSize] != nil {
+        let sizes = store.summary.bundleRecordSizes.keys.sorted().map(String.init).joined(separator: ", ")
+        log += "Layout correlation: Bundle record sizes [\(sizes)]; \(observations.count) independent SDK observations.\n"
+        for candidate in candidates(for: device) {
+            guard store.summary.bundleRecordSizes[candidate.recordSize] != nil else {
+                log += "Candidate \(candidate.id) skipped: required record size \(candidate.recordSize) is absent.\n"
+                continue
+            }
             do {
                 _ = try SDKSnapshotEvidence.validate(data: data, profile: candidate, device: device,
                                                      observations: observations, validator: validator)

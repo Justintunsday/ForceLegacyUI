@@ -157,4 +157,34 @@ final class SingleAppEvidenceTests: XCTestCase {
         XCTAssertEqual(records.map(\.bundlePath), fixture.catalog.map(\.bundlePath))
         _ = try evidence(data: data)
     }
+    func testFoldedRegistrationSpellingKeepsUUIDIdentityAndReceiptEvidence() throws {
+        let a = "/private/var/containers/Bundle/Application/04BA7A11-12F4-4567-89AB-0123456789AB/Example.app"
+        let b = a.replacingOccurrences(of: "04BA7A11", with: "04ba7a11").replacingOccurrences(of: "Example.app", with: "example.app")
+        XCTAssertTrue(LiveStorePolicy.sameBundleRegistration(a, b))
+        XCTAssertFalse(LiveStorePolicy.sameBundleRegistration(a, b.replacingOccurrences(of: "0123456789AB", with: "0123456789AC")))
+        XCTAssertFalse(LiveStorePolicy.sameBundleRegistration(a, b.replacingOccurrences(of: "example.app", with: "Other.app")))
+        XCTAssertFalse(LiveStorePolicy.sameBundleRegistration(a, b+"/../Example.app"))
+        let folded = facts.map { BundleSDKObservation(bundleID: $0.bundleID,
+            bundlePath: ($0.bundlePath as NSString).deletingLastPathComponent + "/" + ($0.bundlePath as NSString).lastPathComponent.lowercased(), sdk: $0.sdk,
+            infoSHA256: $0.infoSHA256, loadCommandsSHA256: $0.loadCommandsSHA256) }
+        let proof = try evidence(folded), plan = try plan()
+        _ = try WriteAuthorization.validatedSingleApp(plan: plan, evidence: proof, source: source)
+        let root = try root(), file = root.appendingPathComponent("fixture.csstore")
+        try fixture.data.write(to: file)
+        let applied = try TransactionEngine.apply(plan, to: file, backups: root.appendingPathComponent("Seed"),
+            authorization: .appOwned(directory: root), validator: validator)
+        let entry = try BackupRepository.create(plan: plan, source: source, identity: applied.receipt.identity,
+            root: root.appendingPathComponent("Evidence"), bundleEvidence: folded)
+        try BackupRepository.setStatus(.applied, directory: entry.directory)
+        XCTAssertEqual(try WriteAuthorization.activeChangeLayout(backup: BackupRepository.load(entry.directory), current: plan.candidate,
+            device: DemoFixture.device, observations: folded, source: source, validator: validator), DemoFixture.profile)
+    }
+    func testAbsentReferenceSizesAreReportedWithoutInferringAColumn() throws {
+        var log = ""
+        XCTAssertNil(try RuntimeLayoutCandidates.correlate(data: fixture.data, device: DemoFixture.device,
+            observations: facts, validator: validator, log: &log))
+        XCTAssertTrue(log.contains("record sizes [160]"))
+        XCTAssertTrue(log.contains("required record size 592 is absent"))
+        XCTAssertTrue(log.contains("required record size 604 is absent"))
+    }
 }

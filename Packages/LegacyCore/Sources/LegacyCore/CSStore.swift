@@ -244,7 +244,7 @@ public struct CSStore {
         var versions = Set<SDKVersion>()
         for record in records {
             guard let app = groups[record.bundleID]?.first, let sdk = app.reportedSDK else { continue }
-            guard sdk == record.sdk, app.bundlePath == record.bundlePath else {
+            guard sdk == record.sdk, LiveStorePolicy.sameBundleRegistration(app.bundlePath, record.bundlePath) else {
                 throw LegacyError.conflict("LS metadata disagrees with the proposed layout for \(record.bundleID).")
             }
             matched += 1; versions.insert(sdk)

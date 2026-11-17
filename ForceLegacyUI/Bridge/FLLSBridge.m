@@ -43,9 +43,13 @@ NSString *FLAccessMode(void) {
 NSDictionary<NSString *, id> *FLInspectBundle(NSString *identifier, NSString *path, NSString *group, NSError **error) {
     BOOL useGroup = group.length && FLCanReleaseDirectoryTokens() &&
         [NSFileManager.defaultManager containerURLForSecurityApplicationGroupIdentifier:group] != nil;
-    int64_t (^request)(BOOL) = nil; void (^release)(int64_t) = nil;
+    int64_t (^request)(NSString *, BOOL) = nil; void (^release)(int64_t) = nil;
     if (useGroup) {
-        request = ^int64_t(BOOL alternate) { return worse_query(FLNormalizeStorePath(path), group, alternate, true); };
+        request = ^int64_t(NSString *container, BOOL alternate) {
+            // The reader supplies only the requested bundle's UUID parent, never the bundle root.
+            if (!FLIsApplicationBundlePath([container stringByAppendingPathComponent:@"Scope.app"])) return -100;
+            return worse_query(container, group, alternate, true);
+        };
         release = ^(int64_t token) { FLReleaseDirectoryToken(token); };
     }
     return FLReadBundleEvidence(identifier, path, request, release, error);

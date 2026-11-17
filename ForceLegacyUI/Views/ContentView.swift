@@ -41,6 +41,14 @@ struct ContentView: View {
                             }
                         }
                     }
+                    if !model.demo && !model.apps.isEmpty && model.inspection?.layoutValidated == false {
+                        Section {
+                            Label("SDK verification incomplete", systemImage: "exclamationmark.magnifyingglass").font(.headline)
+                            Text(model.inspection?.writeReadinessReason ?? "Run read-only inspection first.").font(.subheadline).foregroundStyle(.secondary)
+                            Button("Open Diagnostics") { selectedTab = 1 }
+                            Button("Copy Diagnostic Log") { model.copyDiagnostics() }
+                        }
+                    }
                 }
                 .navigationTitle("ForceLegacyUI")
                 .searchable(text: $search, prompt: "Name or bundle identifier")
@@ -99,7 +107,11 @@ private struct ApplicationRow: View {
                 Text(application.bundleID).font(.caption).foregroundStyle(.secondary).lineLimit(2).textSelection(.enabled)
                 Text("Reported SDK \(application.reportedSDK?.description ?? "unavailable")")
                     .font(.caption).foregroundStyle(.secondary)
-                Text(model.demo ? "Experimental copy" : "Unsupported override").font(.caption2).foregroundStyle(model.demo ? .blue : .orange)
+                if application.reportedSDK == nil, let fact = model.inspection?.bundleFacts.first(where: { $0.bundleID == application.bundleID }) {
+                    Text("Executable SDK \(fact.sdk.description); cache field unverified").font(.caption).foregroundStyle(.secondary)
+                }
+                Text(model.demo ? "Experimental copy" : (model.inspection?.layoutValidated == true ? "SDK metadata validated; appearance unverified" : "Cache SDK field unverified"))
+                    .font(.caption2).foregroundStyle(model.demo || model.inspection?.layoutValidated == true ? .blue : .orange)
             }
             Spacer(minLength: 4)
             Toggle("Legacy appearance for \(application.name)", isOn: Binding(get: { model.selection.contains(application.id) }, set: { enabled in

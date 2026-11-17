@@ -175,7 +175,7 @@ public struct WriteAuthorization {
             throw LegacyError.conflict("The current SDK no longer matches the active receipt.")
         }
         for fact in observations {
-            guard let record = records.first(where: { $0.bundleID == fact.bundleID }), record.bundlePath == fact.bundlePath,
+            guard let record = records.first(where: { $0.bundleID == fact.bundleID }), LiveStorePolicy.sameBundleRegistration(record.bundlePath, fact.bundlePath),
                   record.sdk == (fact.bundleID == change.bundleID ? change.target : fact.sdk) else {
                 throw LegacyError.conflict("Current records contain an unexplained SDK/path change.")
             }

@@ -136,6 +136,7 @@ actor ResearchEngine {
                 let store = try CSStore(data: data)
                 output.storeSummary = store.summary
                 output.log += "Bounded v2 catalog parsed. SHA-256: \(sha256(data))\n"
+                output.log += "Bundle record sizes: " + store.summary.bundleRecordSizes.keys.sorted().map { "\($0) (\(store.summary.bundleRecordSizes[$0]!))" }.joined(separator: ", ") + "\n"
                 do {
                     try validator.validate(data)
                     output.log += "Store copy passed \(demo ? "synthetic" : "system CoreServicesStore") validation.\n"
@@ -176,6 +177,11 @@ actor ResearchEngine {
                     if profile == nil {
                         correlatedProfile = try RuntimeLayoutCandidates.correlate(data: data, device: identity,
                             observations: output.bundleFacts, validator: validator, log: &output.log)
+                        if correlatedProfile == nil {
+                            output.writeReadinessReason = output.bundleFacts.count < 3
+                                ? "Only \(output.bundleFacts.count) independent SDK observations were readable; at least three apps and two SDK versions are required. See Bundle SDK details in Technical log."
+                                : "No candidate layout matches this snapshot. Export Report and Raw Snapshot for field review; see candidate sizes and refusal reasons in Technical log."
+                        }
                     }
                 }
                 if diagnosticOnly {
@@ -189,7 +195,7 @@ actor ResearchEngine {
                         do {
                             for record in records {
                                 if let observed = apps.first(where: { $0.bundleID == record.bundleID }), let sdk = observed.reportedSDK {
-                                    guard sdk == record.sdk, LiveStorePolicy.canonical(observed.bundlePath) == LiveStorePolicy.canonical(record.bundlePath) else {
+                                    guard sdk == record.sdk, LiveStorePolicy.sameBundleRegistration(observed.bundlePath, record.bundlePath) else {
                                         throw LegacyError.conflict("LaunchServices metadata disagrees with the loaded layout for \(record.bundleID).")
                                     }
                                 }

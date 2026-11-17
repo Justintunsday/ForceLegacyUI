@@ -33,6 +33,15 @@ public enum LiveStorePolicy {
             && parent.deletingLastPathComponent().path == "/private/var/containers/Bundle/Application"
     }
 
+    /// LS registration spelling can be folded; native reads still resolve one real .app and check its Info.plist ID.
+    /// This comparison is only for bundle observations. Store write paths remain exact and case-sensitive.
+    public static func sameBundleRegistration(_ first: String, _ second: String) -> Bool {
+        guard bundlePath(first), bundlePath(second), let a = canonical(first), let b = canonical(second) else { return false }
+        let left = URL(fileURLWithPath: a), right = URL(fileURLWithPath: b)
+        return UUID(uuidString: left.deletingLastPathComponent().lastPathComponent) == UUID(uuidString: right.deletingLastPathComponent().lastPathComponent)
+            && left.lastPathComponent.lowercased() == right.lastPathComponent.lowercased()
+    }
+
     public static func storePath(_ path: String) -> Bool {
         guard let value = canonical(path) else { return false }
         let url = URL(fileURLWithPath: value), directory = url.deletingLastPathComponent()
@@ -77,7 +86,7 @@ public struct SDKSnapshotEvidence {
         for fact in observations {
             guard seen.insert(fact.bundleID).inserted, LiveStorePolicy.bundlePath(fact.bundlePath), fact.sdk.isPlausible,
                   hash(fact.infoSHA256), hash(fact.loadCommandsSHA256), let record = records[fact.bundleID],
-                  let path = LiveStorePolicy.canonical(fact.bundlePath), LiveStorePolicy.canonical(record.bundlePath) == path,
+                  LiveStorePolicy.sameBundleRegistration(record.bundlePath, fact.bundlePath),
                   record.sdk == fact.sdk, let unit = store.tables["Bundle"]?[record.recordKey] else {
                 throw LegacyError.conflict("Bundle identity, path or executable SDK disagrees with the layout, or the evidence is incomplete.")
             }

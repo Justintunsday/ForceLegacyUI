@@ -19,6 +19,17 @@ static NSMutableData *executable(uint32_t sdk) {
     little(data, 40, 2); little(data, 44, 0x120000); little(data, 48, sdk);
     return data;
 }
+static NSDictionary *bundleFixture(BOOL withInfo) {
+    NSString *root = [NSTemporaryDirectory() stringByAppendingPathComponent:NSUUID.UUID.UUIDString];
+    NSString *app = [root stringByAppendingPathComponent:@"Example.app"];
+    NSFileManager *files = NSFileManager.defaultManager;
+    check([files createDirectoryAtPath:app withIntermediateDirectories:YES attributes:nil error:NULL], @"Fixture directory failed");
+    NSData *plist = [NSPropertyListSerialization dataWithPropertyList:@{@"CFBundleIdentifier":@"org.example.sdk", @"CFBundleExecutable":@"Runner"}
+        format:NSPropertyListBinaryFormat_v1_0 options:0 error:NULL];
+    check([executable(0x1a0200) writeToFile:[app stringByAppendingPathComponent:@"Runner"] atomically:YES], @"Fixture executable failed");
+    if (withInfo) check([plist writeToFile:[app stringByAppendingPathComponent:@"Info.plist"] atomically:YES], @"Fixture Info failed");
+    return @{@"root":root, @"app":app, @"info":plist};
+}
 NSArray<NSString *> *FLRunBundleEvidenceTests(void) {
     NSMutableArray *passed = [NSMutableArray array];
     void (^test)(NSString *, void (^)(void)) = ^(NSString *name, void (^body)(void)) { body(); [passed addObject:name]; };
@@ -53,7 +64,7 @@ NSArray<NSString *> *FLRunBundleEvidenceTests(void) {
         __block unsigned requests = 0;
         for (NSString *path in @[[bundle stringByAppendingString:@"/../Other.app"],
             @"/private/var/mobile/Containers/Data/Application/04BA7A11-12F4-4567-89AB-0123456789AB/Example.app"]) {
-            check(!FLReadBundleEvidence(@"org.example.sdk", path, ^int64_t(BOOL alt) { (void)alt; ++requests; return 1; }, ^(int64_t token) { (void)token; }, NULL), @"Unrelated bundle path accepted");
+            check(!FLReadBundleEvidence(@"org.example.sdk", path, ^int64_t(NSString *container, BOOL alt) { (void)container; (void)alt; ++requests; return 1; }, ^(int64_t token) { (void)token; }, NULL), @"Unrelated bundle path accepted");
         }
         check(!requests, @"Rejected metadata path reached a private grant API");
     });
@@ -76,6 +87,67 @@ NSArray<NSString *> *FLRunBundleEvidenceTests(void) {
                   symlink("Original", runner.fileSystemRepresentation) == 0, @"Symlink fixture setup failed");
             check(!FLTestBundleAtFD(directory, @"org.example.sdk", NULL), @"Executable symlink was followed");
         } @finally { if (directory >= 0) close(directory); [files removeItemAtPath:root error:NULL]; }
+    });
+    test(@"Folded bundle names resolve uniquely and bounded listings reject ambiguity", ^{
+        check([FLTestMatchBundleName(@[@"Example.app", @"metadata.plist"], @"example.app", NULL) isEqual:@"Example.app"], @"Actual bundle spelling was not retained");
+        check(!FLTestMatchBundleName(@[@"Example.app", @"example.app"], @"example.app", NULL), @"Ambiguous spelling selected an arbitrary app");
+        check(!FLTestMatchBundleName(@[@"Other.app", @"../Example.app"], @"example.app", NULL), @"Unrelated or traversing name was selected");
+        NSMutableArray *names = [NSMutableArray array]; for (unsigned i = 0; i < 65; ++i) [names addObject:@"metadata"];
+        check(!FLTestMatchBundleName(names, @"example.app", NULL), @"Oversized directory listing was accepted");
+    });
+    test(@"Resolved bundle still requires the expected Info identifier and executable SDK", ^{
+        NSDictionary *fixture = bundleFixture(YES);
+        @try {
+            NSDictionary *result = FLTestResolveBundle(@"org.example.sdk", fixture[@"root"], @"example.app", nil, nil, NULL);
+            check([result[@"sdk"] isEqual:@"26.2.0"] && [[result[@"bundlePath"] lastPathComponent] caseInsensitiveCompare:@"Example.app"] == NSOrderedSame, @"Folded registration could not be independently read");
+            check(!FLTestResolveBundle(@"org.other.app", fixture[@"root"], @"example.app", nil, nil, NULL), @"Case resolution bypassed bundle identity");
+        } @finally { [NSFileManager.defaultManager removeItemAtPath:fixture[@"root"] error:NULL]; }
+    });
+    test(@"Readable bundle directory retries a paired grant when its Info file is unreadable", ^{
+        NSDictionary *fixture = bundleFixture(NO); __block unsigned requests = 0; NSMutableArray *released = [NSMutableArray array];
+        @try {
+            NSDictionary *result = FLTestResolveBundle(@"org.example.sdk", fixture[@"root"], @"Example.app", ^int64_t(NSString *container, BOOL alternate) {
+                ++requests; check(!alternate && [container.lastPathComponent isEqual:[fixture[@"root"] lastPathComponent]], @"Grant escaped requested container");
+                check([fixture[@"info"] writeToFile:[fixture[@"app"] stringByAppendingPathComponent:@"Info.plist"] atomically:YES], @"Injected access response failed"); return 0;
+            }, ^(int64_t token) { [released addObject:@(token)]; }, NULL);
+            check([result[@"sdk"] isEqual:@"26.2.0"] && requests == 1 && [released isEqual:@[@0]], @"Subfile access skipped grant retry or leaked handle zero");
+        } @finally { [NSFileManager.defaultManager removeItemAtPath:fixture[@"root"] error:NULL]; }
+    });
+    test(@"A positive but ineffective bundle grant is released before alternate flags", ^{
+        NSDictionary *fixture = bundleFixture(NO); NSMutableArray *released = [NSMutableArray array];
+        @try {
+            NSDictionary *result = FLTestResolveBundle(@"org.example.sdk", fixture[@"root"], @"Example.app", ^int64_t(NSString *container, BOOL alternate) {
+                (void)container;
+                if (alternate) {
+                    check([released isEqual:@[@40]], @"Ineffective grant was retained");
+                    check([fixture[@"info"] writeToFile:[fixture[@"app"] stringByAppendingPathComponent:@"Info.plist"] atomically:YES], @"Injected alternate response failed");
+                }
+                return alternate ? 41 : 40;
+            }, ^(int64_t token) { [released addObject:@(token)]; }, NULL);
+            check([result[@"sdk"] isEqual:@"26.2.0"] && [released isEqual:@[@40, @41]], @"Alternate read or token pairing failed");
+        } @finally { [NSFileManager.defaultManager removeItemAtPath:fixture[@"root"] error:NULL]; }
+    });
+    test(@"Denied and unpaired bundle grants retain the failed path and access stage", ^{
+        NSDictionary *fixture = bundleFixture(NO); __block unsigned requests = 0;
+        @try {
+            int64_t (^request)(NSString *, BOOL) = ^int64_t(NSString *container, BOOL alternate) { (void)container; (void)alternate; ++requests; return -6; };
+            NSError *error = nil;
+            check(!FLTestResolveBundle(@"org.example.sdk", fixture[@"root"], @"Example.app", request, ^(int64_t token) { (void)token; check(NO, @"Denied grant was released as a token"); }, &error), @"Denied grants produced evidence");
+            check(requests == 2 && [error.localizedDescription containsString:@"Info.plist open failed"] && [error.localizedDescription containsString:@"grant: -6"], @"Per-stage diagnostics or alternate attempt missing");
+            requests = 0;
+            check(!FLTestResolveBundle(@"org.example.sdk", fixture[@"root"], @"Example.app", request, nil, NULL) && !requests, @"Consumed an unpaired token");
+        } @finally { [NSFileManager.defaultManager removeItemAtPath:fixture[@"root"] error:NULL]; }
+    });
+    test(@"Bundle identity conflicts and symlinks never trigger additional grants", ^{
+        NSDictionary *fixture = bundleFixture(YES); __block unsigned requests = 0;
+        @try {
+            int64_t (^request)(NSString *, BOOL) = ^int64_t(NSString *container, BOOL alternate) { (void)container; (void)alternate; ++requests; return 1; };
+            void (^release)(int64_t) = ^(int64_t token) { (void)token; };
+            check(!FLTestResolveBundle(@"org.other.app", fixture[@"root"], @"Example.app", request, release, NULL) && !requests, @"Identity mismatch retried grants");
+            NSString *alias = [fixture[@"root"] stringByAppendingPathComponent:@"Alias.app"];
+            check(symlink("Example.app", alias.fileSystemRepresentation) == 0, @"Symlink fixture failed");
+            check(!FLTestResolveBundle(@"org.example.sdk", fixture[@"root"], @"Alias.app", request, release, NULL) && !requests, @"Symlink triggered a grant or was followed");
+        } @finally { [NSFileManager.defaultManager removeItemAtPath:fixture[@"root"] error:NULL]; }
     });
     return passed;
 }
