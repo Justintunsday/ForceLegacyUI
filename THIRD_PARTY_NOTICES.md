@@ -16,6 +16,9 @@ and [upstreams.json](docs/upstreams.json). The complete license is in [LICENSE](
 `5b65200015f7ed0a0fdf34708bd857e4a34e1f80` (release 1.2) was inspected for LS discovery,
 CoreServicesStore organization, SDK metadata and system checksum techniques,
 including recent-inode-first scanning and verifying/retrying consumed grants.
+The documented 592/604 field positions are factual format observations used only
+as read-only candidates until independent per-snapshot checks pass; they are not
+presented as pre-verified iOS 26 support. No upstream source file is copied.
 No explicit redistribution license was found. Its source and artwork are not
 vendored. ForceLegacyUI has its own parser, transaction engine, UI, probes and icon.
 

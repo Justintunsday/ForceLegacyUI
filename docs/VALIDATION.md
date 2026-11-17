@@ -1,5 +1,55 @@
 # Validation evidence
 
+## 0.1.5 validation
+
+Version **0.1.5, build 7**, source
+[`76554e09`](https://github.com/Justintunsday/ForceLegacyUI/commit/76554e09fd8bba532b9dbc92c1e8c944ae2a8c73),
+passed [run 44050101290](https://github.com/Justintunsday/ForceLegacyUI/actions/runs/44050101290)
+on `macos-15-intel`, with Xcode 26.2 selected explicitly.
+
+* **39 core XCTest cases, 45 native regression cases and 4 offline analysis tests passed.**
+  New coverage includes single-plan/path/hash/device authorization, independent SDK
+  evidence, ambiguous triples, candidate-signature corroboration, writable-open
+  probes that change no bytes, receipt-backed active SDK display, restoration and
+  interrupted recovery. Native tests parse bounded thin/universal device Mach-O
+  headers and reject invalid bundle scope, identity and command data. Fixtures and
+  injected private-API responses do not establish access on a physical phone.
+* Regular device apps, the separate MHA device app and simulator apps built.
+  A fresh iPhone 17 Pro simulator running **iOS 26.2, x86_64** launched the normal
+  app and both probes. Both probes exported SDK/plist facts and rendered their
+  control screens. Native app enumeration returned **148 registrations** with
+  `isDemo: false`. The MHA variant was device-built only.
+* The app engine completed the synthetic preview/apply/durable-backup/restore
+  cycle and exported its evidence ZIP. Restored SHA-256 matched the baseline
+  `036b8a8fea6b258779071264cbde428629d4a588fd6800365fec8bbf7ea10e36`.
+  Core ZIP tests separately extract archives using the system unzip tool. This
+  does not verify a live LS write, worse_query access or legacy appearance.
+* All four downloaded IPAs passed independent ZIP, SHA sidecar, version/build,
+  arm64 Mach-O and requested-entitlement checks. The normal app requests its
+  dedicated App Group. The MHA app keeps its exact identity, `house-arrest` mode,
+  distinct display name and empty App Group request. Apple provisioning credentials
+  were absent; the optional signed build was skipped. Every IPA requires re-signing.
+
+Main IPA SHA-256: `9ebc140648f9baa3b55fc99e03c63119d26ca0d54d6883521c72a3f6eb1b3cce`.
+MHA IPA SHA-256: `9cbaaf5596eda09bdb077ddb0b330b2143b92bb3a4eff642960a8c14685883cf`.
+Artifact ID `14314910105`; GitHub-reported artifact ZIP digest
+`0e6fc4ce69e98e5f1d4dde07a1fd06d315b2bd226b53422f0e5a7c92250edfee`.
+Evidence: [0.1.5 records](evidence/v0.1.5/).
+
+The compiled reviewed-live allowlist remains empty. A separate opt-in capability
+now permits a **single-app SDK metadata experiment** only after exact snapshot,
+layout, identity/path, independent executable SDK, writable-open and fresh-preview
+checks. Public 592/604 field signatures are candidates, not pre-verified iOS 26
+layouts. At least three apps and two SDK versions must corroborate a unique SDK
+column. Imported profiles receive the same checks. Receipts retain the layout and
+native metadata fingerprints for revalidated restore after relaunch; batch writes
+remain disabled pending the required first-app evidence.
+
+No physical-device write, iOS 26.6.2 candidate-layout verification or iOS 18
+appearance restoration is claimed. The user's 0.1.4 read-success report below
+remains the available phone evidence. For the next device experiment, use the
+[single-app instructions](SINGLE-APP.zh-Hant.md) and retain the new ZIP capture.
+
 ## 0.1.4 validation
 
 Version **0.1.4, build 6**, source

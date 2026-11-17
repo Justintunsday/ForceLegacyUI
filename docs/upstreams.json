@@ -10,7 +10,7 @@
       "releaseURL": "https://github.com/34306/ForceDuoApp/releases/tag/1.2",
       "licenseFound": false,
       "sourceRedistributed": false,
-      "use": "Implementation technique and file-format investigation; 1.2 recent-inode-first discovery and post-token verification"
+      "use": "Implementation technique and file-format investigation; 1.2 recent-inode discovery, post-token verification, and documented field positions as independently checked runtime candidates"
     },
     {
       "name": "worse_query",

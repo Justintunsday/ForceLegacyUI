@@ -1,6 +1,8 @@
-# 0.1.4：企業簽名 MHA 測試版
+# 0.1.5：企業簽名 MHA 測試版
 
-本次發佈為 **0.1.4，build 6**；[建置與驗證紀錄](VALIDATION.md#014-validation)。
+本次發佈為 **0.1.5，build 7**；[建置與驗證紀錄](VALIDATION.md)。
+一般 App Group 版已在使用者 0.1.4 日誌中成功讀到快取；已有該結果時可繼續使用一般版。
+0.1.5 的 [單 App 實驗](SINGLE-APP.zh-Hant.md) 另要求至少三份可讀的 Bundle／SDK 證據；MHA 身分不會豁免這個條件。
 
 此版本依據你在 iOS 26.6.2（23G90）上以企業簽名 3105 成功存取 App 資料的實測，
 加入保留原始 MobileHouseArrest 身分的 LaunchServices 只讀存取路徑。
@@ -8,12 +10,12 @@
 
 ## 選擇安裝檔
 
-* [ForceLegacyUIHouseArrest-unsigned.ipa](https://github.com/Justintunsday/ForceLegacyUI/releases/download/v0.1.4/ForceLegacyUIHouseArrest-unsigned.ipa)：
+* [ForceLegacyUIHouseArrest-unsigned.ipa](https://github.com/Justintunsday/ForceLegacyUI/releases/download/v0.1.5/ForceLegacyUIHouseArrest-unsigned.ipa)：
   使用你給 3105 簽名的企業簽名方式，保留 `com.apple.mobile.MobileHouseArrest`。
   這個版本與 **3105 使用同一個 Bundle ID，安裝會替換現有 3105，無法同時保留兩個 App**。
   安裝前保留 3105 的原 IPA 與需要的資料。ForceLegacyUI 的新檔案放在
   `Documents/ForceLegacyUI`，不自動清理既有資料。
-* [ForceLegacyUI-unsigned.ipa](https://github.com/Justintunsday/ForceLegacyUI/releases/download/v0.1.4/ForceLegacyUI-unsigned.ipa)：
+* [ForceLegacyUI-unsigned.ipa](https://github.com/Justintunsday/ForceLegacyUI/releases/download/v0.1.5/ForceLegacyUI-unsigned.ipa)：
   一般 App Group 版本，可沿用先前側載方式，與 3105 共存。
   現在也包含限定路徑的 traversal 後備嘗試及可續掃的 inode 搜尋。
 
@@ -23,7 +25,7 @@
 
 ## 安裝後
 
-1. 關閉 Demo laboratory，確認版本為 `0.1.4`。MHA 版桌面名稱為 **ForceLegacyUI MHA**。
+1. 關閉 Demo laboratory，確認版本為 `0.1.5`。MHA 版桌面名稱為 **ForceLegacyUI MHA**。
 2. MHA 版的 Diagnostics → Access backend 應為 `MobileHouseArrest`。
 3. 點 **Run Read-Only Inspection**。此版本會嘗試 lsd 的 class 10／12 容器 lease，
    保留查詢及授權直到讀取結束；後續只開啟符合名稱與大小限制的 LS 快取。
@@ -70,7 +72,7 @@ Diagnostics 的 App list source 會標示 `MCM app-data registrations + individu
 這個清單可與快取搜尋各自得到結果，因此快取存取失敗時仍可能看到部分登記項目。
 
 系統查詢可能使執行時間超出掃描預算。程式不會刪除系統或其他 App 的資料；
-實際修改仍需已驗證的快取格式與外觀證據，目前真實寫入 allowlist 為空。
+單 App SDK 實驗需通過其獨立格式、SDK、預覽及寫入驗證；批量操作仍需後續外觀證據。
 
 ## 為何之前 worse_query 回傳 0 個 App
 

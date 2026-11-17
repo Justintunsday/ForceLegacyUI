@@ -1,0 +1,66 @@
+{
+  "ipas": [
+    {
+      "accessMode": "probe",
+      "appleProvisionedSigningVerified": false,
+      "build": "7",
+      "bundleID": "org.forcelegacyui.app.probe.legacy",
+      "cpuSubtype": 0,
+      "cpuType": 16777228,
+      "displayName": "Legacy Probe",
+      "file": "CompatibilityProbeLegacy-unsigned.ipa",
+      "requestedEntitlements": {},
+      "sha256": "9404bb756faf05b97705e72d6593ddd57c04b30cbdd110fd3e42cf2f7e16c8d2",
+      "size": 88550,
+      "version": "0.1.5"
+    },
+    {
+      "accessMode": "probe",
+      "appleProvisionedSigningVerified": false,
+      "build": "7",
+      "bundleID": "org.forcelegacyui.app.probe.modern",
+      "cpuSubtype": 0,
+      "cpuType": 16777228,
+      "displayName": "Modern Probe",
+      "file": "CompatibilityProbeModern-unsigned.ipa",
+      "requestedEntitlements": {},
+      "sha256": "c8cb3668d7bb27cbc092d787f23863a77c7ff2ca3f9b5a9e9aeaebc480652336",
+      "size": 88549,
+      "version": "0.1.5"
+    },
+    {
+      "accessMode": "app-group",
+      "appleProvisionedSigningVerified": false,
+      "build": "7",
+      "bundleID": "org.forcelegacyui.app",
+      "cpuSubtype": 0,
+      "cpuType": 16777228,
+      "displayName": "ForceLegacyUI",
+      "file": "ForceLegacyUI-unsigned.ipa",
+      "requestedEntitlements": {
+        "com.apple.security.application-groups": [
+          "group.org.forcelegacyui.app"
+        ]
+      },
+      "sha256": "9ebc140648f9baa3b55fc99e03c63119d26ca0d54d6883521c72a3f6eb1b3cce",
+      "size": 461395,
+      "version": "0.1.5"
+    },
+    {
+      "accessMode": "house-arrest",
+      "appleProvisionedSigningVerified": false,
+      "build": "7",
+      "bundleID": "com.apple.mobile.MobileHouseArrest",
+      "cpuSubtype": 0,
+      "cpuType": 16777228,
+      "displayName": "ForceLegacyUI MHA",
+      "file": "ForceLegacyUIHouseArrest-unsigned.ipa",
+      "requestedEntitlements": {},
+      "sha256": "9cbaaf5596eda09bdb077ddb0b330b2143b92bb3a4eff642960a8c14685883cf",
+      "size": 461158,
+      "version": "0.1.5"
+    }
+  ],
+  "passed": true,
+  "scope": "Downloaded IPA ZIP, executable, version, architecture, requested entitlements and SHA sidecars"
+}

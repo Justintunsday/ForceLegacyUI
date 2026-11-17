@@ -1,4 +1,7 @@
-# ForceLegacyUI 0.1.4 安裝與「找不到 App」排查
+# ForceLegacyUI 0.1.5 安裝與「找不到 App」排查
+
+已讀到 App、準備測試修改時，先看 [單 App 實驗教程](SINGLE-APP.zh-Hant.md)。
+你的 0.1.4 一般版已成功讀取快取，可沿用目前的 App Group 簽名方式。
 
 若你已在 iOS 26.6.2 上用企業簽名 3105 成功存取資料，請先看
 [MHA 企業測試版教程](ENTERPRISE-MHA.zh-Hant.md)。該版本與 3105 使用相同 Bundle ID，安裝會替換 3105。
@@ -8,16 +11,16 @@
 
 ## 先更新 IPA
 
-一般版直接下載：[ForceLegacyUI 0.1.4 IPA](https://github.com/Justintunsday/ForceLegacyUI/releases/download/v0.1.4/ForceLegacyUI-unsigned.ipa)。
+一般版直接下載：[ForceLegacyUI 0.1.5 IPA](https://github.com/Justintunsday/ForceLegacyUI/releases/download/v0.1.5/ForceLegacyUI-unsigned.ipa)。
 下載後仍須用你的側載工具重新簽名。
 
 也可以從建置紀錄取得：
 
-1. 打開 [0.1.4（build 6）的成功建置](https://github.com/Justintunsday/ForceLegacyUI/actions/runs/43963044213)。
+1. 打開 [0.1.5（build 7）的成功建置](https://github.com/Justintunsday/ForceLegacyUI/actions/runs/44050101290)。
 2. 登入 GitHub，在該次執行頁面的 **Artifacts** 下載壓縮檔。
 3. 解壓縮後，使用 `dist/ForceLegacyUI-unsigned.ipa`。另外兩個 `CompatibilityProbe` 是對照測試 App。
 4. 用原本的側載工具更新 ForceLegacyUI。保留 App Groups 權限，讓工具用你的帳戶重新簽名並配置描述檔。
-5. 打開 **Diagnostics**，確認 **App version** 顯示 `0.1.4`。
+5. 打開 **Diagnostics**，確認 **App version** 顯示 `0.1.5`；Technical log 另列 build 7。
 
 檔名中的 `unsigned` 表示沒有 Apple 核發的安裝簽名，仍須由側載工具簽名。
 0.1.1 起先以 ad-hoc 簽名攜帶請求的 App Group 資訊，供重新簽名工具讀取；
@@ -99,16 +102,19 @@ Mach-O CPU 架構。這項修正避免後續架構比對錯誤，但不會自行
 0.1.4 的使用者日誌已顯示：一般 App Group 版在 26.6.2（23G90）找到一般名稱的 LS
 快取、成功開啟目錄、通過系統 checksum／格式驗證，並讀出 134 筆登記。
 這個結果表示搜尋與讀取已成功，並不等於寫入權限或 SDK 欄位已驗證。
-目前實機版沒有內建的 26.6.2 格式配置，且寫入白名單為空；關閉 Dry run 也不會啟用 Apply。
+0.1.4 沒有可用格式且真實寫入被整體禁用。0.1.5 改為在裝置上核對候選格式與獨立 SDK，
+通過後才可開啟單 App 實驗；仍不會在缺少證據時強制解除按鈕。
 
-要繼續建立這個 build 的配置，需要實際快取內容，只有 Technical log 的 hash 與登記數不足以決定欄位：
+若 0.1.5 的候選格式仍未通過，要進一步核對這個 build 的欄位，需要實際快取內容；
+只有 Technical log 的 hash 與登記數不足以決定欄位：
 
 1. 關閉 **Demo laboratory**，執行 **Run Read-Only Inspection**。
 2. 點 **Save Report and Raw Snapshot**。
 3. 在 iPhone 的「檔案」App 找到 **ForceLegacyUI → Diagnostics → 最新資料夾**。
 4. 取出 `report.json`、`snapshot.csstore`，以及用來核對的 `snapshot.sha256`。
 
-目前 **Share Report** 只分享 `report.json`；原始快取需從「檔案」附上。
+0.1.5 的 **Share Report and Snapshot** 會分享包含上述三檔的 ZIP，可直接使用。
+0.1.4 的 **Share Report** 仍只分享 `report.json`，需從「檔案」附上原始快取。
 MHA 版的相同資料夾多一層 `ForceLegacyUI`。原始快取可包含 App 登記等私人 metadata，
 可先自行檢查再提供。
 

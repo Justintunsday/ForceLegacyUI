@@ -175,13 +175,27 @@ identifying the actual decision field and a reviewed serializer for that field.
 This is implemented as an **SDK metadata experiment**, not a verified appearance
 override. The planner accepts exact-build profiles, validates every selected app's
 identity and bundle container, cross-checks at least three apps across two SDK
-versions against independent LS proxy observations, changes only the 24-byte SDK
+versions against independent bundle/executable observations (and rejects conflicting
+available LS observations), changes only the 24-byte SDK
 triple and the checksum, and reparses the result.
 
-Imported profiles permit experiments on app-owned copies. They cannot authorize
-live writes. `ReviewedLayouts.liveWriteDigests` is empty because there is no
-reviewed 26.6.2 layout or device appearance evidence. This is an explicit safety
-boundary, not a hidden successful implementation.
+Version 0.1.5 separates first single-app structural verification from later
+appearance verification. The compiled reviewed-live allowlist remains empty, but
+an explicitly enabled single-app experiment can obtain a capability bound to one
+validated snapshot, candidate, selected ID and exact store path. Independent SDKs
+come from read-only CFBundleIdentifier checks and iOS arm64 executable load commands,
+not values inferred from the same cache. At least three apps and two SDK versions
+must agree, with a unique SDK triple per witness record. The system must validate
+both the original and candidate copies, and Apply still requires a fresh preview,
+durable backup and post-write verification. Import alone grants no capability.
+
+The two published field-position observations from ForceDuoApp 1.2 can be tried
+as read-only signature candidates. They are instantiated with current exact device
+metadata and accepted only if all the above on-device checks pass unambiguously.
+They are not shipped as pre-verified iOS 26 layouts, and a matching 592/604-byte
+count alone is insufficient. Unknown or failed signatures remain unsupported.
+The report and ZIP capture allow additional fields to be reviewed without inventing
+offsets. No physical success or appearance effect is implied by the synthetic tests.
 
 The falsifiable next experiment is to downgrade **one Modern Probe registration**
 on a reviewed layout, cold-launch the same unchanged probe executable, and compare
@@ -216,4 +230,5 @@ included.
   controls, main-executable SDK inspection and launch-fact export.
 
 These enable further investigation but do not replace a matching-device call graph.
-See [TESTING.md](TESTING.md) for the evidence required before changing the allowlist.
+See [TESTING.md](TESTING.md) for first-app experiments and the stronger appearance
+evidence required before considering batch operations.

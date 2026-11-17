@@ -6,28 +6,33 @@ and a guarded SDK-metadata experiment engine.
 
 [繁體中文安裝與「找不到 App」排查教程](docs/GUIDE.zh-Hant.md)
 
-[Download 0.1.4 IPA (re-signing required)](https://github.com/Justintunsday/ForceLegacyUI/releases/download/v0.1.4/ForceLegacyUI-unsigned.ipa)
+[Download 0.1.5 IPA (re-signing required)](https://github.com/Justintunsday/ForceLegacyUI/releases/download/v0.1.5/ForceLegacyUI-unsigned.ipa)
+
+[單 App 寫入、預覽與還原教程](docs/SINGLE-APP.zh-Hant.md)
 
 [Enterprise MHA variant and installation instructions](docs/ENTERPRISE-MHA.zh-Hant.md)
 
-Version 0.1.4 (build 6) reworks cache discovery after reviewing
-[ForceDuoApp 1.2](https://github.com/34306/ForceDuoApp/releases/tag/1.2): it searches
-recent inodes first, resumes older progress and retries alternate query flags when
-a consumed token does not actually open the directory. It also fixes MHA capability
-gating and part/part-domain symbol names, and adds bounded registration metadata
-as an app-list fallback when bulk LaunchServices enumeration is empty.
+Version 0.1.5 (build 7) adds an opt-in single-app SDK write experiment. Fresh
+Info.plist/executable observations must corroborate the exact snapshot's layout,
+identities, paths and SDKs across at least three apps and two SDK versions. Known
+field-position signatures are candidates until those checks pass. A writable-open
+probe, fresh dry run, snapshot/path/hash-bound authorization, durable backup and
+post-write verification are required. Receipts retain the layout and metadata
+evidence for restoration after relaunch. Raw diagnostic export now shares one ZIP.
 
 The enterprise variant is named **ForceLegacyUI MHA**. It shares 3105's bundle ID
 and replaces that app when installed. A prefixed `SystemDataOnly` cache can be
-inspected only as a diagnostic source of unverified role. Physical lsd access,
-app-list completeness and appearance changes still need device verification.
+inspected only as a diagnostic source of unverified role. The user reports that
+the regular 0.1.4 build read 134 registrations on 26.6.2; the new write experiment,
+MHA access, app-list completeness and appearance still need device verification.
 
 The regular build resolves matching signing-tool App Group renames, records
 per-stage discovery failures and reports process architecture separately from
 phone model. A permission grant does not establish an appearance override.
 
-**No legacy appearance override is currently verified on iOS 26.6.2.** The shipped
-live-write allowlist is empty. The app does not modify signed app bundles, install
+**No legacy appearance override is currently verified on iOS 26.6.2.** The compiled
+reviewed-live allowlist is empty; the new single-app capability requires its own
+independent checks and explicit experiment setting. The app does not modify signed app bundles, install
 tweaks, reinstall target applications or require a jailbreak. A successful metadata
 write is never described as a successful appearance change.
 
@@ -36,14 +41,16 @@ write is never described as a successful appearance change.
 * List visible installed apps with local icons, identifiers and reported SDKs.
 * Inspect a bounded LS store snapshot, record sizes and checksums without modifying it.
 * Select proposed per-app changes, use Select All / Deselect All and run a dry run.
-* Import an exact-build profile for **app-owned copy experiments** only.
+* Correlate reference-signature candidates or import an exact-build profile, then
+  preview app-owned copies and perform a validated **one-app SDK experiment**.
 * Exercise apply, durable backup, original-value tracking, rollback and restoration
   in the clearly marked synthetic demo laboratory.
 * Export technical diagnostics and compare UIKit / SwiftUI controls in Modern and
   Legacy probe apps, including plist, Mach-O, dyld and LS launch inputs.
 
-No arbitrary byte editor or iOS 27 offsets are used on iOS 26. Unknown layouts
-remain unsupported. No successful physical-device test is fabricated.
+Record size or an OS label alone never selects offsets. Reference field positions
+require current-device independent corroboration; unknown layouts stay unsupported.
+No successful physical-device write or appearance test is fabricated.
 
 ## Build
 
@@ -54,14 +61,15 @@ device-installable main-app IPA when matching credentials and provisioning are
 configured. Unsigned IPAs require signing before installation.
 
 [Find the latest build artifacts](https://github.com/Justintunsday/ForceLegacyUI/actions/workflows/build.yml).
-Use the 0.1.4 build 6 release for sideloading; the old 0.1.0 package omitted App
+Use the 0.1.5 build 7 release for sideloading; the old 0.1.0 package omitted App
 Group signing metadata. See the [validation record](docs/VALIDATION.md) for test scope.
-The [0.1.4 build](https://github.com/Justintunsday/ForceLegacyUI/actions/runs/43963044213)
-passed 28 core safety tests and 40 native discovery/access regression cases,
-requested-entitlement packaging checks, device/simulator builds, synthetic
-transaction testing and native simulator app enumeration (155 records on iOS 26.5).
-The separate MHA device
-identity variant also built; its private-API access has not been verified on a phone.
+The [0.1.5 build](https://github.com/Justintunsday/ForceLegacyUI/actions/runs/44050101290)
+passed 39 core tests, 45 native cases and 4 offline analysis tests. Its iOS 26.2
+simulator completed the synthetic transaction/ZIP flow, launched both probes and
+returned 148 native registrations. Build details and scope are recorded in
+[validation evidence](docs/VALIDATION.md).
+Synthetic authorization, rollback and recovery tests do not establish phone access
+or a legacy appearance effect.
 
 ```sh
 swift test --package-path Packages/LegacyCore --parallel

@@ -22,6 +22,15 @@ Metadata tests separately cover class/flags, deduplication, invalid-ID rejection
 record limits, absent iterator symbols, query cleanup and unavailable SDK/path
 fields. They assert that metadata enumeration performs no activation or file probe.
 
+The 0.1.5 core tests check single-plan/path/device/hash binding, one-target limits,
+stale proofs, duplicate SDK triples, native-fingerprint mismatches, receipt-backed
+active SDK display, restoration/recovery and no-write writable probes. Alternate
+592/604 fixtures are synthetic: they verify candidate rejection/corroboration code,
+not the layout on a real phone. A shifted field and unsupported OS must fail.
+Placeholder `/var` aliases must still agree with canonical bundle paths. ZIP output
+is extracted using the system unzip implementation; offline Python tests verify
+snapshot/report agreement, independent evidence provenance and numeric-key collisions.
+
 The symbol-lookup test exercises the production resolver using the exported
 operation-part/part-domain names. New scan tests inject inode paths and time to
 check descending anchors above forty million, overflow fallback, primary filename
@@ -88,14 +97,16 @@ build and evidence references. Import it in Diagnostics. The app requires:
 * Exact OS version, build and architecture matching.
 * Distinct, bounded fields; no overlap with the SDK triple.
 * Unique bundle identity and a valid application container path.
-* At least three LS-proxy-matching apps spanning two SDK versions.
+* At least three independent bundle/executable SDK observations spanning two SDK versions.
 * System CoreServicesStore acceptance of the original and repaired candidate.
 * A candidate diff confined to selected SDK triples and checksum bytes.
 
-An imported profile unlocks **copy experiments only**. Examine the saved original,
-candidate and plan under Documents/CopyExperiments. Import does not alter the
-compiled live-write allowlist. Record-layout proof and appearance proof are
-separate review decisions.
+Import alone creates no live authorization. Version 0.1.5 checks an imported
+profile or one of the read-only reference-signature candidates against fresh native
+bundle observations and unique SDK columns. A successful O_RDWR open writes zero
+bytes. Only a fresh preview plus an explicitly enabled, one-app, snapshot/path/hash
+bound capability can reach Apply. Examine the saved copies under CopyExperiments.
+Record-layout proof and appearance proof remain separate decisions.
 
 ## Tracing UIKit and SwiftUI inputs
 
@@ -129,16 +140,17 @@ them from a jailbroken device.
 
 ## One-app appearance experiment, after source review
 
-No profile currently meets the requirements for live authorization. A developer
-must review the above evidence and explicitly add an exact profile and its digest
-to `ReviewedLayouts` before building a research version that can write live data.
-Do not remove validation checks or add iOS 27 profiles under an iOS 26 label.
+No iOS 26.6.2 profile is claimed as pre-verified. Candidate signatures must pass
+the current device's independent structure/SDK checks; byte count or OS-label
+substitution is insufficient. Unknown fields still need capture and review.
+The compiled allowlist stays empty; the single-app experiment has its own narrow
+capability. See [the user workflow](SINGLE-APP.zh-Hant.md).
 
-For a reviewed research build:
+After the exact-device checks pass:
 
 1. Back up the device normally. Choose only the Modern Probe initially.
-2. Run read-only inspection, export the baseline, then run a fresh one-app dry run.
-3. Apply once. Retain the verified backup receipt and original snapshot.
+2. Run read-only inspection and export the baseline. Enable the single-app experiment, then run a fresh one-app dry run.
+3. Apply once with the same selection. Retain the verified receipt and original snapshot.
 4. Cold-launch the unchanged Modern Probe. Collect the new facts, trace and both
    control-screen screenshots. Log any LS reload, app termination or device restart;
    the app does not kill system services or claim a cache refresh occurred.

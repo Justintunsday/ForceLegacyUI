@@ -1,0 +1,12 @@
+{
+  "appliedSHA256": "55103ac3135bc35c4d8bd777c86d5d38f2e925b7cc230f170abaec4fbb2146cc",
+  "apply": "Demo copy written and verified.\norg.forcelegacyui.sample.0: 26.2.0 \u2192 18.0.0\nBackup: 1114C2AF-21E6-4C96-A233-98902C7EA6D2\nThis does not verify legacy appearance.",
+  "beforeSHA256": "036b8a8fea6b258779071264cbde428629d4a588fd6800365fec8bbf7ea10e36",
+  "evidenceZIPExported": true,
+  "passed": true,
+  "physicalDeviceTest": false,
+  "preview": "DRY RUN: only app-owned copies were saved.\norg.forcelegacyui.sample.0: 26.2.0 \u2192 18.0.0\nOriginal SHA-256: 036b8a8fea6b258779071264cbde428629d4a588fd6800365fec8bbf7ea10e36\nCandidate SHA-256: 55103ac3135bc35c4d8bd777c86d5d38f2e925b7cc230f170abaec4fbb2146cc\nAppearance has not been tested.\nCopies: F8FEBEAC-7635-4B21-BE89-AF48B55F845C",
+  "restore": "Original SDK values restored and verified. Unrelated current records were preserved.",
+  "restoredSHA256": "036b8a8fea6b258779071264cbde428629d4a588fd6800365fec8bbf7ea10e36",
+  "syntheticData": true
+}
