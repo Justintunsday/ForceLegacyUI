@@ -156,13 +156,27 @@ actor ResearchEngine {
                     output.log += "Store validator refused: \(error.localizedDescription)\n"
                     throw error
                 }
-                if !demo && apps.isEmpty {
+                if !demo {
                     let registrations = try store.discoverRegistrations()
-                    output.applications = registrations
-                    output.catalogSource = diagnosticOnly ? "Prefixed cache registrations (read-only)" : "Read-only cache registrations"
-                    output.log += "Read-only cache fallback: \(registrations.count) unambiguous registrations. SDK offsets were not inferred; installation state and layout remain unverified.\n"
+                    let nativeCount = apps.count
+                    let merged = try CatalogInventory.reconcile(native: apps, registrations: registrations)
+                    apps = merged.applications; output.applications = apps
+                    if !registrations.isEmpty {
+                        output.catalogSource = diagnosticOnly ? "Native + prefixed cache registrations (read-only)" : "Native + read-only cache registrations"
+                    }
+                    output.log += "Catalog reconciliation: \(nativeCount) native records; \(registrations.count) unambiguous cache registrations; \(merged.addedFromCache) added, \(merged.filledMissingPaths) missing paths supplied from cache, \(merged.excludedConflicts) conflicting identities excluded; \(apps.count) resulting records. Cache-sourced paths remain registrations, not installation proof; SDKs are not inferred.\n"
                 }
                 if !demo && !diagnosticOnly {
+                    if LiveStorePolicy.storePath(url.path) {
+                        do {
+                            try TransactionEngine.probeWritable(url, expected: data)
+                            output.writableOpen = true
+                            output.log += "O_RDWR open and stable read succeeded; zero bytes were written. This is access evidence only, not SDK layout validation or write authorization.\n"
+                        } catch {
+                            output.writableOpen = false
+                            output.log += "Writable-open probe failed: \(error.localizedDescription)\n"
+                        }
+                    } else { output.log += "Writable-open probe skipped: source is outside the live UUID cache policy.\n" }
                     let receipts = try BackupRepository.list(backupRoot).filter {
                         $0.status == .applied && $0.receipt.device == identity && $0.receipt.sourceName == url.lastPathComponent && $0.receipt.bundleEvidence != nil
                     }
@@ -224,14 +238,11 @@ actor ResearchEngine {
                             output.applications = records.map { InstalledApplication(bundleID: $0.bundleID, name: $0.name,
                                 bundlePath: $0.bundlePath, reportedSDK: $0.sdk, applicationType: "Validated cache registration") }
                             output.catalogSource = "Validated cache registrations with executable SDK corroboration"
-                            do {
-                                try TransactionEngine.probeWritable(url, expected: data)
-                                output.writableOpen = true; output.singleAppWriteReady = true
+                            if output.writableOpen == true {
+                                output.singleAppWriteReady = true
                                 output.writeReadinessReason = "Layout and independent SDKs agree; enable the single-app experiment and preview one app."
-                                output.log += "O_RDWR open and stable read succeeded; zero bytes were written.\n"
-                            } catch {
-                                output.writableOpen = false; output.writeReadinessReason = error.localizedDescription
-                                output.log += "Writable-open probe failed: \(error.localizedDescription)\n"
+                            } else {
+                                output.writeReadinessReason = "The no-write writable-open probe did not pass. See Technical log for the access result."
                             }
                         } catch {
                             output.writeReadinessReason = error.localizedDescription

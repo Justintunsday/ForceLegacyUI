@@ -41,15 +41,6 @@ jobs:
             CODE_SIGNING_ALLOWED=NO build | tee build/device.log
           python3 scripts/prepare_sideload_metadata.py build/device/Build/Products/Release-iphoneos --evidence dist/sideload-metadata.json
           python3 scripts/package_ipa.py build/device/Build/Products/Release-iphoneos dist --unsigned
-      - name: Build enterprise identity variant
-        run: |
-          set -eo pipefail
-          xcodebuild -project ForceLegacyUI.xcodeproj -scheme ForceLegacyUIDevice -configuration Release \
-            -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build/house-arrest \
-            FL_BUNDLE_ID=com.apple.mobile.MobileHouseArrest FL_ACCESS_MODE=house-arrest APP_GROUP_IDENTIFIER= \
-            CODE_SIGN_ENTITLEMENTS=ForceLegacyUI/Resources/HouseArrest.entitlements CODE_SIGNING_ALLOWED=NO build | tee build/house-arrest.log
-          python3 scripts/prepare_sideload_metadata.py build/house-arrest/Build/Products/Release-iphoneos --house-arrest --evidence dist/house-arrest-metadata.json
-          python3 scripts/package_ipa.py build/house-arrest/Build/Products/Release-iphoneos dist --unsigned --house-arrest
       - name: Build and smoke test simulator
         timeout-minutes: 25
         run: |

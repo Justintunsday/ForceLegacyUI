@@ -50,7 +50,7 @@ final class AppModel: ObservableObject {
         UIPasteboard.general.string = inspection?.log ?? "Inspection has not completed."
     }
     func selectable(_ app: InstalledApplication) -> Bool {
-        app.bundlePath.hasPrefix("/private/var/containers/Bundle/Application/") && app.reportedSDK != nil
+        inspection?.layoutValidated == true && app.bundlePath.hasPrefix("/private/var/containers/Bundle/Application/") && app.reportedSDK != nil
     }
     func selectAll() { selection = Set(apps.filter(selectable).map(\.id)) }
 

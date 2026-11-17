@@ -144,6 +144,7 @@ private struct DiagnosticsView: View {
                         LabeledContent("Access backend", value: info.accessBackend)
                         LabeledContent("Override", value: info.status.rawValue)
                         LabeledContent("Layout", value: info.layoutID ?? "Unknown")
+                        LabeledContent("Writable cache open", value: info.writableOpen.map { $0 ? "Allowed · no bytes written" : "Failed" } ?? "Not tested")
                         if let candidate = info.candidateLayoutID, !info.layoutValidated {
                             LabeledContent("Read-only candidate", value: candidate)
                         }
