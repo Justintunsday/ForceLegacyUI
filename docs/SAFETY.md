@@ -18,6 +18,17 @@ releases any temporary token. It never opens signed bundles for writing. Queries
 use only our resolved dedicated App Group; MHA without group access may have fewer
 readable bundles and cannot bypass the three-observation requirement.
 
+Version 0.1.6 can enumerate at most 64 names in the requested bundle's UUID parent
+to resolve folded registration spelling. It opens only one matching `.app` name;
+ambiguous names, symlinks, changed directory identities and Info.plist ID conflicts
+are refused. UUID/name case equivalence is limited to bundle observation comparison;
+live store write paths stay exact. Individual LS URLs can supply spelling only for
+the same UUID/name and never replace the native metadata read. Scoped parent grants
+are paired and tested through Info.plist/executable reads, including when opening
+the directory alone succeeded. No request targets the overall Bundle/Application
+root, application data or unrelated UUIDs. The current app uses its own bundle path
+as an independent observation when its registration is present.
+
 Read-only discovery may probe exact legacy LS cache directories and UUID/lsd
 `Library/Caches` directories under the three listed system-container roots. Extended
 search only lists root names and matching cache-file metadata; it does not inspect

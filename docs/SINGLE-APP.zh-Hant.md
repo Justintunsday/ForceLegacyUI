@@ -1,20 +1,30 @@
-# 0.1.5：單一 App SDK 實驗
+# 0.1.6：單一 App SDK 實驗
 
 0.1.5（build 7）加入真正的單 App SDK 寫入路徑。它修改 LaunchServices 的 SDK metadata，
 **尚未驗證能把 UIKit／SwiftUI 恢復成 iOS 18 外觀**。找到快取、欄位驗證、取得寫入存取、
 寫入後核對，以及畫面是否改變，會分別檢查。
 
+目前版本為 **0.1.6（build 8）**，補上 SDK 讀取的路徑名稱解析、子檔案授權重試與詳細錯誤。
+它會在同一個 UUID 容器內核對實際 `.app` 名稱，再讀 Info.plist 與執行檔；
+未在真機確認修正效果，未知快取格式仍須獨立驗證。
+
+**你回報的 Bundle record size 是 572；目前沒有內建的 572-byte 配置。**
+0.1.6 先補 SDK 擷取與診斷，仍需要 matching ZIP 的實際欄位與獨立 SDK 來核對配置，
+不會只因尺寸是 572 就啟用寫入。
+
 你的 0.1.4 日誌已顯示一般 App Group 版成功讀取 134 筆登記。可沿用目前側載方式，
-更新 [一般版 IPA](https://github.com/Justintunsday/ForceLegacyUI/releases/download/v0.1.5/ForceLegacyUI-unsigned.ipa)，
+更新 [一般版 IPA](https://github.com/Justintunsday/ForceLegacyUI/releases/download/v0.1.6/ForceLegacyUI-unsigned.ipa)，
 保留 App Groups，讓工具重新簽名。無須因這個結果改換 MHA 版。
 
 ## 先看驗證結果
 
-1. 關閉 **Demo laboratory**，確認版本為 `0.1.5`（build 7）。
+1. 關閉 **Demo laboratory**，確認版本為 `0.1.6`（build 8）。
 2. 執行 **Run Read-Only Inspection**；需要重新找位置時用 **Extended Store Discovery**。
 3. 看 **Independent SDK observations** 與 Technical log。程式最多嘗試 12 個 App Bundle，
    從只讀的 Info.plist 與執行檔 load commands 取得獨立的 build SDK，並核對 Bundle ID。
    SDK 觀察有 8 秒的呼叫間時間預算；同步系統呼叫本身可能更久。
+   會優先讀取目前 ForceLegacyUI 自己的實際 Bundle，其他目標依同一 UUID 內的名稱解析。
+   個別 LS 查詢的 URL 只作名稱提示，仍須讀到真實檔案並核對 Bundle ID。
 4. 程式只把上游公開的 592／604 欄位位置當成候選。每份候選都必須與本機 OS build、
    架構、真實記錄內容、至少 3 個 App 和 2 種 build SDK 吻合，SDK triple 也不可有歧義。
    記錄大小相同不會單獨啟用寫入。未知格式可匯入經核對的 exact-build profile，再跑相同驗證。
@@ -23,6 +33,19 @@
 
 若候選均被拒絕、獨立觀察不足，或 writable-open probe 失敗，按鈕會保持不可用，日誌會寫明原因。
 不會只因你開啟實驗選項就繞過這些檢查。
+
+### 有 App 清單但 SDK 仍是 unavailable
+
+清單只證明快取可讀。0.1.5 的使用者日誌曾顯示 134 筆登記，卻有 12 次 Bundle 開啟
+回報 `errno 2`，獨立 SDK 觀察數為 0。只有這份文字無法確定是名稱大小寫、舊 UUID 路徑，
+還是授權／解析問題；0.1.6 補上同容器名稱解析及每個失敗階段，便於區分。
+
+* `Bundle SDK ... requested ... cache ...`：列出實際嘗試路徑、檔案階段與 grant 回傳值。
+* `Independent executable SDK ... resolved ...`：Info.plist 身分和 Mach-O SDK 已讀到。
+* `Candidate ... skipped: required record size ... is absent`：這份快取沒有該候選尺寸，仍需原始快照核對。
+* 清單的 `Executable SDK ...; cache field unverified` 只顯示執行檔 SDK；選擇開關仍等待快取欄位驗證。
+
+若仍失敗，使用本頁末尾的 ZIP 匯出流程。保持目前已能讀取快取的 App Group 簽名方式即可。
 
 ## 一個 App 的預覽與寫入
 

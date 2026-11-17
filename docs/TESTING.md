@@ -31,6 +31,14 @@ Placeholder `/var` aliases must still agree with canonical bundle paths. ZIP out
 is extracted using the system unzip implementation; offline Python tests verify
 snapshot/report agreement, independent evidence provenance and numeric-key collisions.
 
+The 0.1.6 cases also check unique folded-name resolution, bounded/ambiguous names,
+same-UUID path correlation, receipt matching with resolved spelling, subfile grant
+retry, ineffective positive-token release, alternate flags, unavailable release
+callbacks and rejection of identity conflicts/symlinks. Temporary file fixtures
+simulate access changes; they do not exercise an actual sandbox grant. Missing
+candidate sizes must be reported without inferring a replacement layout. Offline
+analysis retains candidate field references when bundle filename/UUID spelling differs.
+
 The symbol-lookup test exercises the production resolver using the exported
 operation-part/part-domain names. New scan tests inject inode paths and time to
 check descending anchors above forty million, overflow fallback, primary filename

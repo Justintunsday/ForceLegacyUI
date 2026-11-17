@@ -6,13 +6,25 @@ and a guarded SDK-metadata experiment engine.
 
 [繁體中文安裝與「找不到 App」排查教程](docs/GUIDE.zh-Hant.md)
 
-[Download 0.1.5 IPA (re-signing required)](https://github.com/Justintunsday/ForceLegacyUI/releases/download/v0.1.5/ForceLegacyUI-unsigned.ipa)
+[Download 0.1.6 IPA (re-signing required)](https://github.com/Justintunsday/ForceLegacyUI/releases/download/v0.1.6/ForceLegacyUI-unsigned.ipa)
 
 [單 App 寫入、預覽與還原教程](docs/SINGLE-APP.zh-Hant.md)
 
 [Enterprise MHA variant and installation instructions](docs/ENTERPRISE-MHA.zh-Hant.md)
 
-Version 0.1.5 (build 7) adds an opt-in single-app SDK write experiment. Fresh
+Version 0.1.6 (build 8) addresses bundle SDK read failures reported with 0.1.5.
+It resolves registration spelling against bounded entries in the same UUID
+container, checks Info.plist identity and retries scoped grants through the actual
+metadata read. Individual LS URLs are spelling hints only for the same container
+and name. Logs now include requested/resolved paths, access stages and absent
+candidate sizes. An independently read executable SDK is displayed separately
+while the cache SDK field remains unverified.
+
+The user's reported **572-byte Bundle records have no included profile**. This
+release does not turn that size into a supported write layout; a matching raw
+snapshot/report and independent SDK observations are still needed for field review.
+
+The opt-in single-app SDK write experiment requires fresh
 Info.plist/executable observations must corroborate the exact snapshot's layout,
 identities, paths and SDKs across at least three apps and two SDK versions. Known
 field-position signatures are candidates until those checks pass. A writable-open
@@ -61,10 +73,10 @@ device-installable main-app IPA when matching credentials and provisioning are
 configured. Unsigned IPAs require signing before installation.
 
 [Find the latest build artifacts](https://github.com/Justintunsday/ForceLegacyUI/actions/workflows/build.yml).
-Use the 0.1.5 build 7 release for sideloading; the old 0.1.0 package omitted App
+Use the 0.1.6 build 8 release for sideloading; the old 0.1.0 package omitted App
 Group signing metadata. See the [validation record](docs/VALIDATION.md) for test scope.
-The [0.1.5 build](https://github.com/Justintunsday/ForceLegacyUI/actions/runs/44050101290)
-passed 39 core tests, 45 native cases and 4 offline analysis tests. Its iOS 26.2
+The [0.1.6 build](https://github.com/Justintunsday/ForceLegacyUI/actions/runs/44064110113)
+passed 41 core tests, 51 native cases and 5 offline analysis tests. Its iOS 26.2
 simulator completed the synthetic transaction/ZIP flow, launched both probes and
 returned 148 native registrations. Build details and scope are recorded in
 [validation evidence](docs/VALIDATION.md).

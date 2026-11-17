@@ -1,5 +1,51 @@
 # Validation evidence
 
+## 0.1.6 validation
+
+Version **0.1.6, build 8**, source
+[`14919cb4`](https://github.com/Justintunsday/ForceLegacyUI/commit/14919cb4a044e25d1922569364397d4d8cb15a96),
+passed [run 44064110113](https://github.com/Justintunsday/ForceLegacyUI/actions/runs/44064110113)
+on `macos-15-intel` with Xcode 26.2.
+
+* **41 core XCTest cases, 51 native regression cases and 5 offline analysis tests passed.**
+  New coverage checks unique folded-name matching, ambiguous/oversized listings,
+  actual bundle identity and SDK reads, retry after a subfile failure despite a
+  readable directory, positive-token release and alternate flags, missing release
+  callbacks, symlink/identity refusal, same-UUID spelling correlation and receipt
+  compatibility. File fixtures and injected grant results do not test a real
+  sandbox extension or establish phone access.
+* Normal device apps, the separate MHA device app and simulator apps built.
+  A fresh iPhone 17 Pro simulator on **iOS 26.2, x86_64** launched the normal app
+  and both probes. Both probes exported their facts. Native enumeration returned
+  **148 registrations** with `isDemo: false`. The app completed synthetic preview,
+  apply, durable backup, restore and ZIP export; the restored SHA matched the
+  original `036b8a8fea6b258779071264cbde428629d4a588fd6800365fec8bbf7ea10e36`.
+* All four downloaded IPAs passed independent ZIP, SHA sidecar, version/build,
+  arm64 Mach-O and requested-entitlement checks. The standard app requests its
+  dedicated App Group; MHA retains its exact ID/mode and no group request.
+  No provisioning credentials were supplied, so optional Apple signing was skipped.
+  All IPAs require re-signing before installation.
+
+Main IPA SHA-256: `37ada96f96510a57d8dfde99ecf84351e3cfc41fbf0d5083e91f12363c65b6c0`.
+MHA IPA SHA-256: `f639e534c96987e4dc7102d3078c29b34e90d81c592ad13d30212b8a5c393421`.
+Artifact ID `14321315153`; GitHub-reported ZIP digest
+`c5d29160dbb4be85a4e347212a4f70ecf6b5a55d953424a9763c78df12093282`.
+Evidence: [0.1.6 records](evidence/v0.1.6/).
+
+The update addresses missing same-container spelling resolution and metadata-read
+grant retries exposed during review of the user's 0.1.5 ENOENT log below. The
+attempted app-bundle path strings and raw snapshot were not supplied, so those omissions are not claimed
+as the conclusively verified cause on that phone. The current app is prioritized
+as an independent SDK witness; individual LS URLs are spelling hints only and
+must stay within the same UUID/name. Resolved metadata must still match the real
+Info.plist identity, executable SDK and fingerprints. Live store paths retain
+their exact spelling; unknown record layouts and batch writes remain blocked.
+
+**No physical-device bundle-resolution success, SDK write or legacy appearance
+change is claimed.** A readable executable SDK does not by itself verify a cache
+SDK column. [The guide](SINGLE-APP.zh-Hant.md) explains the new per-stage logs and
+the matching report/snapshot ZIP needed if verification remains incomplete.
+
 ## 0.1.5 validation
 
 Version **0.1.5, build 7**, source
@@ -49,6 +95,27 @@ No physical-device write, iOS 26.6.2 candidate-layout verification or iOS 18
 appearance restoration is claimed. The user's 0.1.4 read-success report below
 remains the available phone evidence. For the next device experiment, use the
 [single-app instructions](SINGLE-APP.zh-Hant.md) and retain the new ZIP capture.
+
+### Additional user-provided 0.1.5 device feedback
+
+The user's 0.1.5 build 7 log on iOS 26.6.2 (23G90), iPhone17,3, arm64 showed
+successful regular App Group access, a system-validated primary-name snapshot and
+134 read-only registrations. All twelve attempted application bundle reads failed
+with ENOENT; independent SDK observations were zero. No candidate-match/refusal
+lines or record-size inventory were present. This does not prove that the layout
+would match once the bundle paths are resolved, or that the cache is writable.
+
+The user subsequently reported **572-byte Bundle records**, outside the shipped
+592/604 reference candidates. Version 0.1.6 does not introduce a 572-byte profile;
+the layout gate will still require a matching capture and independent SDK checks.
+
+The raw snapshot and attempted application-bundle paths were not provided. Consequently, the root cause
+cannot be assigned conclusively to case-folded names, stale container UUIDs or
+access behavior. Version 0.1.6 addresses missing spelling resolution and subfile
+grant retries, adds the requested/resolved paths and candidate-size diagnostics,
+and reports executable SDKs separately from unverified cache fields. No phone
+success for these changes is claimed; private UUIDs and signing-team identifiers
+from the user's log are omitted from this record.
 
 ## 0.1.4 validation
 
