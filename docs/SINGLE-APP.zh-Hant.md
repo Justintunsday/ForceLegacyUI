@@ -19,6 +19,11 @@ ZIP 內的 0.1.7 日誌顯示 UUID 與固定根目錄 traversal 都回報 `-104`
 0.1.8 對拒絕／無 token 的 Bundle 查詢加入 `0x800000000` 旗標重試；
 尚未在手機驗證此重試能讀到其他執行檔。先沿用目前簽名更新一般版即可。
 
+後續收到的 0.1.8 ZIP 已確認：572 候選成功解碼，134 筆登記都有候選 SDK；
+一般版對其他 Bundle 的兩組 traversal 旗標仍都沒有 token，獨立觀察數維持 1。
+[實測紀錄](feedback-0.1.8.md)。這時應比較同一企業簽名、保留原始身分的
+[MHA 版](ENTERPRISE-MHA.zh-Hant.md)，再判斷存取能力；它尚未證實能解決 Bundle 讀取。
+
 你的 0.1.4 日誌已顯示一般 App Group 版成功讀取 134 筆登記。可沿用目前側載方式，
 更新 [一般版 IPA](https://github.com/Justintunsday/ForceLegacyUI/releases/download/v0.1.8/ForceLegacyUI-unsigned.ipa)，
 保留 App Groups，讓工具重新簽名。無須因這個結果改換 MHA 版。
