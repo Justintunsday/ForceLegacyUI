@@ -4,6 +4,14 @@ The compiled reviewed-live allowlist is empty. Version 0.1.5 has a separate,
 opt-in single-app experiment with snapshot-bound authorization. Importing JSON,
 matching a byte count or obtaining a token cannot authorize that experiment alone.
 
+The 0.1.8 read-only candidate path can display proposed cache SDK values after one
+fresh native SDK/path/identity match and system validation. Its evidence type is
+separate from SDKSnapshotEvidence and cannot be passed to WriteAuthorization.
+Candidate cache values never become executable witnesses or selectable targets.
+The captured 572-byte signature is restricted to 26.6.2 / 23G90 / arm64. Null
+placeholders and dotless identifiers are outside the target scope; malformed
+non-null paths and duplicate in-scope identities remain errors.
+
 Candidate field-position signatures are never OS support claims. They must parse
 the current snapshot and match three independent Info.plist/executable observations
 across at least two SDK versions; each SDK triple must be unique in its record.
@@ -37,7 +45,10 @@ Info.plist/executable, does not enumerate other UUIDs, uses read-only descriptor
 and releases the token after that attempt. Both traversal scopes require lstat
 confirmation of an existing nonsymlink directory before querying. The root API
 accepts no caller-supplied path; application-data and arbitrary filesystem roots
-are excluded. Kernel grant success and effectiveness remain device-test questions.
+are excluded. 0.1.8 retries upstream alternate flags 0x800000000 after a denied/tokenless bundle
+query using 0x8000000000; it does not retry missing APIs or consume an absent token.
+Each query is disposed before retry, and a consumed token retains one owner.
+Kernel grant success and effectiveness remain device-test questions.
 
 Read-only discovery may probe exact legacy LS cache directories and UUID/lsd
 `Library/Caches` directories under the three listed system-container roots. Extended

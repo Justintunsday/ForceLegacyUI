@@ -1,31 +1,38 @@
-# 0.1.7：單一 App SDK 實驗
+# 0.1.8：單一 App SDK 實驗
 
 0.1.5（build 7）加入真正的單 App SDK 寫入路徑。它修改 LaunchServices 的 SDK metadata，
 **尚未驗證能把 UIKit／SwiftUI 恢復成 iOS 18 外觀**。找到快取、欄位驗證、取得寫入存取、
 寫入後核對，以及畫面是否改變，會分別檢查。
 
-目前版本為 **0.1.7（build 9）**。0.1.6 補上 SDK 讀取的路徑名稱解析、子檔案授權重試與詳細錯誤。
+目前版本為 **0.1.8（build 10）**。0.1.6 補上 SDK 讀取的路徑名稱解析、子檔案授權重試與詳細錯誤。
 它會在同一個 UUID 容器內核對實際 `.app` 名稱，再讀 Info.plist 與執行檔；
 未在真機確認修正效果，未知快取格式仍須獨立驗證。
 
-**你回報的 Bundle record size 是 572；目前沒有內建的 572-byte 配置。**
-0.1.7 先補 SDK 擷取的授權後備，仍需要 matching ZIP 的實際欄位與獨立 SDK 來核對配置，
-不會只因尺寸是 572 就啟用寫入。
+**已分析你提供的 ZIP，0.1.8 加入 23G90／arm64 的 572-byte 格式候選。**
+自身執行檔 SDK `26.2.0` 唯一對應到 payload `0x40`；這仍只有一個獨立觀察。
+快照中缺少安裝佔位路徑的系統記錄會排除，非空但損壞的路徑仍拒絕。
+有一份新鮮 native 觀察且欄位相符時，清單可顯示 `Cache SDK … · candidate`；
+候選值不能選取、不能當作獨立觀察，也不會開啟 Apply。
+[欄位與限制紀錄](LAYOUT-572.md)／[候選 JSON](../Layouts/candidate-572-23G90-arm64.json)。
+
+ZIP 內的 0.1.7 日誌顯示 UUID 與固定根目錄 traversal 都回報 `-104`（沒有 token）。
+0.1.8 對拒絕／無 token 的 Bundle 查詢加入 `0x800000000` 旗標重試；
+尚未在手機驗證此重試能讀到其他執行檔。先沿用目前簽名更新一般版即可。
 
 你的 0.1.4 日誌已顯示一般 App Group 版成功讀取 134 筆登記。可沿用目前側載方式，
-更新 [一般版 IPA](https://github.com/Justintunsday/ForceLegacyUI/releases/download/v0.1.7/ForceLegacyUI-unsigned.ipa)，
+更新 [一般版 IPA](https://github.com/Justintunsday/ForceLegacyUI/releases/download/v0.1.8/ForceLegacyUI-unsigned.ipa)，
 保留 App Groups，讓工具重新簽名。無須因這個結果改換 MHA 版。
 
 ## 先看驗證結果
 
-1. 關閉 **Demo laboratory**，確認版本為 `0.1.7`（build 9）。
+1. 關閉 **Demo laboratory**，確認版本為 `0.1.8`（build 10）。
 2. 執行 **Run Read-Only Inspection**；需要重新找位置時用 **Extended Store Discovery**。
 3. 看 **Independent SDK observations** 與 Technical log。程式最多嘗試 12 個 App Bundle，
    從只讀的 Info.plist 與執行檔 load commands 取得獨立的 build SDK，並核對 Bundle ID。
    SDK 觀察有 8 秒的呼叫間時間預算；同步系統呼叫本身可能更久。
    會優先讀取目前 ForceLegacyUI 自己的實際 Bundle，其他目標依同一 UUID 內的名稱解析。
    個別 LS 查詢的 URL 只作名稱提示，仍須讀到真實檔案並核對 Bundle ID。
-4. 程式只把上游公開的 592／604 欄位位置當成候選。每份候選都必須與本機 OS build、
+4. 程式會核對這次 23G90／arm64 的 572 候選，以及上游公開的 592／604 候選。寫入前，每份候選都必須與本機 OS build、
    架構、真實記錄內容、至少 3 個 App 和 2 種 build SDK 吻合，SDK triple 也不可有歧義。
    記錄大小相同不會單獨啟用寫入。未知格式可匯入經核對的 exact-build profile，再跑相同驗證。
 5. 格式與 SDK 證據通過後，程式會嘗試 `O_RDWR` 開啟並讀回同一份快取，**此探測不寫任何位元組**。
@@ -55,7 +62,7 @@
 
 新日誌中的 `Traversal UUID-container grant`、`Bundle-root traversal` 會顯示後備結果。
 `-105` 表示無法先確認既有 nonsymlink 目錄；`-103` 表示查詢無結果；`-104` 表示沒有 token。
-非負 handle 仍要成功讀出 native SDK 才算有效；取得 SDK 後，572-byte 格式也仍需核對。
+非負 handle 仍要成功讀出 native SDK 才算有效；0.1.8 的 572 候選還需三個 App／兩種 SDK 的新鮮觀察，才能進入寫入實驗。
 
 ## 一個 App 的預覽與寫入
 

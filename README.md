@@ -6,11 +6,20 @@ and a guarded SDK-metadata experiment engine.
 
 [繁體中文安裝與「找不到 App」排查教程](docs/GUIDE.zh-Hant.md)
 
-[Download 0.1.7 IPA (re-signing required)](https://github.com/Justintunsday/ForceLegacyUI/releases/download/v0.1.7/ForceLegacyUI-unsigned.ipa)
+[Download 0.1.8 IPA (re-signing required)](https://github.com/Justintunsday/ForceLegacyUI/releases/download/v0.1.8/ForceLegacyUI-unsigned.ipa)
 
 [單 App 寫入、預覽與還原教程](docs/SINGLE-APP.zh-Hant.md)
 
 [Enterprise MHA variant and installation instructions](docs/ENTERPRISE-MHA.zh-Hant.md)
+
+Version **0.1.8 (build 10)** includes a [572-byte candidate](docs/LAYOUT-572.md)
+restricted to iOS 26.6.2 / 23G90 / arm64, reviewed against a matching private
+snapshot and one independently read self-SDK. One fresh matching native witness
+can explain read-only cache SDK values, clearly marked as candidates; selection
+and live authorization still require three apps and two SDK versions. The reader
+excludes null-placeholder system records from its UUID application scope. Bundle
+traversal now retries the upstream alternate flag set after a denied/tokenless
+query. Improved phone access and legacy appearance remain unverified.
 
 Version 0.1.7 (build 9) adds traversal fallbacks to bundle SDK reading after the
 regular and alternate worse_query attempts. It first tries the requested UUID,
@@ -28,12 +37,13 @@ and name. Logs now include requested/resolved paths, access stages and absent
 candidate sizes. An independently read executable SDK is displayed separately
 while the cache SDK field remains unverified.
 
-The user's reported **572-byte Bundle records have no included profile**. This
-release does not turn that size into a supported write layout; a matching raw
-snapshot/report and independent SDK observations are still needed for field review.
+The supplied ZIP established a bounded **572-byte candidate**, not a verified
+write layout. The captured log still had only one native SDK witness and returned
+no sandbox tokens for the other bundle traversal attempts. The reviewed-live
+allowlist stays empty, and the original private capture is not published.
 
 The opt-in single-app SDK write experiment requires fresh
-Info.plist/executable observations must corroborate the exact snapshot's layout,
+Info.plist/executable observations to corroborate the exact snapshot's layout,
 identities, paths and SDKs across at least three apps and two SDK versions. Known
 field-position signatures are candidates until those checks pass. A writable-open
 probe, fresh dry run, snapshot/path/hash-bound authorization, durable backup and
@@ -81,10 +91,10 @@ device-installable main-app IPA when matching credentials and provisioning are
 configured. Unsigned IPAs require signing before installation.
 
 [Find the latest build artifacts](https://github.com/Justintunsday/ForceLegacyUI/actions/workflows/build.yml).
-Use the 0.1.7 build 9 release for sideloading; the old 0.1.0 package omitted App
+Use the 0.1.8 build 10 release for sideloading; the old 0.1.0 package omitted App
 Group signing metadata. See the [validation record](docs/VALIDATION.md) for test scope.
-The [0.1.7 build](https://github.com/Justintunsday/ForceLegacyUI/actions/runs/44072817445)
-passed 41 core tests, 58 native cases and 5 offline analysis tests. Its iOS 26.2
+The [0.1.8 build](https://github.com/Justintunsday/ForceLegacyUI/actions/runs/44079799734)
+passed 46 core tests, 60 native cases and 5 offline analysis tests. Its iOS 26.2
 simulator completed the synthetic transaction/ZIP flow, launched both probes and
 returned 148 native registrations. Build details and scope are recorded in
 [validation evidence](docs/VALIDATION.md).

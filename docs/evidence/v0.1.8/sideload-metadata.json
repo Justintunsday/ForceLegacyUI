@@ -1,0 +1,30 @@
+[
+  {
+    "accessMode": "probe",
+    "bundleID": "org.forcelegacyui.app.probe.legacy",
+    "requestedEntitlements": {},
+    "requiresAppleProvisionedResigning": true,
+    "signatureKind": "ad-hoc metadata only",
+    "version": "0.1.8"
+  },
+  {
+    "accessMode": "probe",
+    "bundleID": "org.forcelegacyui.app.probe.modern",
+    "requestedEntitlements": {},
+    "requiresAppleProvisionedResigning": true,
+    "signatureKind": "ad-hoc metadata only",
+    "version": "0.1.8"
+  },
+  {
+    "accessMode": "app-group",
+    "bundleID": "org.forcelegacyui.app",
+    "requestedEntitlements": {
+      "com.apple.security.application-groups": [
+        "group.org.forcelegacyui.app"
+      ]
+    },
+    "requiresAppleProvisionedResigning": true,
+    "signatureKind": "ad-hoc metadata only",
+    "version": "0.1.8"
+  }
+]

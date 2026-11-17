@@ -57,6 +57,13 @@ both remain failures. These tests do not measure device filesystem performance.
 
 ## First run on iOS 26.6.2
 
+The 0.1.8 core cases use synthetic 572-byte payloads to check exact build/architecture
+binding, one-witness read-only decoding without a write proof, wrong/ambiguous SDK
+rejection, null-placeholder scope, malformed non-null path refusal and one-field
+planning with full evidence. Native cases retry the alternate traversal flags only
+after denied/tokenless results, preserve the UUID/fixed-root domain, dispose every
+query and leave one paired token owner. The private phone capture is not sent to CI.
+
 1. Sign and install ForceLegacyUI with a dedicated, provisioned App Group as
    described in [BUILDING.md](BUILDING.md). No root tool, jailbreak framework or
    modification of an installed target bundle is used.

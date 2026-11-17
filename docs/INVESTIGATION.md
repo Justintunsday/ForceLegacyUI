@@ -197,6 +197,20 @@ count alone is insufficient. Unknown or failed signatures remain unsupported.
 The report and ZIP capture allow additional fields to be reviewed without inventing
 offsets. No physical success or appearance effect is implied by the synthetic tests.
 
+Version 0.1.8 also includes the [captured 572-byte candidate](LAYOUT-572.md), restricted
+to 26.6.2 / 23G90 / arm64. The supplied snapshot had one native SDK witness matching
+uniquely at payload byte 64. This permits candidate inspection, not live authorization;
+the three-app/two-SDK write requirement is unchanged. Candidate cache values are
+never fed back as independent executable observations.
+
+The same private capture revealed linked `lnch` binary property lists containing
+real compatibility Booleans. The 572-byte field at 132 points to a distinct launch
+dictionary whose compressed `p` identifier matches each of the 437 Bundle records.
+Of those dictionaries, 35 explicitly set true and 10 set false; the remainder omit
+the key. This is cached serialized data, not evidence that UIKit reads it or that
+rewriting it is effective. No flag-mutation path is implemented. See the linked
+review for parsing and sharing caveats.
+
 The falsifiable next experiment is to downgrade **one Modern Probe registration**
 on a reviewed layout, cold-launch the same unchanged probe executable, and compare
 its exported LS SDK, Mach-O SDK, dyld SDK and both UI control screens. The Legacy

@@ -29,7 +29,10 @@ The candidate is restricted to **iOS 26.6.2, build 23G90, arm64**. No arm64e
 capture was reviewed. It is not extrapolated to another build or architecture.
 
 The captured catalog also contained 228 same-size/kind records with a **null**
-placeholder reference. These are outside the UUID application-container scope;
+placeholder reference. Field review identified 156 unique reverse-DNS UUID
+registrations; 134 matched the report's existing generic inventory. These cached
+registrations do not establish current installation. Null-placeholder records are
+outside the UUID application-container scope;
 the reader now excludes them before interpreting application fields. Non-null
 malformed placeholders, conflicting duplicate application identities, invalid
 paths and implausible SDKs still fail. Dotless identifiers remain outside the
@@ -52,5 +55,28 @@ This alternate flag combination is a device experiment, not demonstrated access.
 
 Synthetic 572-byte fixtures test candidate decoding, exclusion, ambiguous/missing
 evidence, exact device binding and one-field planning. They do not validate a
-mutated phone snapshot or demonstrate a legacy appearance change. No direct
-per-app Boolean field for UIDesignRequiresCompatibility has been established.
+mutated phone snapshot or demonstrate a legacy appearance change.
+
+## Cached compatibility Boolean
+
+Further read-only review found the key in 52 PropertyList units. Each has a
+four-byte `lnch` prefix followed by a standard `bplist00` payload, which Python's
+plistlib decoded successfully. The root `UIDesignRequiresCompatibility` value
+was Boolean true in 40 units and false in 12 units.
+
+In all 437 Bundle records, the UInt32 at payload **132 / 0x84** referenced a
+distinct `lnch` PropertyList. Its compressed root key **`p`** matched the Bundle
+identifier in every record. Among these 437 linked dictionaries, 35 contained
+true, 10 contained false and 392 omitted the key. These counts include records
+outside the supported UUID mutation scope and do not establish installation.
+The current app's cached true value agrees with its build-time Info.plist opt-out;
+other apps' native plist flags have not been independently read.
+
+This establishes a serialized per-app cached Boolean, beyond a raw string match.
+It does **not** establish that UIKit/SwiftUI uses this cached value at launch,
+that a replacement survives lsd rebuilding it, or that modifying it changes
+appearance. No Boolean rewrite or changed phone snapshot was produced. Binary
+plist objects/references can be shared: blindly flipping a Boolean object's byte
+could change other keys. A future experiment must validate the decoded one-key
+semantic difference, object references, outer store checksum and transaction/
+restore boundaries. The current SDK experiment does not edit these dictionaries.

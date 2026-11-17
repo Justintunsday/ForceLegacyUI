@@ -1,5 +1,45 @@
 # Validation evidence
 
+## 0.1.8 validation
+
+Version **0.1.8, build 10**, application source
+[`c4d89f25`](https://github.com/Justintunsday/ForceLegacyUI/commit/c4d89f2568a2f2ac4d7552f115535098fd460b46),
+passed [run 44079799734](https://github.com/Justintunsday/ForceLegacyUI/actions/runs/44079799734)
+on `macos-15-intel` with Xcode 26.2.
+
+* **46 core XCTest cases, 60 native regression cases and 5 offline analysis tests passed.**
+  New synthetic cases check the exact 572 candidate, one-witness read-only decoding
+  without write authorization, ambiguous/wrong SDK refusal, excluded null-placeholder
+  records, malformed non-null paths, and full-evidence one-SDK-field planning.
+  Injected native cases preserve the UUID/fixed-root query scope through alternate
+  flag retries, dispose denied/tokenless queries and retain paired token ownership.
+* Normal and MHA device apps built. The iOS 26.2 x86_64 iPhone 17 Pro simulator
+  launched the three normal apps, exported both probe reports, returned **148 native
+  registrations** with `isDemo: false`, and passed synthetic preview/apply/backup/
+  restore/ZIP export. The restored SHA matched the original
+  `036b8a8fea6b258779071264cbde428629d4a588fd6800365fec8bbf7ea10e36`.
+* All four downloaded IPAs passed independent ZIP, SHA sidecar, version/build,
+  arm64 and requested-entitlement checks. Apple-provisioned signing was skipped;
+  the IPAs require re-signing.
+
+Main IPA SHA-256: `05b48d43c0f4094b687ae48653c75bda114fefc8ba3aa9e754578fd3ef490aca`.
+MHA IPA SHA-256: `606d05f9ae52d361a87c1816a6e4f42d5b95b8255dea9f3152eb7d5f7ab9901e`.
+Artifact ID `14327241741`; GitHub-reported ZIP digest
+`6dd085f754c576781b57df23615ee4b8c6328f8d924ec5322b69f633433faaec`.
+Evidence: [0.1.8 records](evidence/v0.1.8/).
+
+The private, matching user ZIP was reviewed locally, not sent to CI or committed.
+Its original hash remained unchanged. [Field review](LAYOUT-572.md) found the
+572-byte candidate and linked serialized compatibility Booleans. Only one native
+SDK witness was available, so this does not authorize live writes. The candidate
+is restricted to **26.6.2 / 23G90 / arm64**; no arm64e capture was reviewed.
+
+**No phone success for the alternate flag retry, live SDK write, cached-Boolean
+rewrite or legacy appearance is claimed.** The read-only evidence type cannot
+be used as the write proof. The three-app/two-SDK requirement and empty compiled
+reviewed-live allowlist remain in force.
+
+
 ## 0.1.7 validation
 
 Version **0.1.7, build 9**, source
