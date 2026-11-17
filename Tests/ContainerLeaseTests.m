@@ -6,11 +6,12 @@
 #include <string.h>
 
 static struct {
-    unsigned queries, disposed, copies, freedObjects, activations, tokens, consumes, releases, probes, metadataCallbacks;
-    uint64_t kind, flags;
-    BOOL readable, activation, result;
+    unsigned queries, disposed, copies, freedObjects, activations, tokens, consumes, releases, probes, metadataCallbacks, existenceChecks;
+    uint64_t kind, flags, part;
+    BOOL readable, activation, result, exists;
     const char *root;
     char identifier[128];
+    char domain[1024];
 } state;
 static void check(BOOL value, NSString *message) { if (!value) [NSException raise:@"ContainerLeaseRegression" format:@"%@", message]; }
 static void *queryCreate(void) { ++state.queries; return malloc(1); }
@@ -20,8 +21,8 @@ static void setIdentifiers(void *query, xpc_object_t value) {
     snprintf(state.identifier, sizeof(state.identifier), "%s", text ?: "");
 }
 static void setFlags(void *query, uint64_t value) { (void)query; state.flags = value; }
-static void setPart(void *query, uint64_t value) { (void)query; (void)value; }
-static void setDomain(void *query, const char *value) { (void)query; (void)value; }
+static void setPart(void *query, uint64_t value) { (void)query; state.part = value; }
+static void setDomain(void *query, const char *value) { (void)query; snprintf(state.domain, sizeof(state.domain), "%s", value); }
 static void *getResult(void *query) { return state.result ? query : NULL; }
 static const char *getPath(void *object) { (void)object; return state.root; }
 static void dispose(void *query) { ++state.disposed; free(query); }
@@ -29,11 +30,17 @@ static void *copyObject(void *object) { (void)object; ++state.copies; return mal
 static bool activate(void *object, bool ignored) { (void)object; (void)ignored; ++state.activations; return state.activation; }
 static void freeObject(void *object) { ++state.freedObjects; free(object); }
 static char *copyToken(void *object) { (void)object; ++state.tokens; return strdup("injected-test-token"); }
+static char *copyNoToken(void *object) { (void)object; ++state.tokens; return NULL; }
 static int64_t consume(const char *token) { (void)token; ++state.consumes; return 73; }
 static int releaseToken(int64_t token) { check(token == 73, @"Wrong manual token released"); ++state.releases; return 0; }
 static BOOL readable(const char *path, int *error) {
     check(strcmp(path, state.root) == 0, @"Unexpected directory probe"); ++state.probes;
     if (error) *error = state.readable ? 0 : EACCES; return state.readable;
+}
+static BOOL existing(const char *path, int *error) {
+    check(strcmp(path, state.root) == 0, @"Existence probe escaped requested UUID"); ++state.existenceChecks;
+    if (error) *error = state.exists ? 0 : EPERM;
+    return state.exists;
 }
 static const char *getIdentifier(void *object) { return (const char *)object; }
 static bool iterateMetadata(void *query, bool (^callback)(void *)) {
@@ -55,6 +62,14 @@ static FLContainerRuntime runtime(void) {
     api.readableDirectory = readable;
     return api;
 }
+static FLContainerRuntime bundleTraversalRuntime(void) {
+    FLContainerRuntime api = runtime();
+    state.root = "/private/var/containers/Bundle/Application/04BA7A11-12F4-4567-89AB-0123456789AB";
+    state.exists = YES; api.existingDirectory = existing;
+    api.groups = setIdentifiers; api.part = setPart; api.domain = setDomain;
+    api.token = copyToken; api.consume = consume; api.release = releaseToken;
+    return api;
+}
 NSArray<NSString *> *FLRunContainerLeaseTests(void) {
     NSMutableArray *passed = [NSMutableArray array];
     void (^test)(NSString *, void (^)(void)) = ^(NSString *name, void (^body)(void)) { body(); [passed addObject:name]; };
@@ -68,6 +83,36 @@ NSArray<NSString *> *FLRunContainerLeaseTests(void) {
         });
         check(api.part == setPart && api.domain == setDomain, @"Correct exported part APIs were not resolved");
         check(![lookedUp containsObject:@"container_query_set_part"] && ![lookedUp containsObject:@"container_query_set_part_domain"], @"Nonexistent API names returned to the production loader");
+    });
+    test(@"Bundle traversal accepts one UUID parent and rejects roots, data and nested paths before queries", ^{
+        FLContainerRuntime api = bundleTraversalRuntime(); NSString *root = [NSString stringWithUTF8String:state.root];
+        check([FLTraversalDomainForBundleContainer(root) hasSuffix:root], @"Valid UUID parent refused");
+        check([FLTraversalDomainForBundleContainer([root substringFromIndex:8]) hasSuffix:root], @"Lexical /var alias was not canonicalized");
+        check(!FLTraversalDomainForCacheDirectory(root), @"Bundle scope leaked into LS-only cache policy");
+        for (NSString *path in @[@"/private/var/containers/Bundle/Application", [root stringByAppendingPathComponent:@"Example.app"],
+            [root stringByAppendingPathComponent:@"../Other"], @"/private/var/mobile/Containers/Data/Application/04BA7A11-12F4-4567-89AB-0123456789AB"]) {
+            check(FLTestBundleTraversalToken(path, &api, [NSMutableString string]) == -100, @"Unrelated traversal target accepted");
+        }
+        check(!state.queries && !state.existenceChecks && !state.tokens, @"Rejected path reached filesystem or token APIs");
+    });
+    test(@"Bundle traversal binds query context and leaves a paired token for the metadata reader", ^{
+        FLContainerRuntime api = bundleTraversalRuntime(); NSString *root = [NSString stringWithUTF8String:state.root];
+        check(FLTestBundleTraversalToken(root, &api, [NSMutableString string]) == 73, @"Traversal token unavailable");
+        check(state.kind == 13 && state.flags == 0x8000000000ULL && state.part == 3 &&
+            strcmp(state.identifier, "systemgroup.com.apple.mobilegestaltcache") == 0 && strstr(state.domain, state.root), @"Traversal query escaped fixed context");
+        check(state.existenceChecks == 1 && state.disposed == 1 && state.consumes == 1 && !state.releases, @"Query cleanup or token ownership failed");
+        api.release(73); check(state.releases == 1, @"Metadata reader could not release traversal token");
+    });
+    test(@"Bundle traversal refuses unverifiable directories, missing release APIs and denied tokens", ^{
+        FLContainerRuntime api = bundleTraversalRuntime(); NSString *root = [NSString stringWithUTF8String:state.root];
+        state.exists = NO;
+        check(FLTestBundleTraversalToken(root, &api, [NSMutableString string]) == -105 && !state.queries, @"Unverified directory reached a sandbox query");
+        api = bundleTraversalRuntime(); api.release = NULL;
+        check(FLTestBundleTraversalToken(root, &api, [NSMutableString string]) == -101 && !state.queries && !state.consumes, @"Unpaired traversal token was consumed");
+        api = bundleTraversalRuntime(); state.result = NO;
+        check(FLTestBundleTraversalToken(root, &api, [NSMutableString string]) == -103 && state.disposed == 1 && !state.tokens, @"Denied query leaked or copied a token");
+        api = bundleTraversalRuntime(); api.token = copyNoToken;
+        check(FLTestBundleTraversalToken(root, &api, [NSMutableString string]) == -104 && state.disposed == 1 && !state.consumes, @"Absent token was consumed or query leaked");
     });
     test(@"MCM catalog reads metadata without token or object activation APIs", ^{
         FLContainerRuntime api = runtime(); api.iterate = iterateMetadata; api.identifier = getIdentifier;

@@ -64,7 +64,7 @@ NSArray<NSString *> *FLRunBundleEvidenceTests(void) {
         __block unsigned requests = 0;
         for (NSString *path in @[[bundle stringByAppendingString:@"/../Other.app"],
             @"/private/var/mobile/Containers/Data/Application/04BA7A11-12F4-4567-89AB-0123456789AB/Example.app"]) {
-            check(!FLReadBundleEvidence(@"org.example.sdk", path, ^int64_t(NSString *container, BOOL alt) { (void)container; (void)alt; ++requests; return 1; }, ^(int64_t token) { (void)token; }, NULL), @"Unrelated bundle path accepted");
+            check(!FLReadBundleEvidence(@"org.example.sdk", path, ^int64_t(NSString *container, FLBundleGrantMethod method) { (void)container; (void)method; ++requests; return 1; }, ^(int64_t token) { (void)token; }, NULL), @"Unrelated bundle path accepted");
         }
         check(!requests, @"Rejected metadata path reached a private grant API");
     });
@@ -106,8 +106,8 @@ NSArray<NSString *> *FLRunBundleEvidenceTests(void) {
     test(@"Readable bundle directory retries a paired grant when its Info file is unreadable", ^{
         NSDictionary *fixture = bundleFixture(NO); __block unsigned requests = 0; NSMutableArray *released = [NSMutableArray array];
         @try {
-            NSDictionary *result = FLTestResolveBundle(@"org.example.sdk", fixture[@"root"], @"Example.app", ^int64_t(NSString *container, BOOL alternate) {
-                ++requests; check(!alternate && [container.lastPathComponent isEqual:[fixture[@"root"] lastPathComponent]], @"Grant escaped requested container");
+            NSDictionary *result = FLTestResolveBundle(@"org.example.sdk", fixture[@"root"], @"Example.app", ^int64_t(NSString *container, FLBundleGrantMethod method) {
+                ++requests; check(method == FLBundleGrantStandard && [container.lastPathComponent isEqual:[fixture[@"root"] lastPathComponent]], @"Grant escaped requested container");
                 check([fixture[@"info"] writeToFile:[fixture[@"app"] stringByAppendingPathComponent:@"Info.plist"] atomically:YES], @"Injected access response failed"); return 0;
             }, ^(int64_t token) { [released addObject:@(token)]; }, NULL);
             check([result[@"sdk"] isEqual:@"26.2.0"] && requests == 1 && [released isEqual:@[@0]], @"Subfile access skipped grant retry or leaked handle zero");
@@ -116,13 +116,14 @@ NSArray<NSString *> *FLRunBundleEvidenceTests(void) {
     test(@"A positive but ineffective bundle grant is released before alternate flags", ^{
         NSDictionary *fixture = bundleFixture(NO); NSMutableArray *released = [NSMutableArray array];
         @try {
-            NSDictionary *result = FLTestResolveBundle(@"org.example.sdk", fixture[@"root"], @"Example.app", ^int64_t(NSString *container, BOOL alternate) {
+            NSDictionary *result = FLTestResolveBundle(@"org.example.sdk", fixture[@"root"], @"Example.app", ^int64_t(NSString *container, FLBundleGrantMethod method) {
                 (void)container;
-                if (alternate) {
+                check(method != FLBundleGrantTraversal, @"Traversal called after successful alternate read");
+                if (method == FLBundleGrantAlternate) {
                     check([released isEqual:@[@40]], @"Ineffective grant was retained");
                     check([fixture[@"info"] writeToFile:[fixture[@"app"] stringByAppendingPathComponent:@"Info.plist"] atomically:YES], @"Injected alternate response failed");
                 }
-                return alternate ? 41 : 40;
+                return method == FLBundleGrantAlternate ? 41 : 40;
             }, ^(int64_t token) { [released addObject:@(token)]; }, NULL);
             check([result[@"sdk"] isEqual:@"26.2.0"] && [released isEqual:@[@40, @41]], @"Alternate read or token pairing failed");
         } @finally { [NSFileManager.defaultManager removeItemAtPath:fixture[@"root"] error:NULL]; }
@@ -130,10 +131,10 @@ NSArray<NSString *> *FLRunBundleEvidenceTests(void) {
     test(@"Denied and unpaired bundle grants retain the failed path and access stage", ^{
         NSDictionary *fixture = bundleFixture(NO); __block unsigned requests = 0;
         @try {
-            int64_t (^request)(NSString *, BOOL) = ^int64_t(NSString *container, BOOL alternate) { (void)container; (void)alternate; ++requests; return -6; };
+            int64_t (^request)(NSString *, FLBundleGrantMethod) = ^int64_t(NSString *container, FLBundleGrantMethod method) { (void)container; (void)method; ++requests; return -6; };
             NSError *error = nil;
             check(!FLTestResolveBundle(@"org.example.sdk", fixture[@"root"], @"Example.app", request, ^(int64_t token) { (void)token; check(NO, @"Denied grant was released as a token"); }, &error), @"Denied grants produced evidence");
-            check(requests == 2 && [error.localizedDescription containsString:@"Info.plist open failed"] && [error.localizedDescription containsString:@"grant: -6"], @"Per-stage diagnostics or alternate attempt missing");
+            check(requests == 3 && [error.localizedDescription containsString:@"Info.plist open failed"] && [error.localizedDescription containsString:@"Traversal UUID-container grant: -6"], @"Per-stage diagnostics or traversal attempt missing");
             requests = 0;
             check(!FLTestResolveBundle(@"org.example.sdk", fixture[@"root"], @"Example.app", request, nil, NULL) && !requests, @"Consumed an unpaired token");
         } @finally { [NSFileManager.defaultManager removeItemAtPath:fixture[@"root"] error:NULL]; }
@@ -141,12 +142,36 @@ NSArray<NSString *> *FLRunBundleEvidenceTests(void) {
     test(@"Bundle identity conflicts and symlinks never trigger additional grants", ^{
         NSDictionary *fixture = bundleFixture(YES); __block unsigned requests = 0;
         @try {
-            int64_t (^request)(NSString *, BOOL) = ^int64_t(NSString *container, BOOL alternate) { (void)container; (void)alternate; ++requests; return 1; };
+            int64_t (^request)(NSString *, FLBundleGrantMethod) = ^int64_t(NSString *container, FLBundleGrantMethod method) { (void)container; (void)method; ++requests; return 1; };
             void (^release)(int64_t) = ^(int64_t token) { (void)token; };
             check(!FLTestResolveBundle(@"org.other.app", fixture[@"root"], @"Example.app", request, release, NULL) && !requests, @"Identity mismatch retried grants");
             NSString *alias = [fixture[@"root"] stringByAppendingPathComponent:@"Alias.app"];
             check(symlink("Example.app", alias.fileSystemRepresentation) == 0, @"Symlink fixture failed");
             check(!FLTestResolveBundle(@"org.example.sdk", fixture[@"root"], @"Alias.app", request, release, NULL) && !requests, @"Symlink triggered a grant or was followed");
+        } @finally { [NSFileManager.defaultManager removeItemAtPath:fixture[@"root"] error:NULL]; }
+    });
+    test(@"Scoped traversal is attempted after both worse_query methods are denied", ^{
+        NSDictionary *fixture = bundleFixture(NO); NSMutableArray *methods = [NSMutableArray array], *released = [NSMutableArray array];
+        @try {
+            NSDictionary *result = FLTestResolveBundle(@"org.example.sdk", fixture[@"root"], @"Example.app", ^int64_t(NSString *container, FLBundleGrantMethod method) {
+                (void)container; [methods addObject:@(method)];
+                if (method != FLBundleGrantTraversal) return -6;
+                check([fixture[@"info"] writeToFile:[fixture[@"app"] stringByAppendingPathComponent:@"Info.plist"] atomically:YES], @"Injected traversal access failed");
+                return 73;
+            }, ^(int64_t token) { [released addObject:@(token)]; }, NULL);
+            check([result[@"sdk"] isEqual:@"26.2.0"] && [methods isEqual:@[@0, @1, @2]] && [released isEqual:@[@73]], @"Traversal read or paired release failed");
+        } @finally { [NSFileManager.defaultManager removeItemAtPath:fixture[@"root"] error:NULL]; }
+    });
+    test(@"Unavailable worse_query symbols do not disable an independent traversal backend", ^{
+        NSDictionary *fixture = bundleFixture(NO); __block unsigned requests = 0, releases = 0;
+        @try {
+            NSDictionary *result = FLTestResolveBundle(@"org.example.sdk", fixture[@"root"], @"Example.app", ^int64_t(NSString *container, FLBundleGrantMethod method) {
+                (void)container; ++requests;
+                if (method != FLBundleGrantTraversal) return -2;
+                check([fixture[@"info"] writeToFile:[fixture[@"app"] stringByAppendingPathComponent:@"Info.plist"] atomically:YES], @"Injected independent access failed");
+                return 0;
+            }, ^(int64_t token) { check(token == 0, @"Wrong traversal token released"); ++releases; }, NULL);
+            check([result[@"sdk"] isEqual:@"26.2.0"] && requests == 3 && releases == 1, @"Unavailable primary backend blocked traversal");
         } @finally { [NSFileManager.defaultManager removeItemAtPath:fixture[@"root"] error:NULL]; }
     });
     return passed;

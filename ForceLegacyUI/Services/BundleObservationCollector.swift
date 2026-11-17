@@ -28,6 +28,7 @@ enum BundleObservationCollector {
             result.append(BundleSDKObservation(bundleID: app.bundleID, bundlePath: resolvedPath, sdk: sdk,
                                                 infoSHA256: sha256(info), loadCommandsSHA256: sha256(headers)))
             log += "Independent executable SDK \(app.bundleID): \(sdk); Info.plist identity and read stability checked; resolved \(resolvedPath).\n"
+            if let access = raw["accessDiagnostics"] as? String, !access.isEmpty { log += access }
             if resolvedPath != app.bundlePath { log += "Registration spelling: \(app.bundlePath); resolved from directory entries or this app's own bundle.\n" }
         }
         log += "Bundle SDK observations: \(result.count), \(attempted) attempts; 12-attempt / 8-second budget between calls. Signed bundles were opened read-only.\n"

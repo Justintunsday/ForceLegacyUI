@@ -219,7 +219,7 @@ static NSDictionary *FLReadFromContainer(NSString *identifier, NSString *contain
     } @finally { close(directory); }
 }
 static NSDictionary *FLResolveBundle(NSString *identifier, NSString *path, NSArray<NSString *> *parents,
-    int64_t (^requestToken)(NSString *, BOOL), void (^releaseToken)(int64_t), NSError **error) {
+    int64_t (^requestToken)(NSString *, FLBundleGrantMethod), void (^releaseToken)(int64_t), NSError **error) {
     NSError *failure = nil; NSMutableArray *details = [NSMutableArray array];
     NSDictionary *observed = FLReadBundlePath(identifier, path, &failure);
     if (observed) return observed;
@@ -233,10 +233,10 @@ static NSDictionary *FLResolveBundle(NSString *identifier, NSString *path, NSArr
     }
     if (requestToken && releaseToken) {
         for (NSString *parent in parents) {
-            for (unsigned attempt = 0; attempt < 2; ++attempt) {
-                int64_t token = requestToken(parent, attempt == 1);
-                [details addObject:[NSString stringWithFormat:@"%@ UUID-container grant: %lld", attempt ? @"Alternate" : @"Standard", (long long)token]];
-                if (token == -2) break;
+            NSArray *methods = @[@"Standard", @"Alternate", @"Traversal"];
+            for (NSUInteger attempt = 0; attempt < methods.count; ++attempt) {
+                int64_t token = requestToken(parent, (FLBundleGrantMethod)attempt);
+                [details addObject:[NSString stringWithFormat:@"%@ UUID-container grant: %lld", methods[attempt], (long long)token]];
                 if (token < 0) continue;
                 @try { observed = FLReadFromContainer(identifier, parent, path.lastPathComponent, &failure); }
                 @finally { releaseToken(token); }
@@ -249,7 +249,7 @@ static NSDictionary *FLResolveBundle(NSString *identifier, NSString *path, NSArr
     FLFail(error, [details componentsJoinedByString:@"; "]); return nil;
 }
 NSDictionary<NSString *, id> *FLReadBundleEvidence(NSString *identifier, NSString *path,
-    int64_t (^requestToken)(NSString *, BOOL), void (^releaseToken)(int64_t), NSError **error) {
+    int64_t (^requestToken)(NSString *, FLBundleGrantMethod), void (^releaseToken)(int64_t), NSError **error) {
     if (!identifier.length || identifier.length > 255 || !FLIsApplicationBundlePath(path)) { FLFail(error, @"Bundle metadata request is outside the application-bundle policy."); return nil; }
     path = FLNormalizeStorePath(path);
     NSString *parent = path.stringByDeletingLastPathComponent;
@@ -261,7 +261,7 @@ NSDictionary<NSString *, id> *FLReadBundleEvidence(NSString *identifier, NSStrin
 NSDictionary<NSString *, id> *FLTestBundleAtFD(int directory, NSString *identifier, NSError **error) { return FLReadBundleAtFD(directory, identifier, error); }
 NSString *FLTestMatchBundleName(NSArray<NSString *> *names, NSString *requested, NSError **error) { return FLMatchBundleName(names, requested, error); }
 NSDictionary<NSString *, id> *FLTestResolveBundle(NSString *identifier, NSString *containerPath, NSString *requested,
-    int64_t (^requestToken)(NSString *, BOOL), void (^releaseToken)(int64_t), NSError **error) {
+    int64_t (^requestToken)(NSString *, FLBundleGrantMethod), void (^releaseToken)(int64_t), NSError **error) {
     containerPath = FLNormalizeStorePath(containerPath);
     return FLResolveBundle(identifier, [containerPath stringByAppendingPathComponent:requested], @[containerPath], requestToken, releaseToken, error);
 }

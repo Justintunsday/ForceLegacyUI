@@ -4,6 +4,9 @@ NS_ASSUME_NONNULL_BEGIN
 FOUNDATION_EXPORT BOOL FLHouseArrestIdentityAllowed(NSString *bundleID, NSString *mode);
 FOUNDATION_EXPORT NSString * _Nullable FLTraversalDomainForCacheDirectory(NSString *directory);
 FOUNDATION_EXPORT int64_t FLTraversalTokenForCacheDirectory(NSString *directory, NSMutableString *log);
+FOUNDATION_EXPORT NSString * _Nullable FLTraversalDomainForBundleContainer(NSString *directory);
+/// Requires an existing, nonsymlink UUID bundle container; only its metadata reader consumes this token.
+FOUNDATION_EXPORT int64_t FLTraversalTokenForBundleContainer(NSString *directory, NSMutableString *log);
 FOUNDATION_EXPORT NSString *FLContainerRuntimeDiagnostics(void);
 FOUNDATION_EXPORT void FLReleaseDirectoryToken(int64_t token);
 FOUNDATION_EXPORT BOOL FLCanReleaseDirectoryTokens(void);

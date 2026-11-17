@@ -62,16 +62,30 @@ NSDictionary<NSString *, id> *FLInspectBundle(NSString *identifier, NSString *pa
     }
     BOOL useGroup = group.length && FLCanReleaseDirectoryTokens() &&
         [NSFileManager.defaultManager containerURLForSecurityApplicationGroupIdentifier:group] != nil;
-    int64_t (^request)(NSString *, BOOL) = nil; void (^release)(int64_t) = nil;
-    if (useGroup) {
-        request = ^int64_t(NSString *container, BOOL alternate) {
+    NSMutableString *grantLog = [NSMutableString string];
+    int64_t (^request)(NSString *, FLBundleGrantMethod) = nil; void (^release)(int64_t) = nil;
+    if (FLCanReleaseDirectoryTokens()) {
+        request = ^int64_t(NSString *container, FLBundleGrantMethod method) {
             // The reader supplies only the requested bundle's UUID parent, never the bundle root.
             if (!FLIsApplicationBundlePath([container stringByAppendingPathComponent:@"Scope.app"])) return -100;
-            return worse_query(container, group, alternate, true);
+            if (method == FLBundleGrantTraversal) return FLTraversalTokenForBundleContainer(container, grantLog);
+            if (!useGroup) return -101;
+            return worse_query(container, group, method == FLBundleGrantAlternate, true);
         };
         release = ^(int64_t token) { FLReleaseDirectoryToken(token); };
     }
-    return FLReadBundleEvidence(identifier, readPath, request, release, error);
+    NSError *failure = nil;
+    NSDictionary *observed = FLReadBundleEvidence(identifier, readPath, request, release, &failure);
+    if (!observed) {
+        if (error) {
+            if (!grantLog.length) *error = failure;
+            else *error = [NSError errorWithDomain:@"ForceLegacyUI.BundleAccess" code:1 userInfo:@{NSLocalizedDescriptionKey:
+                [NSString stringWithFormat:@"%@; %@", failure.localizedDescription ?: @"Bundle read failed", grantLog]}];
+        }
+        return nil;
+    }
+    NSMutableDictionary *result = [observed mutableCopy]; result[@"accessDiagnostics"] = grantLog;
+    return result;
 }
 BOOL FLStoreIsDiagnosticOnly(NSString *path) { return FLIsDiagnosticLSStoreName(path.lastPathComponent); }
 void FLResetStoreDiscoveryProgress(void) {

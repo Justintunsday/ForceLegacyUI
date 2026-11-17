@@ -1,24 +1,41 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Independent, LS-only implementation informed by 3105 / MHA-C2 and bad_query research.
+// Independent scoped LS-cache and bundle-metadata access informed by 3105 / MHA-C2 and bad_query research.
 #import "FLContainerAccess.h"
 #import "FLContainerRuntime.h"
 #import "FLStoreDiscovery.h"
+#import "FLBundleEvidence.h"
 #include <dlfcn.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdlib.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 BOOL FLHouseArrestIdentityAllowed(NSString *bundleID, NSString *mode) {
     return [bundleID isKindOfClass:NSString.class] && [mode isKindOfClass:NSString.class] &&
         [mode isEqualToString:@"house-arrest"] && [bundleID isEqualToString:@"com.apple.mobile.MobileHouseArrest"];
 }
-NSString *FLTraversalDomainForCacheDirectory(NSString *directory) {
-    directory = FLNormalizeStorePath(directory);
-    if (!FLIsAllowedStoreDirectory(directory) && ![FLStoreContainerRoots() containsObject:directory]) return nil;
+static NSString *FLTraversalDomain(NSString *directory) {
     NSMutableArray *parents = [NSMutableArray array];
     for (unsigned depth = 0; depth < 8; ++depth) [parents addObject:@".."];
     return [[parents componentsJoinedByString:@"/"] stringByAppendingString:directory];
+}
+NSString *FLTraversalDomainForCacheDirectory(NSString *directory) {
+    directory = FLNormalizeStorePath(directory);
+    if (!FLIsAllowedStoreDirectory(directory) && ![FLStoreContainerRoots() containsObject:directory]) return nil;
+    return FLTraversalDomain(directory);
+}
+NSString *FLTraversalDomainForBundleContainer(NSString *directory) {
+    directory = FLNormalizeStorePath(directory);
+    if (!FLIsApplicationBundlePath([directory stringByAppendingPathComponent:@"Scope.app"])) return nil;
+    return FLTraversalDomain(directory);
+}
+static BOOL FLExistingDirectory(const char *path, int *failure) {
+    struct stat value;
+    if (lstat(path, &value) != 0) { if (failure) *failure = errno; return NO; }
+    if (!S_ISDIR(value.st_mode)) { if (failure) *failure = EINVAL; return NO; }
+    if (failure) *failure = 0;
+    return YES;
 }
 static BOOL FLReadDirectory(const char *path, int *failure) {
     int descriptor = open(path, O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC);
@@ -48,6 +65,7 @@ static FLContainerRuntime FLResolveContainerRuntime(FLContainerSymbolLookup look
     FL_SYMBOL(release, "sandbox_extension_release");
 #undef FL_SYMBOL
     api.readableDirectory = FLReadDirectory;
+    api.existingDirectory = FLExistingDirectory;
     return api;
 }
 static FLContainerRuntime *FLContainerFunctions(void) {
@@ -155,10 +173,7 @@ NSArray<NSDictionary<NSString *, id> *> *FLMHAAppDataCatalog(NSMutableString *lo
     }
     return FLReadMHAAppDataCatalog(FLContainerFunctions(), 4096, log);
 }
-int64_t FLTraversalTokenForCacheDirectory(NSString *directory, NSMutableString *log) {
-    NSString *domain = FLTraversalDomainForCacheDirectory(directory);
-    if (!domain) { [log appendString:@"Traversal fallback refused a path outside LS discovery policy.\n"]; return -100; }
-    FLContainerRuntime *api = FLContainerFunctions();
+static int64_t FLTraversalToken(NSString *directory, NSString *domain, FLContainerRuntime *api, NSMutableString *log) {
     NSArray *missing = [FLMissingQuery(api, YES) arrayByAddingObjectsFromArray:FLMissingManual(api)];
     if (missing.count) {
         if (![log containsString:@"Traversal fallback missing symbols:"])
@@ -179,6 +194,25 @@ int64_t FLTraversalTokenForCacheDirectory(NSString *directory, NSMutableString *
         [log appendFormat:@"Traversal fallback %@: handle %lld; directory access still must be checked.\n", directory, (long long)handle];
         return handle;
     } @finally { api->dispose(query); }
+}
+int64_t FLTraversalTokenForCacheDirectory(NSString *directory, NSMutableString *log) {
+    NSString *domain = FLTraversalDomainForCacheDirectory(directory);
+    if (!domain) { [log appendString:@"Traversal fallback refused a path outside LS discovery policy.\n"]; return -100; }
+    return FLTraversalToken(directory, domain, FLContainerFunctions(), log);
+}
+static int64_t FLBundleTraversalToken(NSString *directory, FLContainerRuntime *api, NSMutableString *log) {
+    NSString *domain = FLTraversalDomainForBundleContainer(directory);
+    if (!domain) { [log appendString:@"Bundle traversal refused a path outside one UUID bundle container.\n"]; return -100; }
+    directory = FLNormalizeStorePath(directory);
+    int failure = 0;
+    if (!(api->existingDirectory ?: FLExistingDirectory)(directory.fileSystemRepresentation, &failure)) {
+        [log appendFormat:@"Bundle traversal skipped: existing nonsymlink UUID directory could not be verified, errno %d.\n", failure];
+        return -105;
+    }
+    return FLTraversalToken(directory, domain, api, log);
+}
+int64_t FLTraversalTokenForBundleContainer(NSString *directory, NSMutableString *log) {
+    return FLBundleTraversalToken(directory, FLContainerFunctions(), log);
 }
 
 @interface FLLSDContainerLease () {
@@ -251,5 +285,9 @@ FLLSDContainerLease *FLTestOpenLSDLease(uint64_t kind, const FLContainerRuntime 
 }
 NSArray<NSDictionary<NSString *, id> *> *FLTestMHAAppDataCatalog(const FLContainerRuntime *runtime, NSUInteger limit, NSMutableString *log) {
     return FLReadMHAAppDataCatalog(runtime, limit, log);
+}
+int64_t FLTestBundleTraversalToken(NSString *directory, const FLContainerRuntime *runtime, NSMutableString *log) {
+    FLContainerRuntime api = *runtime;
+    return FLBundleTraversalToken(directory, &api, log);
 }
 #endif
