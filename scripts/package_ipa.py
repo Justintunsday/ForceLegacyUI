@@ -36,7 +36,7 @@ for app in apps:
 (args.output / "PACKAGING.txt").write_text(
     "Unsigned IPAs require signing with your own provisioning profile before installation.\n"
     "An ad-hoc signature carries requested entitlements for sideloading tools; it does not grant device permissions.\n"
-    "The standard ForceLegacyUI build needs a dedicated, correctly provisioned App Group.\n"
-    "The HouseArrest variant needs enterprise signing preserving com.apple.mobile.MobileHouseArrest; it shares 3105's identity and replaces that app.\n"
+    "The standard ForceLegacyUI build needs a dedicated, correctly provisioned App Group.\n" +
+    ("The archived HouseArrest variant shares 3105's identity and replaces that app.\n" if args.house_arrest else "") +
     "Signing ForceLegacyUI/probes does not modify or re-sign the target applications.\n"
     "No appearance override is verified; see the investigation and testing documentation.\n")
