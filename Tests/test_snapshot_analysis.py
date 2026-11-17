@@ -1,5 +1,5 @@
 """Read-only analyzer checks against the simulator's exported synthetic store."""
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import importlib.util
 import hashlib
 import unittest
@@ -58,5 +58,19 @@ class SnapshotAnalysisTests(unittest.TestCase):
         output = module.Store(self.data).report(report)
         self.assertEqual(output["readOnlyObservations"], [])
         self.assertEqual(output["executableSDKColumnConsensus"], [])
+
+    def test_resolved_bundle_spelling_still_matches_registration_fields(self):
+        report = self.report()
+        for fact in report["bundleFacts"]:
+            path = PurePosixPath(fact["bundlePath"])
+            fact["bundlePath"] = str(path.parent / path.name.lower())
+        rows = module.Store(self.data).report(report)["readOnlyObservations"]
+        self.assertEqual(len(rows), 3)
+        for row in rows:
+            self.assertEqual(row["candidateBundleNameOffsets"], [68])
+            self.assertEqual(row["candidatePlaceholderOffsets"], [72])
+            self.assertEqual(row["candidateSDKOffsets"], [32])
+        parent = "/private/var/containers/Bundle/Application/04BA7A11-12F4-4567-89AB-0123456789AB/SerializedPlaceholder.ipa"
+        self.assertEqual(module.placeholder_key(parent), module.placeholder_key(parent.replace("04BA7A11", "04ba7a11").replace("/private", "", 1)))
 
 if __name__ == "__main__": unittest.main()

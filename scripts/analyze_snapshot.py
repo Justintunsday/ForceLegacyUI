@@ -5,8 +5,18 @@ import argparse
 import hashlib
 import json
 import struct
+import uuid
 from collections import defaultdict
 from pathlib import PurePosixPath
+
+def placeholder_key(value):
+    if value.startswith("/var/"): value = "/private" + value
+    if "." in value.split("/") or ".." in value.split("/"): return value
+    path = PurePosixPath(value)
+    if path.name == "SerializedPlaceholder.ipa" and str(path.parent.parent) == "/private/var/containers/Bundle/Application":
+        try: return str(path.parent.parent / str(uuid.UUID(path.parent.name)).upper() / path.name)
+        except ValueError: pass
+    return value
 
 class Store:
     def __init__(self, data):
@@ -73,13 +83,15 @@ class Store:
                 raise ValueError("Evidence analysis exceeds its bounded string/record budget")
             strings = {}
             normalized_strings = {}
+            bundle_names = {}
             for key, (offset, size) in self.tables["<string>"].items():
                 if size <= 4096:
                     try:
                         value = self.text(offset, size)
                         strings.setdefault(value, set()).add(key)
-                        normalized = "/private" + value if value.startswith("/var/") else value
-                        normalized_strings.setdefault(normalized, set()).add(key)
+                        normalized_strings.setdefault(placeholder_key(value), set()).add(key)
+                        if value.endswith(".app") and PurePosixPath(value).name == value:
+                            bundle_names.setdefault(value.lower(), set()).add(key)
                     except UnicodeDecodeError: pass
             observations = []
             sources = []
@@ -113,8 +125,8 @@ class Store:
                     path = app.get("bundlePath", "")
                     if path.startswith("/var/"): path = "/private" + path
                     bundle = PurePosixPath(path)
-                    placeholders = normalized_strings.get(str(bundle.parent / "SerializedPlaceholder.ipa"), set())
-                    bundle_keys = strings.get(bundle.name, set())
+                    placeholders = normalized_strings.get(placeholder_key(str(bundle.parent / "SerializedPlaceholder.ipa")), set())
+                    bundle_keys = bundle_names.get(bundle.name.lower(), set())
                     observations.append({"bundleID": app["bundleID"], "bundlePath":path, "source":source,
                         "observedSDK":f'{sdk["major"]}.{sdk["minor"]}.{sdk["patch"]}',
                         "recordKey": record_key, "recordSize": size, "recordBody": body,
