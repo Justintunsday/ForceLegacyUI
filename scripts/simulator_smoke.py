@@ -19,6 +19,15 @@ def run(*args, timeout=120, **kwargs):
                 print(stream.decode(errors="replace") if isinstance(stream, bytes) else stream, flush=True)
         raise
 
+def wait_for_file(path, label, timeout=120):
+    # First launch can return a PID before SwiftUI has run its task on a busy CI host.
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        if path.is_file():
+            return
+        time.sleep(1)
+    raise SystemExit(f"{label} did not export evidence within {timeout} seconds: {path.name}")
+
 devices = json.loads(run("xcrun", "simctl", "list", "devices", "available", "--json"))["devices"]
 candidates = [(runtime, d) for runtime, items in devices.items() if "iOS-26-" in runtime for d in items if "iPhone" in d["name"]]
 if not candidates: raise SystemExit("No iOS 26 iPhone simulator runtime available; smoke test cannot be claimed")
@@ -62,12 +71,10 @@ for name in ["ForceLegacyUI", "CompatibilityProbeModern", "CompatibilityProbeLeg
     if name == "ForceLegacyUI":
         container = Path(run("xcrun", "simctl", "get_app_container", udid, identifier, "data"))
         self_test_path = container / "Documents/simulator-self-test.json"
-        for _ in range(120):
-            if self_test_path.exists(): break
-            time.sleep(1)
-        if not self_test_path.exists(): raise SystemExit("App engine self-test did not produce evidence")
+        wait_for_file(self_test_path, "App engine self-test")
         self_test = json.loads(self_test_path.read_text())
-        if not self_test.get("passed"): raise SystemExit("App engine self-test failed")
+        if not self_test.get("passed") or not self_test.get("evidenceZIPExported"):
+            raise SystemExit("App engine transaction/ZIP self-test failed")
         (output / "simulator-self-test.json").write_text(json.dumps(self_test, indent=2, sort_keys=True) + "\n")
         fixture_path = container / "Documents/DemoLaboratory/synthetic.csstore"
         (output / "synthetic-demo.csstore").write_bytes(fixture_path.read_bytes())
@@ -76,10 +83,14 @@ for name in ["ForceLegacyUI", "CompatibilityProbeModern", "CompatibilityProbeLeg
     if name != "ForceLegacyUI":
         container = Path(run("xcrun", "simctl", "get_app_container", udid, identifier, "data"))
         facts_path = container / "Documents/launch-facts.json"
-        if not facts_path.exists(): raise SystemExit(f"Probe failed to export facts: {identifier}")
+        wait_for_file(facts_path, identifier)
         facts = json.loads(facts_path.read_text())
         if facts["plistCompatibilityValue"] != name.endswith("Legacy"): raise SystemExit("Probe plist control mismatch")
         (output / f"{name}-launch-facts.json").write_text(json.dumps(facts, indent=2, sort_keys=True) + "\n")
+    # Capture the loaded app after its evidence task, not only the launch animation.
+    run("/bin/ps", "-p", launch[len(prefix):], "-o", "comm=", timeout=30)
+    time.sleep(2)
+    run("xcrun", "simctl", "io", udid, "screenshot", str(output / f"{name}-simulator.png"))
     evidence["launches"].append({"bundleID": identifier, "launchResult": launch, "factsExported": facts is not None})
     run("xcrun", "simctl", "terminate", udid, identifier)
 # Test the real LaunchServices enumeration path too; the synthetic demo cannot cover app visibility.
@@ -88,10 +99,7 @@ main_id = main_info["CFBundleIdentifier"]
 run("xcrun", "simctl", "launch", udid, main_id, "--catalog-self-test")
 container = Path(run("xcrun", "simctl", "get_app_container", udid, main_id, "data"))
 catalog_file = container / "Documents/simulator-catalog-test.json"
-for _ in range(20):
-    if catalog_file.exists(): break
-    time.sleep(1)
-if not catalog_file.exists(): raise SystemExit("Native application catalog self-test did not produce evidence")
+wait_for_file(catalog_file, "Native application catalog self-test")
 catalog = json.loads(catalog_file.read_text())
 if catalog["isDemo"] or not any(app["bundleID"] == main_id for app in catalog["applications"]):
     raise SystemExit("Native catalog was empty or used synthetic data")
